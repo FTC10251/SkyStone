@@ -23,7 +23,9 @@ public class ChangePIDiFulDarby extends OpMode {
     boolean right_bumper_isPressed;
     boolean left_bumper_isPressed;
     double lastVal;
+    double lastValMid;
     boolean darby = false;
+    boolean darbyTwo = false;
 
     @Override
     public void init() {
@@ -97,6 +99,7 @@ public class ChangePIDiFulDarby extends OpMode {
         telemetry.addData( "F:", pidStuff.f);
         telemetry.addData("Left Pid F", leftMotor.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER).f);
         telemetry.addData("Did Change Val", darby);
+        telemetry.addData("middle motor brake,", darbyTwo);
         middleMotor.setPower(gamepad1.left_stick_x);
         middleMotor2.setPower(gamepad1.left_stick_x);
 
@@ -112,13 +115,25 @@ public class ChangePIDiFulDarby extends OpMode {
             darby = true;
 
         }
+        if (Math.abs(middleMotor.getPower() + lastValMid)< Math.abs (middleMotor.getPower())){
+            telemetry.addData("braking", 2);
+            darbyTwo = true;
+
+        }
         if (darby && Math.abs(gamepad1.left_stick_x)< .05){
             leftMotor.setPower(0);
             rightMotor.setPower(0);
             darby = false;
         }
 
+        if (darby && Math.abs(gamepad1.left_stick_y)< .05){
+            middleMotor.setPower(0);
+            middleMotor2.setPower(0);
+            darbyTwo = false;
+        }
+
         lastVal = leftMotor.getPower();
+        lastValMid = middleMotor.getPower();
 
         telemetry.update();
     }

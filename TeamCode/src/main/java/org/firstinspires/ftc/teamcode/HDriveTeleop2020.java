@@ -62,6 +62,10 @@ public class HDriveTeleop2020 extends OpMode {
     DcMotorEx rightMotor;
     DcMotorEx middleMotor;
     DcMotorEx middleMotor2;
+    double lastVal;
+    double lastValMid;
+    boolean darby = false;
+    boolean darbyTwo = false;
 
 
     Orientation angles;
@@ -106,9 +110,9 @@ public class HDriveTeleop2020 extends OpMode {
         middleMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         middleMotor2.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         pidStuff = leftMotor.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER);
-        pidStuff.p = 10;
-        pidStuff.i = 100;
-        pidStuff.d = 0;
+        pidStuff.p = 25;
+        pidStuff.i = 7;
+        pidStuff.d = 10;
         pidStuff.f = 14;
         pidStuff.algorithm = MotorControlAlgorithm.PIDF;
         leftMotor.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, pidStuff);
@@ -136,6 +140,8 @@ public class HDriveTeleop2020 extends OpMode {
         telemetry.addData("Angle", angleDouble);
         telemetry.addData("Middle Power", middleMotor.getPower());
         telemetry.addData("Middle 2 Power", middleMotor2.getPower());
+
+
         telemetry.update();
     }
 
@@ -242,6 +248,31 @@ public class HDriveTeleop2020 extends OpMode {
             rightMotor.setPower(speed * calculator.getRightDrive() /*- sideChangePower*/);
             middleMotor.setPower(speed * calculator.getMiddleDrive() * 2);
             middleMotor2.setPower(speed * calculator.getMiddleDrive() * 2);
+
+            if (Math.abs(leftMotor.getPower() + lastVal)< Math.abs (leftMotor.getPower())){
+                telemetry.addData("braking", 1);
+                darby = true;
+
+            }
+            if (Math.abs(middleMotor.getPower() + lastValMid)< Math.abs (middleMotor.getPower())){
+                telemetry.addData("braking", 2);
+                darbyTwo = true;
+
+            }
+            if (darby && Math.abs(gamepad1.left_stick_x)< .05){
+                leftMotor.setPower(0);
+                rightMotor.setPower(0);
+                darby = false;
+            }
+
+            if (darby && Math.abs(gamepad1.left_stick_y)< .05){
+                middleMotor.setPower(0);
+                middleMotor2.setPower(0);
+                darbyTwo = false;
+            }
+
+            lastVal = leftMotor.getPower();
+            lastValMid = middleMotor.getPower();
         }
     }
     public void tankDriveOdometry() {
@@ -254,6 +285,7 @@ public class HDriveTeleop2020 extends OpMode {
         lastRightPos = rightMotor.getCurrentPosition();
         xPos = (xPos + ((leftPosChange + rightPosChange)/2) * Math.sin(Math.toRadians(extraClasses.convertAngle(angleDouble))));
         yPos = (yPos + ((leftPosChange + rightPosChange)/2) * Math.cos(Math.toRadians(extraClasses.convertAngle(angleDouble))));
+
         /*telemetry.addData("XPos", xPos);
         telemetry.addData("YPos", yPos);
         telemetry.addData("Angle", extraClasses.convertAngle(angleDouble));

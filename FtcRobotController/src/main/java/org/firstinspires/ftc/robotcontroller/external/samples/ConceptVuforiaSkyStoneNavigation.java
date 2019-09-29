@@ -109,12 +109,13 @@ public class ConceptVuforiaSkyStoneNavigation extends LinearOpMode {
      * and paste it in to your code on the next line, between the double quotes.
      */
     private static final String VUFORIA_KEY =
-            " -- YOUR NEW VUFORIA KEY GOES HERE  --- ";
+            "AWTzyDD/////AAABmXc9YGYk9kC9krb6KdWZ9hVC7/8o9Z/ZcGqEsCKx4HeT+G32mHKxDwKa4Hen6V52ikzlRbrqGXZuhKZPL8psMmuEoGlZ5yvHZLZjn/QcnFhc0D6g4UrXRKgYPYdXacdIgu/+KV1Tv1pNqY3vi4hyikc7ecWKTH2DVxL3CVqmtSjvJ1phlRJLaEx3GZW1YZ/IWvbA3+EDBSi4Kxbh5C84PWP5Ta1BcbPVn29PFNh9JlxIBkQdLCkkG2yp9RdKoOJFSG8IaYiz72FCaOa8UPTcxE+XoIgwfdLQwfQfmuJvx1E3h8iySlXl0UJjQZ2f03PbhxMuidv6vsTT/yTO5JvgOmPdIxlfCllRMKI22YCkRPz+";
 
     // Since ImageTarget trackables use mm to specifiy their dimensions, we must use mm for all the physical dimension.
     // We will define some constants and conversions here
     private static final float mmPerInch        = 25.4f;
-    private static final float mmTargetHeight   = (6) * mmPerInch;          // the height of the center of the target image above the floor
+    private static final float mmTargetHeight   = (6) * mmPerInch;           // the height of the center of the target image above the floor
+
 
     // Constant for Stone Target
     private static final float stoneZ = 2.00f * mmPerInch;
