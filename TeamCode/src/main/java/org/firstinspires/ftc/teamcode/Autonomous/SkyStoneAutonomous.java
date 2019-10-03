@@ -1,51 +1,65 @@
-/* Copyright (c) 2019 FIRST. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without modification,
- * are permitted (subject to the limitations in the disclaimer below) provided that
- * the following conditions are met:
- *
- * Redistributions of source code must retain the above copyright notice, this list
- * of conditions and the following disclaimer.
- *
- * Redistributions in binary form must reproduce the above copyright notice, this
- * list of conditions and the following disclaimer in the documentation and/or
- * other materials provided with the distribution.
- *
- * Neither the name of FIRST nor the names of its contributors may be used to endorse or
- * promote products derived from this software without specific prior written permission.
- *
- * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE GRANTED BY THIS
- * LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
- * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
- * THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
- * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
- * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
+package org.firstinspires.ftc.teamcode.Autonomous;
+import android.graphics.Color;
+import android.graphics.Point;
+import android.util.Range;
 
-package org.firstinspires.ftc.robotcontroller.external.samples;
-
+import com.qualcomm.hardware.bosch.BNO055IMU;
+import com.qualcomm.hardware.bosch.JustLoggingAccelerationIntegrator;
+import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-
+import com.qualcomm.robotcore.hardware.AnalogInput;
+import com.qualcomm.robotcore.hardware.CRServo;
+import com.qualcomm.robotcore.hardware.ColorSensor;
+import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorController;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.DistanceSensor;
+import com.qualcomm.robotcore.hardware.GyroSensor;
+import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.MotorControlAlgorithm;
+import com.qualcomm.robotcore.hardware.OpticalDistanceSensor;
+import com.qualcomm.robotcore.hardware.PIDCoefficients;
+import com.qualcomm.robotcore.hardware.PIDFCoefficients;
+import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.hardware.ServoController;
+import com.qualcomm.robotcore.hardware.TouchSensor;
+import com.qualcomm.robotcore.util.ElapsedTime;
+import org.firstinspires.ftc.robotcontroller.external.samples.HardwarePushbot;
 import org.firstinspires.ftc.robotcore.external.ClassFactory;
+import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.matrices.OpenGLMatrix;
 import org.firstinspires.ftc.robotcore.external.matrices.VectorF;
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
+import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
+import com.qualcomm.hardware.modernrobotics.ModernRoboticsI2cGyro;
+import org.firstinspires.ftc.robotcore.external.navigation.Position;
+import org.firstinspires.ftc.robotcore.external.navigation.RelicRecoveryVuMark;
+import org.firstinspires.ftc.robotcore.external.navigation.Velocity;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackable;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackableDefaultListener;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackables;
+import org.firstinspires.ftc.robotcore.external.tfod.Recognition;
+import org.firstinspires.ftc.robotcore.external.tfod.TFObjectDetector;
 
+import java.math.RoundingMode;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
+import static com.qualcomm.robotcore.hardware.DcMotor.RunMode.RUN_TO_POSITION;
+import static com.qualcomm.robotcore.hardware.DcMotor.RunMode.RUN_USING_ENCODER;
+import static com.qualcomm.robotcore.hardware.DcMotor.RunMode.RUN_WITHOUT_ENCODER;
+import static com.qualcomm.robotcore.hardware.DcMotor.RunMode.STOP_AND_RESET_ENCODER;
 import static org.firstinspires.ftc.robotcore.external.navigation.AngleUnit.DEGREES;
 import static org.firstinspires.ftc.robotcore.external.navigation.AxesOrder.XYZ;
 import static org.firstinspires.ftc.robotcore.external.navigation.AxesOrder.YZX;
@@ -53,121 +67,119 @@ import static org.firstinspires.ftc.robotcore.external.navigation.AxesReference.
 import static org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer.CameraDirection.BACK;
 
 /**
- * This 2019-2020 OpMode illustrates the basics of using the Vuforia localizer to determine
- * positioning and orientation of robot on the SKYSTONE FTC field.
- * The code is structured as a LinearOpMode
- *
- * When images are located, Vuforia is able to determine the position and orientation of the
- * image relative to the camera.  This sample code then combines that information with a
- * knowledge of where the target images are on the field, to determine the location of the camera.
- *
- * From the Audience perspective, the Red Alliance station is on the right and the
- * Blue Alliance Station is on the left.
-
- * Eight perimeter targets are distributed evenly around the four perimeter walls
- * Four Bridge targets are located on the bridge uprights.
- * Refer to the Field Setup manual for more specific location details
- *
- * A final calculation then uses the location of the camera on the robot to determine the
- * robot's location and orientation on the field.
- *
- * @see VuforiaLocalizer
- * @see VuforiaTrackableDefaultListener
- * see  skystone/doc/tutorial/FTC_FieldCoordinateSystemDefinition.pdf
- *
- * Use Android Studio to Copy this Class, and Paste it into your team's code folder with a new name.
- * Remove or comment out the @Disabled line to add this opmode to the Driver Station OpMode list.
- *
- * IMPORTANT: In order to use this OpMode, you need to obtain your own Vuforia license key as
- * is explained below.
+ * Created by Luke on 9/25/2016. Final Far Auto
  */
-
-@TeleOp(name="SKYSTONE Vuforia Nav Webcam", group ="Concept")
-public class ConceptVuforiaSkyStoneNavigationWebcam extends LinearOpMode {
-
-    // IMPORTANT: If you are using a USB WebCam, you must select CAMERA_CHOICE = BACK; and PHONE_IS_PORTRAIT = false;
-    private static final VuforiaLocalizer.CameraDirection CAMERA_CHOICE = BACK;
-    private static final boolean PHONE_IS_PORTRAIT = false  ;
-
-    /*
-     * IMPORTANT: You need to obtain your own license key to use Vuforia. The string below with which
-     * 'parameters.vuforiaLicenseKey' is initialized is for illustration only, and will not function.
-     * A Vuforia 'Development' license key, can be obtained free of charge from the Vuforia developer
-     * web site at https://developer.vuforia.com/license-manager.
-     *
-     * Vuforia license keys are always 380 characters long, and look as if they contain mostly
-     * random data. As an example, here is a example of a fragment of a valid key:
-     *      ... yIgIzTqZ4mWjk9wd3cZO9T1axEqzuhxoGlfOOI2dRzKS4T0hQ8kT ...
-     * Once you've obtained a license key, copy the string from the Vuforia web site
-     * and paste it in to your code on the next line, between the double quotes.
-     */
+@Autonomous(name= "SkyStone Auto", group = "HDrive")
+public class SkyStoneAutonomous extends LinearOpMode {
+    //Vuforia
     private static final String VUFORIA_KEY =
             "Aff5Onj/////AAABmWU00gJ3W031oMf/yab8x+lDTcSp4Ipj3tbjxGCvrixJIcImUGnhiWcbd+U0kjaqRapa8gT1pti8r6x9DZjPKc1Z33pt6uSXJ5nU6HliFApbRiW3nfGQjMaXbItmKyFyA4kkVbxz3Q/UHL5eQbOwpBR880DPsrqElLqI/A6d9MtxwR+HxPGwKjkGI/PQ8LLkoRDK0ea609oynQOlKybmI/a923orWWI+oPWmB6+41EbnAjtnxVK6BZ6e0Y8rXebNcD7/OjVsdZ+pTEfJzR4YYyDt7yCmLKknqW0WGdF0D0zBBBAt4sYwtB6e9CA8FxjxzDOMoUmlZ/pQFXwSdW4I07ZRzatuXJ2FG+hSvxATv1BG";
 
-    // Since ImageTarget trackables use mm to specifiy their dimensions, we must use mm for all the physical dimension.
-    // We will define some constants and conversions here
+    BNO055IMU imu;
+
+    double initialAngle;
+    double startPos;
+    double angleDouble = 0;
+    boolean firstTime = true;
+    boolean finished = true;
+    DcMotorEx leftMotor;
+    DcMotorEx rightMotor;
+    DcMotorEx middleMotor;
+    DcMotorEx middleMotor2;
+
+    Orientation angles;
+    PIDFCoefficients pidStuff;
+    WebcamName webcamName = null;
+
+    //Vuforia Variables
     private static final float mmPerInch        = 25.4f;
     private static final float mmTargetHeight   = (6) * mmPerInch;          // the height of the center of the target image above the floor
-
-    // Constant for Stone Target
     private static final float stoneZ = 2.00f * mmPerInch;
-
-    // Constants for the center support targets
     private static final float bridgeZ = 6.42f * mmPerInch;
     private static final float bridgeY = 23 * mmPerInch;
     private static final float bridgeX = 5.18f * mmPerInch;
     private static final float bridgeRotY = 59;                                 // Units are degrees
     private static final float bridgeRotZ = 180;
-
-    // Constants for perimeter targets
     private static final float halfField = 72 * mmPerInch;
     private static final float quadField  = 36 * mmPerInch;
-
-    // Class Members
     private OpenGLMatrix lastLocation = null;
     private VuforiaLocalizer vuforia = null;
-
-    /**
-     * This is the webcam we are to use. As with other hardware devices such as motors and
-     * servos, this device is identified using the robot configuration tool in the FTC application.
-     */
-    WebcamName webcamName = null;
-
     private boolean targetVisible = false;
     private float phoneXRotate    = 0;
     private float phoneYRotate    = 0;
     private float phoneZRotate    = 0;
+    private static final VuforiaLocalizer.CameraDirection CAMERA_CHOICE = BACK;
+    private static final boolean PHONE_IS_PORTRAIT = false;
+    @Override public void runOpMode() throws InterruptedException {
 
-    @Override public void runOpMode() {
-        /*
-         * Retrieve the camera we are to use.
-         */
+        BNO055IMU.Parameters parameters3 = new BNO055IMU.Parameters();
+        parameters3.angleUnit = BNO055IMU.AngleUnit.DEGREES;
+        parameters3.accelUnit = BNO055IMU.AccelUnit.METERS_PERSEC_PERSEC;
+        parameters3.calibrationDataFile = "AdafruitIMUCalibration.json"; // see the calibration sample opmode
+        parameters3.loggingEnabled = true;
+        parameters3.loggingTag = "IMU";
+        imu = hardwareMap.get(BNO055IMU.class, "imu");
+        imu.initialize(parameters3);
+        telemetry.addData("Status", "Resetting Encoders");    //
+        telemetry.update();
+        telemetry.addData("Status", "Resetting Encoders");    //
+        telemetry.update();
+        leftMotor = (DcMotorEx) hardwareMap.get(DcMotor.class, "leftMotor");
+        rightMotor = (DcMotorEx) hardwareMap.get(DcMotor.class, "rightMotor");
+        middleMotor = (DcMotorEx) hardwareMap.get(DcMotor.class, "middleMotor");
+        middleMotor2 = (DcMotorEx) hardwareMap.get(DcMotor.class, "middleMotor2");
         webcamName = hardwareMap.get(WebcamName.class, "Webcam 1");
 
         /*
-         * Configure Vuforia by creating a Parameter object, and passing it to the Vuforia engine.
-         * We can pass Vuforia the handle to a camera preview resource (on the RC phone);
-         * If no camera monitor is desired, use the parameter-less constructor instead (commented out below).
+         * Initialize the drive system variables.
+         * The init
+         * () method of the hardware class does all the work here
          */
+
+        // Send telemetry message to signify robot waiting;
+        telemetry.addData("Status", "Resetting Encoders for awesome reason");    //
+        telemetry.update();
+        leftMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        rightMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        middleMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        middleMotor2.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        idle();
+
+        leftMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        rightMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        middleMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        middleMotor2.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+        telemetry.addData("Path0", "Starting at %7d :%7d",
+                leftMotor.getCurrentPosition(),
+                rightMotor.getCurrentPosition(),
+                middleMotor.getCurrentPosition());
+        telemetry.update();
+        rightMotor.setDirection(DcMotor.Direction.FORWARD); // Set to REVERSE if using AndyMark motors
+        leftMotor.setDirection(DcMotor.Direction.REVERSE);// Set to FORWARD if using AndyMark motors
+        middleMotor.setDirection(DcMotor.Direction.REVERSE);
+        middleMotor2.setDirection(DcMotor.Direction.REVERSE);
+        pidStuff = leftMotor.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER);
+        pidStuff.p = 5;
+        pidStuff.i = 1;
+        pidStuff.d = 0;
+        pidStuff.f = 10.2;
+        pidStuff.algorithm = MotorControlAlgorithm.PIDF;
+        leftMotor.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER,pidStuff);
+        rightMotor.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER,pidStuff);
+        //pidStuff.f = 23;
+        middleMotor.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER,pidStuff);
+        middleMotor2.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, pidStuff);
+        angles   = imu.getAngularOrientation().toAxesReference(AxesReference.INTRINSIC).toAxesOrder(AxesOrder.ZYX);
+        angleDouble = Double.parseDouble(formatAngle(angles.angleUnit, angles.firstAngle)) + 180;
+        initialAngle = angleDouble;
+
         int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
         VuforiaLocalizer.Parameters parameters = new VuforiaLocalizer.Parameters(cameraMonitorViewId);
-
-        // VuforiaLocalizer.Parameters parameters = new VuforiaLocalizer.Parameters();
-
         parameters.vuforiaLicenseKey = VUFORIA_KEY;
-
-        /**
-         * We also indicate which camera on the RC we wish to use.
-         */
         parameters.cameraName = webcamName;
-
-        //  Instantiate the Vuforia engine
         vuforia = ClassFactory.getInstance().createVuforia(parameters);
-
-        // Load the data sets for the trackable objects. These particular data
-        // sets are stored in the 'assets' part of our application.
         VuforiaTrackables targetsSkyStone = this.vuforia.loadTrackablesFromAsset("Skystone");
-
         VuforiaTrackable stoneTarget = targetsSkyStone.get(0);
         stoneTarget.setName("Stone Target");
         VuforiaTrackable blueRearBridge = targetsSkyStone.get(1);
@@ -194,125 +206,72 @@ public class ConceptVuforiaSkyStoneNavigationWebcam extends LinearOpMode {
         rear1.setName("Rear Perimeter 1");
         VuforiaTrackable rear2 = targetsSkyStone.get(12);
         rear2.setName("Rear Perimeter 2");
-
-        // For convenience, gather together all the trackable objects in one easily-iterable collection */
         List<VuforiaTrackable> allTrackables = new ArrayList<VuforiaTrackable>();
         allTrackables.addAll(targetsSkyStone);
-
-        /**
-         * In order for localization to work, we need to tell the system where each target is on the field, and
-         * where the phone resides on the robot.  These specifications are in the form of <em>transformation matrices.</em>
-         * Transformation matrices are a central, important concept in the math here involved in localization.
-         * See <a href="https://en.wikipedia.org/wiki/Transformation_matrix">Transformation Matrix</a>
-         * for detailed information. Commonly, you'll encounter transformation matrices as instances
-         * of the {@link OpenGLMatrix} class.
-         *
-         * If you are standing in the Red Alliance Station looking towards the center of the field,
-         *     - The X axis runs from your left to the right. (positive from the center to the right)
-         *     - The Y axis runs from the Red Alliance Station towards the other side of the field
-         *       where the Blue Alliance Station is. (Positive is from the center, towards the BlueAlliance station)
-         *     - The Z axis runs from the floor, upwards towards the ceiling.  (Positive is above the floor)
-         *
-         * Before being transformed, each target image is conceptually located at the origin of the field's
-         *  coordinate system (the center of the field), facing up.
-         */
-
-        // Set the position of the Stone Target.  Since it's not fixed in position, assume it's at the field origin.
-        // Rotated it to to face forward, and raised it to sit on the ground correctly.
-        // This can be used for generic target-centric approach algorithms
         stoneTarget.setLocation(OpenGLMatrix
                 .translation(0, 0, stoneZ)
                 .multiplied(Orientation.getRotationMatrix(EXTRINSIC, XYZ, DEGREES, 90, 0, -90)));
-
-        //Set the position of the bridge support targets with relation to origin (center of field)
         blueFrontBridge.setLocation(OpenGLMatrix
                 .translation(-bridgeX, bridgeY, bridgeZ)
                 .multiplied(Orientation.getRotationMatrix(EXTRINSIC, XYZ, DEGREES, 0, bridgeRotY, bridgeRotZ)));
-
         blueRearBridge.setLocation(OpenGLMatrix
                 .translation(-bridgeX, bridgeY, bridgeZ)
                 .multiplied(Orientation.getRotationMatrix(EXTRINSIC, XYZ, DEGREES, 0, -bridgeRotY, bridgeRotZ)));
-
         redFrontBridge.setLocation(OpenGLMatrix
                 .translation(-bridgeX, -bridgeY, bridgeZ)
                 .multiplied(Orientation.getRotationMatrix(EXTRINSIC, XYZ, DEGREES, 0, -bridgeRotY, 0)));
-
         redRearBridge.setLocation(OpenGLMatrix
                 .translation(bridgeX, -bridgeY, bridgeZ)
                 .multiplied(Orientation.getRotationMatrix(EXTRINSIC, XYZ, DEGREES, 0, bridgeRotY, 0)));
-
-        //Set the position of the perimeter targets with relation to origin (center of field)
         red1.setLocation(OpenGLMatrix
                 .translation(quadField, -halfField, mmTargetHeight)
                 .multiplied(Orientation.getRotationMatrix(EXTRINSIC, XYZ, DEGREES, 90, 0, 180)));
-
         red2.setLocation(OpenGLMatrix
                 .translation(-quadField, -halfField, mmTargetHeight)
                 .multiplied(Orientation.getRotationMatrix(EXTRINSIC, XYZ, DEGREES, 90, 0, 180)));
-
         front1.setLocation(OpenGLMatrix
                 .translation(-halfField, -quadField, mmTargetHeight)
                 .multiplied(Orientation.getRotationMatrix(EXTRINSIC, XYZ, DEGREES, 90, 0 , 90)));
-
         front2.setLocation(OpenGLMatrix
                 .translation(-halfField, quadField, mmTargetHeight)
                 .multiplied(Orientation.getRotationMatrix(EXTRINSIC, XYZ, DEGREES, 90, 0, 90)));
-
         blue1.setLocation(OpenGLMatrix
                 .translation(-quadField, halfField, mmTargetHeight)
                 .multiplied(Orientation.getRotationMatrix(EXTRINSIC, XYZ, DEGREES, 90, 0, 0)));
-
         blue2.setLocation(OpenGLMatrix
                 .translation(quadField, halfField, mmTargetHeight)
                 .multiplied(Orientation.getRotationMatrix(EXTRINSIC, XYZ, DEGREES, 90, 0, 0)));
-
         rear1.setLocation(OpenGLMatrix
                 .translation(halfField, quadField, mmTargetHeight)
                 .multiplied(Orientation.getRotationMatrix(EXTRINSIC, XYZ, DEGREES, 90, 0 , -90)));
-
         rear2.setLocation(OpenGLMatrix
                 .translation(halfField, -quadField, mmTargetHeight)
                 .multiplied(Orientation.getRotationMatrix(EXTRINSIC, XYZ, DEGREES, 90, 0, -90)));
-
         if (CAMERA_CHOICE == BACK) {
             phoneYRotate = -90;
         } else {
             phoneYRotate = 90;
         }
-
-        // Rotate the phone vertical about the X axis if it's in portrait mode
         if (PHONE_IS_PORTRAIT) {
             phoneXRotate = 90 ;
         }
-
-        // Next, translate the camera lens to where it is on the robot.
-        // In this example, it is centered (left to right), but forward of the middle of the robot, and above ground level.
         final float CAMERA_FORWARD_DISPLACEMENT  = 4.0f * mmPerInch;   // eg: Camera is 4 Inches in front of robot-center
         final float CAMERA_VERTICAL_DISPLACEMENT = 8.0f * mmPerInch;   // eg: Camera is 8 Inches above ground
         final float CAMERA_LEFT_DISPLACEMENT     = 0;     // eg: Camera is ON the robot's center line
-
         OpenGLMatrix robotFromCamera = OpenGLMatrix
-                    .translation(CAMERA_FORWARD_DISPLACEMENT, CAMERA_LEFT_DISPLACEMENT, CAMERA_VERTICAL_DISPLACEMENT)
-                    .multiplied(Orientation.getRotationMatrix(EXTRINSIC, YZX, DEGREES, phoneYRotate, phoneZRotate, phoneXRotate));
-
-        /**  Let all the trackable listeners know where the phone is.  */
+                .translation(CAMERA_FORWARD_DISPLACEMENT, CAMERA_LEFT_DISPLACEMENT, CAMERA_VERTICAL_DISPLACEMENT)
+                .multiplied(Orientation.getRotationMatrix(EXTRINSIC, YZX, DEGREES, phoneYRotate, phoneZRotate, phoneXRotate));
         for (VuforiaTrackable trackable : allTrackables) {
             ((VuforiaTrackableDefaultListener) trackable.getListener()).setPhoneInformation(robotFromCamera, parameters.cameraDirection);
         }
 
-        // WARNING:
-        // In this sample, we do not wait for PLAY to be pressed.  Target Tracking is started immediately when INIT is pressed.
-        // This sequence is used to enable the new remote DS Camera Preview feature to be used with this sample.
-        // CONSEQUENTLY do not put any driving commands in this loop.
-        // To restore the normal opmode structure, just un-comment the following line:
+        telemetry.addLine("Ready to Begin");
+        telemetry.addData("Starting Angle", initialAngle);
+        telemetry.update();
 
-        // waitForStart();
-
-        // Note: To use the remote camera preview:
-        // AFTER you hit Init on the Driver Station, use the "options menu" to select "Camera Stream"
-        // Tap the preview window to receive a fresh image.
-
+        waitForStart();
         targetsSkyStone.activate();
+
         while (!isStopRequested()) {
 
             // check all the trackable targets to see which one (if any) is visible.
@@ -348,7 +307,74 @@ public class ConceptVuforiaSkyStoneNavigationWebcam extends LinearOpMode {
             telemetry.update();
         }
 
+
         // Disable Tracking when we are done;
-        targetsSkyStone.deactivate();
+        //targetsSkyStone.deactivate();
+
     }
+    public double convertAngle(double angle) {
+        double angleUsed = angle + 180;
+        return angleUsed;
+    }
+    public double offsetAngle(double angle) {
+        double newAngle = angle;
+        if (angle > 360) {
+            newAngle = angle - 360;
+        }
+        return newAngle;
+    }
+
+
+
+    String formatAngle(AngleUnit angleUnit, double angle) {
+        return formatDegrees(AngleUnit.DEGREES.fromUnit(angleUnit, angle));
+    }
+
+    String formatDegrees(double degrees){
+        return String.format(Locale.getDefault(), "%.1f", AngleUnit.DEGREES.normalize(degrees));
+    }
+    String format(OpenGLMatrix transformationMatrix) {
+        return (transformationMatrix != null) ? transformationMatrix.formatAsTransform() : "null";
+    }
+    public double roundDouble(double x){
+        DecimalFormat twoDForm = new DecimalFormat("0.########");
+        String str = twoDForm.format(x);
+        return Double.valueOf(str);
+    }
+    public double scaleSpeed (double maxSpeed, double minSpeed, double targetPos, double currentPos){
+        if (firstTime){
+            startPos = currentPos;
+            firstTime = false;
+            finished = false;
+        }
+        double speedDif = maxSpeed - minSpeed;
+        double dis = targetPos - startPos;
+        double midPt = startPos + dis/2;
+        if(Math.abs(currentPos) >= Math.abs(startPos) && Math.abs(currentPos) <= Math.abs(midPt)){
+            return minSpeed + ((currentPos- startPos)/(dis/2))*(speedDif);
+        }
+        else if (Math.abs(currentPos) <= Math.abs(targetPos) && Math.abs(currentPos) > Math.abs(midPt)){
+            return minSpeed + ((targetPos - currentPos)/(dis/2))*(speedDif);
+        }
+        if (Math.abs(currentPos) >= Math.abs(targetPos)){
+            firstTime = true;
+            finished = true;
+        }
+        return 0;
+    }
+    public double scaleSpeed2 (double maxSpeed, double minSpeed, double targetPos, double currentPos){
+        if (firstTime){
+            startPos = currentPos;
+            firstTime = false;
+            finished = false;
+        }
+        //  if(Math.abs(currentPos - startPos) <= Math.abs(targetPos - startPos)) {
+        double scale = 1 - (Math.abs(currentPos-startPos)) / (Math.abs(targetPos-startPos));
+        return scale * (maxSpeed - minSpeed) + minSpeed;
+        //  }
+        //   return 0;
+    }
+
 }
+
+
