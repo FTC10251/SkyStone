@@ -57,8 +57,9 @@ public class HDriveTeleop2020 extends OpMode {
     float rightX;
     long rightStickTimer = 0;
     boolean newAPressed2 = true;
-    boolean newRightTrigger2 = true;
     boolean newYPressed2 = true;
+    int armPos = 0;
+    double goalPos;
 
 
     //Robot Hardware
@@ -67,13 +68,12 @@ public class HDriveTeleop2020 extends OpMode {
     DcMotorEx rightMotor;
     DcMotorEx rightMotor2;
     DcMotorEx middleMotor;
-    DcMotorEx middleMotor2;
     DcMotorEx rightIntakeMotor;
     DcMotorEx leftIntakeMotor;
+    DcMotorEx armFlipper;
     Servo rightIntakeServo;
     Servo leftIntakeServo;
     Servo clawServo;
-    Servo armFlipper;
 
 
 
@@ -98,21 +98,18 @@ public class HDriveTeleop2020 extends OpMode {
         rightMotor = (DcMotorEx) hardwareMap.get(DcMotor.class, "rightMotor");
         rightMotor2 = (DcMotorEx) hardwareMap.get(DcMotor.class, "rightMotor2");
         middleMotor = (DcMotorEx) hardwareMap.get(DcMotor.class, "middleMotor");
-        middleMotor2 = (DcMotorEx) hardwareMap.get(DcMotor.class, "middleMotor2");
         rightIntakeMotor = (DcMotorEx) hardwareMap.get(DcMotor.class, "rightIntakeMotor");
         leftIntakeMotor = (DcMotorEx) hardwareMap.get(DcMotor.class, "leftIntakeMotor");
         rightIntakeServo = hardwareMap.get(Servo.class, "rightIntakeServo");
         leftIntakeServo = hardwareMap.get(Servo.class, "leftIntakeServo");
         clawServo = hardwareMap.get(Servo.class, "clawServo");
-        armFlipper = hardwareMap.get(Servo.class, "armFlipper");
+        armFlipper = (DcMotorEx) hardwareMap.get(DcMotor.class, "armFlipper");
         calculator = new HDriveFCCalc();
         dpadCalculator = new HDriveFCCalc();
         armCalculator = new ArmCalculator(bicep, forearm);
-        extraClasses = new ExtraClasses(leftMotor, rightMotor, middleMotor, middleMotor2);
         leftMotor.setDirection(DcMotor.Direction.REVERSE);
         leftMotor2.setDirection(DcMotor.Direction.REVERSE);
         middleMotor.setDirection(DcMotor.Direction.REVERSE);
-        middleMotor2.setDirection(DcMotor.Direction.REVERSE);
 
         /*leftMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         rightMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -129,7 +126,6 @@ public class HDriveTeleop2020 extends OpMode {
         rightMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         rightMotor2.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         middleMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        middleMotor2.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         pidStuff = leftMotor.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER);
         pidStuff.p = 10;
         pidStuff.i = 100;
@@ -141,7 +137,6 @@ public class HDriveTeleop2020 extends OpMode {
         rightMotor.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, pidStuff);
         rightMotor2.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, pidStuff);
         middleMotor.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, pidStuff);
-        middleMotor2.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, pidStuff);
 
     timeDifferenceBetweenLoops = System.currentTimeMillis();
 }
@@ -157,12 +152,12 @@ public class HDriveTeleop2020 extends OpMode {
         moveTheBase();
         checkEncoderModes();
         tankDriveOdometry();
+        moveArm();
         telemetry.addData("Left Move", calculator.getLeftDrive());
         telemetry.addData("Right Move", calculator.getRightDrive());
         telemetry.addData("Middle Move", calculator.getMiddleDrive());
         telemetry.addData("Angle", angleDouble);
         telemetry.addData("Middle Power", middleMotor.getPower());
-        telemetry.addData("Middle 2 Power", middleMotor2.getPower());
         telemetry.addData("Left 2 Power", leftMotor2.getPower());
         telemetry.update();
     }
@@ -200,7 +195,6 @@ public class HDriveTeleop2020 extends OpMode {
             updatedDpadMovement = true;
             dpadCalculator.calculateMovement(xJoystick, yJoystick, 0, angleDouble + offset);
             middleMotor.setPower(dpadCalculator.getMiddleDrive());
-            middleMotor2.setPower(dpadCalculator.getMiddleDrive());
             leftMotor.setPower(dpadCalculator.getLeftDrive());
             leftMotor2.setPower(dpadCalculator.getLeftDrive());
             rightMotor.setPower(dpadCalculator.getRightDrive());
@@ -211,7 +205,6 @@ public class HDriveTeleop2020 extends OpMode {
             rightMotor.setPower(0);
             rightMotor2.setPower(0);
             middleMotor.setPower(0);
-            middleMotor2.setPower(0);
             updatedDpadMovement = false;
         }
     }
@@ -275,7 +268,6 @@ public class HDriveTeleop2020 extends OpMode {
             rightMotor.setPower(speed * calculator.getRightDrive() /*- sideChangePower*/);
             rightMotor2.setPower(speed * calculator.getRightDrive() /*- sideChangePower*/);
             middleMotor.setPower(speed * calculator.getMiddleDrive() * 2);
-            middleMotor2.setPower(speed * calculator.getMiddleDrive() * 2);
         }
     }
     public void tankDriveOdometry() {
@@ -307,21 +299,69 @@ public class HDriveTeleop2020 extends OpMode {
             rightMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
             rightMotor2.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
             middleMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            middleMotor2.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         }
-    }
-    public void runIntake(){
-
     }
     public void moveArm(){
-        //closes claw and moves arm all the way ove the robot
+        //closes claw and moves arm all the way over the robot/ back to home position
         if (gamepad2.y && newYPressed2){
             newYPressed2 = false;
-            clawServo.setPosition(0/*enter position here*/);
-            armFlipper.setPosition(0/*enter position here*/);
+            switch(armPos) {
+                case 0 :
+                    // currently home
+                    goalPos = 1;
+                    clawServo.setPosition(goalPos);
+                    armFlipper.setTargetPosition(1);
+                    break;
+                case 1 :
+                    // currently extended
+                    goalPos = 0;
+                    clawServo.setPosition(goalPos);
+                    armFlipper.setMode(RUN_TO_POSITION);
+                    armFlipper.setTargetPosition(0);
+                    break;
+                 default :
+                     telemetry.addData("Something went wrong and it is all darby's fault", 0);
+            }
+
+            armPos += 1;
+            armPos = armPos%1;
         } else{
+
             newYPressed2 = false;
+            if (armFlipper.isBusy()){
+                switch(armPos) {
+                    case 0 :
+                        // trying to go home
+                        armFlipper.setPower(-1);
+                        break;
+                    case 1 :
+                        // trying to extend
+                        armFlipper.setPower(1);
+                        break;
+                    default :
+                        telemetry.addData("Something went wrong and it is all darby's fault", 1);
+                }
+            }
+        }
+        if (!armFlipper.isBusy() && gamepad2.right_stick_x != 0) {
+            armFlipper.setPower(gamepad2.right_stick_x);
+        }
+        if(gamepad2.a && newAPressed2){
+            if (closeEnough (clawServo.getPosition(), /* open*/ 1, .05)){
+                clawServo.setPosition(/* closed*/0);
+            } else if (closeEnough (clawServo.getPosition(), /* closed*/ 0, .05)){
+                clawServo.setPosition(/* open*/1);
+            } else{
+                telemetry.addData("Something went wrong and it is all darby's fault", 2);
+            }
+            newAPressed2 = false;
+        }
+        else{
+            newAPressed2 = true;
         }
 
+    }
+    public boolean closeEnough (double current, double target, double tolerance){
+        return Math.abs(current - target) <= tolerance;
     }
 }
