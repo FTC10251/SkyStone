@@ -6,20 +6,18 @@ import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.MotorControlAlgorithm;
 import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 import org.firstinspires.ftc.robotcore.external.navigation.Position;
 import org.firstinspires.ftc.robotcore.external.navigation.Velocity;
-import org.firstinspires.ftc.robotcore.internal.android.dex.util.ExceptionWithContext;
 
-import static com.qualcomm.robotcore.hardware.DcMotor.RunMode.RUN_TO_POSITION;
-import static com.qualcomm.robotcore.hardware.DcMotor.RunMode.RUN_USING_ENCODER;
 
 @TeleOp(name = "SkyStone TeleOp", group = "HDrive")
 public class HDriveTeleop2020 extends OpMode {
@@ -44,9 +42,9 @@ public class HDriveTeleop2020 extends OpMode {
     double lastRightPos = 0;
     double xPos = 0;
     double yPos = 0;
+    double intakeState = 0;
 
     boolean fieldCentric = true;
-    boolean isGettingOnLander = false;
     boolean isPressedX = false;
     boolean isFieldCentricButton = false;
     boolean armMode = false;
@@ -54,18 +52,20 @@ public class HDriveTeleop2020 extends OpMode {
     boolean dpadWasPressed = false;
     boolean updatedDpadMovement = false;
     boolean rightStickMoved = false;
+    boolean newYPressed2 = true;
+    boolean leftTriggerState = false;
+    boolean leftTriggerPressed = false;
+    boolean leftBumperPressed = false;
+
     float rightX;
     long rightStickTimer = 0;
-    boolean newAPressed2 = true;
-    boolean newRightTrigger2 = true;
-    boolean newYPressed2 = true;
 
 
     //Robot Hardware
     DcMotorEx leftMotor;
-    DcMotorEx leftMotor2;
+    //DcMotorEx leftMotor2;
     DcMotorEx rightMotor;
-    DcMotorEx rightMotor2;
+    //DcMotorEx rightMotor2;
     DcMotorEx middleMotor;
     DcMotorEx middleMotor2;
     DcMotorEx rightIntakeMotor;
@@ -75,6 +75,8 @@ public class HDriveTeleop2020 extends OpMode {
     Servo clawServo;
     Servo armFlipper;
 
+    DistanceSensor sensorRangeLeft;
+    DistanceSensor sensorRangeRight;
 
 
 
@@ -94,23 +96,25 @@ public class HDriveTeleop2020 extends OpMode {
         imu.initialize(parameters);
         imu.startAccelerationIntegration(new Position(), new Velocity(), 1000);
         leftMotor = (DcMotorEx) hardwareMap.get(DcMotor.class, "leftMotor");
-        leftMotor2 = (DcMotorEx) hardwareMap.get(DcMotor.class, "leftMotor2");
+        //leftMotor2 = (DcMotorEx) hardwareMap.get(DcMotor.class, "leftMotor2");
         rightMotor = (DcMotorEx) hardwareMap.get(DcMotor.class, "rightMotor");
-        rightMotor2 = (DcMotorEx) hardwareMap.get(DcMotor.class, "rightMotor2");
+        //rightMotor2 = (DcMotorEx) hardwareMap.get(DcMotor.class, "rightMotor2");
         middleMotor = (DcMotorEx) hardwareMap.get(DcMotor.class, "middleMotor");
         middleMotor2 = (DcMotorEx) hardwareMap.get(DcMotor.class, "middleMotor2");
-        rightIntakeMotor = (DcMotorEx) hardwareMap.get(DcMotor.class, "rightIntakeMotor");
-        leftIntakeMotor = (DcMotorEx) hardwareMap.get(DcMotor.class, "leftIntakeMotor");
+        //rightIntakeMotor = (DcMotorEx) hardwareMap.get(DcMotor.class, "rightIntakeMotor");
+        //leftIntakeMotor = (DcMotorEx) hardwareMap.get(DcMotor.class, "leftIntakeMotor");
         rightIntakeServo = hardwareMap.get(Servo.class, "rightIntakeServo");
         leftIntakeServo = hardwareMap.get(Servo.class, "leftIntakeServo");
-        clawServo = hardwareMap.get(Servo.class, "clawServo");
-        armFlipper = hardwareMap.get(Servo.class, "armFlipper");
+        //clawServo = hardwareMap.get(Servo.class, "clawServo");
+        //armFlipper = hardwareMap.get(Servo.class, "armFlipper");
+        sensorRangeLeft = hardwareMap.get(DistanceSensor.class, "rangeSensorLeft");
+        sensorRangeRight = hardwareMap.get(DistanceSensor.class, "rangeSensorRight");
         calculator = new HDriveFCCalc();
         dpadCalculator = new HDriveFCCalc();
         armCalculator = new ArmCalculator(bicep, forearm);
         extraClasses = new ExtraClasses(leftMotor, rightMotor, middleMotor, middleMotor2);
         leftMotor.setDirection(DcMotor.Direction.REVERSE);
-        leftMotor2.setDirection(DcMotor.Direction.REVERSE);
+        //leftMotor2.setDirection(DcMotor.Direction.REVERSE);
         middleMotor.setDirection(DcMotor.Direction.REVERSE);
         middleMotor2.setDirection(DcMotor.Direction.REVERSE);
 
@@ -125,9 +129,9 @@ public class HDriveTeleop2020 extends OpMode {
         angleDouble = Double.parseDouble(ExcessStuff.formatAngle(angles.angleUnit, angles.firstAngle));
         holdAngle = angleDouble;
         leftMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        leftMotor2.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        //leftMotor2.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         rightMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        rightMotor2.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        //rightMotor2.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         middleMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         middleMotor2.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         pidStuff = leftMotor.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER);
@@ -137,9 +141,9 @@ public class HDriveTeleop2020 extends OpMode {
         pidStuff.f = 14;
         pidStuff.algorithm = MotorControlAlgorithm.PIDF;
         leftMotor.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, pidStuff);
-        leftMotor2.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, pidStuff);
+        //leftMotor2.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, pidStuff);
         rightMotor.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, pidStuff);
-        rightMotor2.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, pidStuff);
+        //rightMotor2.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, pidStuff);
         middleMotor.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, pidStuff);
         middleMotor2.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, pidStuff);
 
@@ -155,6 +159,7 @@ public class HDriveTeleop2020 extends OpMode {
         dpadCheck();
         checkFieldCentricAndSlowMode();
         moveTheBase();
+        runIntake();
         checkEncoderModes();
         tankDriveOdometry();
         telemetry.addData("Left Move", calculator.getLeftDrive());
@@ -163,7 +168,7 @@ public class HDriveTeleop2020 extends OpMode {
         telemetry.addData("Angle", angleDouble);
         telemetry.addData("Middle Power", middleMotor.getPower());
         telemetry.addData("Middle 2 Power", middleMotor2.getPower());
-        telemetry.addData("Left 2 Power", leftMotor2.getPower());
+        //telemetry.addData("Left 2 Power", leftMotor2.getPower());
         telemetry.update();
     }
 
@@ -202,14 +207,14 @@ public class HDriveTeleop2020 extends OpMode {
             middleMotor.setPower(dpadCalculator.getMiddleDrive());
             middleMotor2.setPower(dpadCalculator.getMiddleDrive());
             leftMotor.setPower(dpadCalculator.getLeftDrive());
-            leftMotor2.setPower(dpadCalculator.getLeftDrive());
+            //leftMotor2.setPower(dpadCalculator.getLeftDrive());
             rightMotor.setPower(dpadCalculator.getRightDrive());
-            rightMotor2.setPower(dpadCalculator.getRightDrive());
+            //rightMotor2.setPower(dpadCalculator.getRightDrive());
         } else if ((leftMotor.getPower() != 0 || rightMotor.getPower() != 0 || middleMotor.getPower() != 0) && updatedDpadMovement) {
             leftMotor.setPower(0);
-            leftMotor2.setPower(0);
+            //leftMotor2.setPower(0);
             rightMotor.setPower(0);
-            rightMotor2.setPower(0);
+            //rightMotor2.setPower(0);
             middleMotor.setPower(0);
             middleMotor2.setPower(0);
             updatedDpadMovement = false;
@@ -271,9 +276,9 @@ public class HDriveTeleop2020 extends OpMode {
             }
             maintainAngle();
             leftMotor.setPower(speed * calculator.getLeftDrive() /*+ sideChangePower*/);
-            leftMotor2.setPower(speed * calculator.getLeftDrive() /*+ sideChangePower*/);
+            //leftMotor2.setPower(speed * calculator.getLeftDrive() /*+ sideChangePower*/);
             rightMotor.setPower(speed * calculator.getRightDrive() /*- sideChangePower*/);
-            rightMotor2.setPower(speed * calculator.getRightDrive() /*- sideChangePower*/);
+            //rightMotor2.setPower(speed * calculator.getRightDrive() /*- sideChangePower*/);
             middleMotor.setPower(speed * calculator.getMiddleDrive() * 2);
             middleMotor2.setPower(speed * calculator.getMiddleDrive() * 2);
         }
@@ -303,22 +308,74 @@ public class HDriveTeleop2020 extends OpMode {
     public void checkEncoderModes() {
         if ((!leftMotor.getMode().equals(DcMotor.RunMode.RUN_USING_ENCODER) || !rightMotor.getMode().equals(DcMotor.RunMode.RUN_USING_ENCODER) || !middleMotor.getMode().equals(DcMotor.RunMode.RUN_USING_ENCODER))) {
             leftMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            leftMotor2.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            //leftMotor2.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
             rightMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            rightMotor2.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            //rightMotor2.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
             middleMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
             middleMotor2.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         }
     }
     public void runIntake(){
+         //Set Trigger to Toggle and Check if its pressed
+        if(gamepad2.left_trigger > .5 && leftTriggerPressed == false) {
+            leftTriggerPressed = true;
+            if(leftTriggerState) {
+                leftTriggerState = false;
+            }
+            else {
+                leftTriggerState = true;
+            }
+        }
+        else {
+            leftTriggerPressed = false;
+        }
+
+        //Set the intake servos to the two predetermined postions
+        if(gamepad2.left_bumper && leftBumperPressed == false) {
+            leftBumperPressed = true;
+            if(intakeState == 0) {
+                intakeState = 1;
+                leftIntakeServo.setPosition(.5);
+                rightIntakeServo.setPosition(.5);
+            } else if(intakeState == 1) {
+                intakeState = 0;
+                leftIntakeServo.setPosition(1);
+                rightIntakeServo.setPosition(1);
+            }
+        }
+        else {
+            leftBumperPressed = false;
+        }
+
+        //Actually Run the Intake
+        if(leftTriggerState) {
+            double leftDistance = sensorRangeLeft.getDistance(DistanceUnit.CM);
+            double rightDistance = sensorRangeRight.getDistance(DistanceUnit.CM);
+            if((leftDistance - rightDistance > 4)) {
+                //leftIntakeMotor.setPower(-.4);
+                //rightIntakeMotor.setPower(.2);
+            }
+            else if((leftDistance - rightDistance) < -4) {
+                //leftIntakeMotor.setPower(.2);
+                //rightIntakeMotor.setPower(-.4);
+            }
+            else if(Math.abs((leftDistance - rightDistance)) < 4) {
+                //leftIntakeMotor.setPower(-.4);
+                //rightIntakeMotor.setPower(-.4);
+            }
+        }
+        else {
+            //leftIntakeMotor.setPower(0);
+            //rightIntakeMotor.setPower(0);
+        }
 
     }
     public void moveArm(){
         //closes claw and moves arm all the way ove the robot
         if (gamepad2.y && newYPressed2){
             newYPressed2 = false;
-            clawServo.setPosition(0/*enter position here*/);
-            armFlipper.setPosition(0/*enter position here*/);
+            //clawServo.setPosition(0/*enter position here*/);
+            //armFlipper.setPosition(0/*enter position here*/);
         } else{
             newYPressed2 = false;
         }
