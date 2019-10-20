@@ -61,8 +61,23 @@ public class ExtraClasses {
         return length;
     }
     static public double convertAngle(double inputAngle) {
-        double newAngle = inputAngle + 180;
+        double newAngle = 0;
+        if(inputAngle <= 0) {
+            newAngle = Math.abs(inputAngle);
+        }
+        else {
+            newAngle = 180 + (180 - Math.abs(inputAngle));
+        }
         return newAngle;
+    }
+    static public double angleDistance(double currentAngle, double targetAngle) {
+        double distance1 = Math.abs(targetAngle - currentAngle);
+        double distance2 = Math.abs((360 - currentAngle) - targetAngle);
+        double angleDistance = distance1;
+        if(distance1 > distance2) {
+            angleDistance = distance2;
+        }
+        return angleDistance;
     }
     static public void setSpeedMode() {
     }

@@ -34,8 +34,6 @@ public class ChangePIDiFulDarby extends OpMode {
         middleMotor = (DcMotorEx) hardwareMap.get(DcMotor.class, "middleMotor");
         middleMotor2 = (DcMotorEx) hardwareMap.get(DcMotor.class, "middleMotor2");
         leftMotor.setDirection(DcMotor.Direction.REVERSE);
-        middleMotor.setDirection(DcMotor.Direction.REVERSE);
-        middleMotor2.setDirection(DcMotor.Direction.REVERSE);
         leftMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         rightMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         middleMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
@@ -104,11 +102,11 @@ public class ChangePIDiFulDarby extends OpMode {
         middleMotor2.setPower(gamepad1.left_stick_x);
 
         if (gamepad1.right_stick_x != 0){
-            rightMotor.setPower(gamepad1.right_stick_x);
-            leftMotor.setPower(-gamepad1.right_stick_x);
+            rightMotor.setPower(-gamepad1.right_stick_x);
+            leftMotor.setPower(gamepad1.right_stick_x);
         } else {
-            leftMotor.setPower(gamepad1.left_stick_y);
-            rightMotor.setPower(gamepad1.left_stick_y);
+            leftMotor.setPower(-gamepad1.left_stick_y);
+            rightMotor.setPower(-gamepad1.left_stick_y);
         }
         if (Math.abs(leftMotor.getPower() + lastVal)< Math.abs (leftMotor.getPower())){
             telemetry.addData("braking", 1);
@@ -126,7 +124,7 @@ public class ChangePIDiFulDarby extends OpMode {
             darby = false;
         }
 
-        if (darby && Math.abs(gamepad1.left_stick_y)< .05){
+        if (darbyTwo && Math.abs(gamepad1.left_stick_y)< .05){
             middleMotor.setPower(0);
             middleMotor2.setPower(0);
             darbyTwo = false;

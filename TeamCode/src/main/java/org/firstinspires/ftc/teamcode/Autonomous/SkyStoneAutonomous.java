@@ -49,6 +49,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackableDefau
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackables;
 import org.firstinspires.ftc.robotcore.external.tfod.Recognition;
 import org.firstinspires.ftc.robotcore.external.tfod.TFObjectDetector;
+import org.firstinspires.ftc.teamcode.ExtraClasses;
 
 import java.math.RoundingMode;
 import java.text.DecimalFormat;
@@ -74,9 +75,11 @@ public class SkyStoneAutonomous extends LinearOpMode {
     //Vuforia
     private static final String VUFORIA_KEY =
             "Aff5Onj/////AAABmWU00gJ3W031oMf/yab8x+lDTcSp4Ipj3tbjxGCvrixJIcImUGnhiWcbd+U0kjaqRapa8gT1pti8r6x9DZjPKc1Z33pt6uSXJ5nU6HliFApbRiW3nfGQjMaXbItmKyFyA4kkVbxz3Q/UHL5eQbOwpBR880DPsrqElLqI/A6d9MtxwR+HxPGwKjkGI/PQ8LLkoRDK0ea609oynQOlKybmI/a923orWWI+oPWmB6+41EbnAjtnxVK6BZ6e0Y8rXebNcD7/OjVsdZ+pTEfJzR4YYyDt7yCmLKknqW0WGdF0D0zBBBAt4sYwtB6e9CA8FxjxzDOMoUmlZ/pQFXwSdW4I07ZRzatuXJ2FG+hSvxATv1BG";
+    static final double     COUNTS_PER_INCH         = /*(COUNTS_PER_MOTOR_REV * DRIVE_GEAR_REDUCTION) /
+            (WHEEL_DIAMETER_INCHES * 3.1415)*/ 91.125;
 
     BNO055IMU imu;
-
+    ExtraClasses extraClasses;
     double initialAngle;
     double startPos;
     double angleDouble = 0;
@@ -171,7 +174,7 @@ public class SkyStoneAutonomous extends LinearOpMode {
         middleMotor.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER,pidStuff);
         middleMotor2.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, pidStuff);
         angles   = imu.getAngularOrientation().toAxesReference(AxesReference.INTRINSIC).toAxesOrder(AxesOrder.ZYX);
-        angleDouble = Double.parseDouble(formatAngle(angles.angleUnit, angles.firstAngle)) + 180;
+        angleDouble = Double.parseDouble(formatAngle(angles.angleUnit, angles.firstAngle));
         initialAngle = angleDouble;
 
         int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
@@ -270,6 +273,22 @@ public class SkyStoneAutonomous extends LinearOpMode {
         telemetry.update();
 
         waitForStart();
+
+        encoderDriveProfiled(.1,.7,27,.1, 5,true);
+        turnInCircleProfiled(10,.2,-1,90,-.1,-.7,.1,20);
+        encoderDriveProfiled(.1,.8,80,.1,5,true);
+
+        //Block is in Left Starting position
+
+        //Bock is in Mid Starting Position
+
+        encoderDriveProfiled(.1,.1,.7,27,1,7,true); //Move towards the block
+        turnInCircleProfiled(10,.2,-1,90,-.1,-.1,-.7,.1,20); //back up to prepare going forward
+        encoderDriveProfiled(.1,.3,.8,80,1,7,true); //start going towards the platform
+        turnInCircleProfiled(10,.2,1,45,.3,.3,.5,1,10);
+        turnInCircleProfiled(10,.2,-1,45,.3,.3,.5,1,10);
+        //Block is in Right Starting Position
+
         targetsSkyStone.activate();
 
         while (!isStopRequested()) {
@@ -374,7 +393,259 @@ public class SkyStoneAutonomous extends LinearOpMode {
         //  }
         //   return 0;
     }
+    public void turnInCircle(double radius, double velocity, double turnDirection, double rotations, double timeout) {
+        leftMotor.setMode(STOP_AND_RESET_ENCODER);
+        rightMotor.setMode(STOP_AND_RESET_ENCODER);
+        middleMotor.setMode(STOP_AND_RESET_ENCODER);
+        middleMotor2.setMode(STOP_AND_RESET_ENCODER);
 
+        leftMotor.setMode(RUN_USING_ENCODER);
+        rightMotor.setMode(RUN_USING_ENCODER);
+        middleMotor.setMode(RUN_USING_ENCODER);
+        middleMotor2.setMode(RUN_USING_ENCODER);
+
+        boolean finishedMotion = false;
+        angles   = imu.getAngularOrientation().toAxesReference(AxesReference.INTRINSIC).toAxesOrder(AxesOrder.ZYX);
+        double startingAngle = extraClasses.convertAngle(Double.parseDouble(formatAngle(angles.angleUnit, angles.firstAngle)));
+        double leftPower = 0;
+        double rightPower = 0;
+        double leftRadius = 0;
+        double rightRadius = 0;
+        if(turnDirection < 0) { //counterclockwize is negative
+            leftRadius = radius - 8.25;
+            rightRadius = radius + 8.25;
+            leftPower = (2 * velocity) / (1 + (rightRadius / leftRadius));
+            rightPower = (rightRadius / leftRadius) * ((2 * velocity) / (1 + (rightRadius / leftRadius)));
+
+            if(rightPower > 1) {
+                leftPower = leftPower * (1 / rightPower);
+                rightPower = 1;
+            }
+        } else {
+            leftRadius = radius + 8.25;
+            rightRadius = radius - 8.25;
+            rightPower = (2 * velocity) / (1 + (leftRadius / rightRadius));
+            leftPower = (leftRadius / rightRadius) * ((2 * velocity) / (1 + (leftRadius / rightRadius)));
+            if(leftPower > 1) {
+                rightPower = rightPower * (1 / leftPower);
+                leftPower = 1;
+            }
+        }
+
+        while(opModeIsActive() && !finishedMotion) {
+
+
+            angles   = imu.getAngularOrientation().toAxesReference(AxesReference.INTRINSIC).toAxesOrder(AxesOrder.ZYX);
+            double currentAngle = extraClasses.convertAngle(Double.parseDouble(formatAngle(angles.angleUnit, angles.firstAngle)));
+            double angleDifference = Math.max(currentAngle,startingAngle) - Math.min(currentAngle,startingAngle);
+            if(angleDifference >= rotations) {
+                finishedMotion = true;
+            }
+
+            telemetry.addData("Left Power", leftPower);
+            telemetry.addData("Right Power", rightPower);
+            telemetry.addData("Angle Diff", angleDifference);
+            telemetry.update();
+
+            leftMotor.setPower(leftPower);
+            rightMotor.setPower(rightPower);
+        }
+        leftMotor.setPower(0);
+        rightMotor.setPower(0);
+    }
+    public void turnInCircleProfiled(double radius, double velocity, double turnDirection, double rotations, double minSpeedInitial, double minSpeedFinal, double maxSpeed, double speedUpAt, double slowDownAt) {
+        leftMotor.setMode(STOP_AND_RESET_ENCODER);
+        rightMotor.setMode(STOP_AND_RESET_ENCODER);
+        middleMotor.setMode(STOP_AND_RESET_ENCODER);
+        middleMotor2.setMode(STOP_AND_RESET_ENCODER);
+
+        leftMotor.setMode(RUN_USING_ENCODER);
+        rightMotor.setMode(RUN_USING_ENCODER);
+        middleMotor.setMode(RUN_USING_ENCODER);
+        middleMotor2.setMode(RUN_USING_ENCODER);
+
+        boolean finishedMotion = false;
+        angles   = imu.getAngularOrientation().toAxesReference(AxesReference.INTRINSIC).toAxesOrder(AxesOrder.ZYX);
+        double startingAngle = extraClasses.convertAngle(Double.parseDouble(formatAngle(angles.angleUnit, angles.firstAngle)));
+        double leftPower = 0;
+        double rightPower = 0;
+        double leftRatio;
+        double rightRatio;
+        double leftRadius;
+        double rightRadius;
+        if(turnDirection < 0) { //counterclockwize is negative
+            leftRadius = radius - 8.25;
+            rightRadius = radius + 8.25;
+            leftRatio = (2 * velocity) / (1 + (rightRadius / leftRadius));
+            rightRatio = (rightRadius / leftRadius) * ((2 * velocity) / (1 + (rightRadius / leftRadius)));
+
+            if(rightPower > 1) {
+                leftRatio = leftRatio * (1 / rightRatio);
+                rightRatio = 1;
+            }
+        } else {
+            leftRadius = radius + 8.25;
+            rightRadius = radius - 8.25;
+            rightRatio = 1 * (2 * velocity) / (1 + (leftRadius / rightRadius));
+            leftRatio = 1 * (leftRadius / rightRadius) * ((2 * velocity) / (1 + (leftRadius / rightRadius)));
+            if(leftPower > 1) {
+                rightRatio = rightRatio * (1 / leftRatio);
+                leftRatio = 1;
+            }
+        }
+        double speedDifferenceInitial = maxSpeed - minSpeedInitial;
+        minSpeedInitial = minSpeedInitial / (Math.max(Math.abs(leftRatio),Math.abs(rightRatio)));
+        speedDifferenceInitial = speedDifferenceInitial / (Math.max(Math.abs(leftRatio),Math.abs(rightRatio)));
+        double speedDifferenceFinal = maxSpeed - minSpeedFinal;
+        minSpeedFinal = minSpeedFinal / (Math.max(Math.abs(leftRatio),Math.abs(rightRatio)));
+        speedDifferenceFinal = speedDifferenceFinal / (Math.max(Math.abs(leftRatio),Math.abs(rightRatio)));
+        while(opModeIsActive() && !finishedMotion) {
+            angles   = imu.getAngularOrientation().toAxesReference(AxesReference.INTRINSIC).toAxesOrder(AxesOrder.ZYX);
+            double currentAngle = extraClasses.convertAngle(Double.parseDouble(formatAngle(angles.angleUnit, angles.firstAngle)));
+            double angleDifference = extraClasses.angleDistance(currentAngle,startingAngle);
+            if(angleDifference >= rotations) {
+                finishedMotion = true;
+            }
+
+            int currentState = 0;
+            if(angleDifference <= speedUpAt) {
+                currentState = 1;
+                leftPower = (minSpeedInitial * leftRatio) + (leftRatio * (angleDifference / speedUpAt) * speedDifferenceInitial);
+                rightPower = (minSpeedInitial * rightRatio) + (rightRatio * (angleDifference / speedUpAt) * speedDifferenceInitial);
+            } else if (angleDifference > speedUpAt && angleDifference < (rotations - slowDownAt)) {
+                currentState = 2;
+                leftPower = (leftRatio * minSpeedInitial) + (leftRatio * speedDifferenceInitial);
+                rightPower = (rightRatio * minSpeedInitial) + (rightRatio * speedDifferenceInitial);
+            } else if(angleDifference > (rotations - slowDownAt)) {
+                currentState = 3;
+                leftPower = (minSpeedFinal * leftRatio) + (leftRatio * ((rotations - angleDifference) / slowDownAt) * speedDifferenceFinal);
+                rightPower = (minSpeedFinal * rightRatio) + (rightRatio * ((rotations - angleDifference) / slowDownAt) * speedDifferenceFinal);
+            }
+            telemetry.addData("Left Power", leftPower);
+            telemetry.addData("Right Power", rightPower);
+            telemetry.addData("Angle Diff", angleDifference);
+            telemetry.addData("Current State", currentState);
+            telemetry.addData("Current Angle", currentAngle);
+            telemetry.addData("Starting Angle", startingAngle);
+            telemetry.addData("State", currentState);
+            telemetry.update();
+
+            leftMotor.setPower(leftPower);
+            rightMotor.setPower(rightPower);
+        }
+        leftMotor.setPower(0);
+        rightMotor.setPower(0);
+        angles   = imu.getAngularOrientation().toAxesReference(AxesReference.INTRINSIC).toAxesOrder(AxesOrder.ZYX);
+        double currentAngle = extraClasses.convertAngle(Double.parseDouble(formatAngle(angles.angleUnit, angles.firstAngle)));
+        telemetry.addData("Angle", currentAngle);
+        telemetry.update();
+    }
+    public void encoderDriveProfiled(double minSpeedInitial, double minSpeedFinal, double maxSpeed, double inches, double speedUpAt, double slowDownAt, boolean end) {
+        int newSideTargets = 0;
+        speedUpAt = speedUpAt * COUNTS_PER_INCH;
+        slowDownAt = slowDownAt * COUNTS_PER_INCH;
+        double speedDifferenceInitial = maxSpeed - minSpeedInitial;
+        double speedDifferenceFinal = maxSpeed - minSpeedFinal;
+        if(opModeIsActive()) {
+            leftMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+            rightMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+            newSideTargets = /*robot.leftMotor.getCurrentPosition() + */(int) ((Math.abs(inches)) * COUNTS_PER_INCH);
+            leftMotor.setTargetPosition(newSideTargets);
+            rightMotor.setTargetPosition(newSideTargets);
+
+            leftMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            rightMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+            double currentPowerLeft = 0;
+            double currentPowerRight = 0;
+            while(Math.abs(leftMotor.getCurrentPosition()) < newSideTargets && Math.abs(rightMotor.getCurrentPosition()) < newSideTargets) {
+                int stateAt = 0;
+                double currentEncoderPos = leftMotor.getCurrentPosition();
+                if(Math.abs(currentEncoderPos) < Math.abs(speedUpAt)) {
+                    stateAt = 1;
+                    currentPowerLeft = minSpeedInitial + (speedDifferenceInitial * (Math.abs(currentEncoderPos / speedUpAt)));
+                    currentPowerRight = minSpeedInitial + (speedDifferenceInitial * (Math.abs(currentEncoderPos / speedUpAt)));
+                } else if(Math.abs(currentEncoderPos) >= Math.abs(speedUpAt) && Math.abs(currentEncoderPos) <= (newSideTargets - slowDownAt)) {
+                    stateAt = 2;
+                    currentPowerLeft = minSpeedInitial + speedDifferenceInitial;
+                    currentPowerRight = minSpeedInitial + speedDifferenceInitial;
+                } else if(Math.abs(currentEncoderPos) > (newSideTargets - slowDownAt)) {
+                    stateAt = 3;
+                    currentPowerLeft = minSpeedFinal + (speedDifferenceFinal * ((newSideTargets - Math.abs(currentEncoderPos)) / (newSideTargets - slowDownAt)));
+                    currentPowerRight = minSpeedFinal + (speedDifferenceFinal * ((newSideTargets - Math.abs(currentEncoderPos)) / (newSideTargets - slowDownAt)));
+                }
+
+                leftMotor.setPower(currentPowerLeft);
+                rightMotor.setPower(currentPowerRight);
+                telemetry.addData("Power", currentPowerLeft);
+                telemetry.addData("At", stateAt);
+                telemetry.addData("Target", newSideTargets);
+                telemetry.addData("Current Pos" , leftMotor.getCurrentPosition());
+                telemetry.addData("Current Right", rightMotor.getCurrentPosition());
+                telemetry.update();
+            }
+        }
+        if(end == true) {
+            leftMotor.setPower(0);
+            rightMotor.setPower(0);
+        }
+    }
+    public void encoderDriveProfiledDeleteLater(double minSpeed, double maxSpeed, double inches, double speedUpAt, double slowDownAt, boolean end) {
+        int newSideTargets = 0;
+        if(opModeIsActive()) {
+            leftMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+            rightMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+            newSideTargets = /*robot.leftMotor.getCurrentPosition() + */(int) ((Math.abs(inches)) * COUNTS_PER_INCH);
+            leftMotor.setTargetPosition(newSideTargets);
+            rightMotor.setTargetPosition(newSideTargets);
+
+            leftMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            rightMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+            // reset the timeout time and start motion.
+            leftMotor.setPower(0);
+            rightMotor.setPower(0);
+
+            double currentPowerLeft = 0;
+            double currentPowerRight = 0;
+            while(Math.abs(leftMotor.getCurrentPosition()) < newSideTargets && Math.abs(rightMotor.getCurrentPosition()) < newSideTargets) {
+                int stateAt = 0;
+                if((Math.abs(leftMotor.getCurrentPosition())) < (Math.abs(speedUpAt) * COUNTS_PER_INCH)) {
+                    stateAt = 1;
+                    currentPowerLeft = minSpeed + (maxSpeed * (Math.abs(leftMotor.getCurrentPosition())/(Math.abs(speedUpAt) * COUNTS_PER_INCH)));
+                    currentPowerRight = minSpeed + (maxSpeed * (Math.abs(rightMotor.getCurrentPosition())/(Math.abs(speedUpAt) * COUNTS_PER_INCH)));
+                } else if((newSideTargets - Math.abs(leftMotor.getCurrentPosition())) > (Math.abs(slowDownAt) * COUNTS_PER_INCH) && (Math.abs(leftMotor.getCurrentPosition())) > (Math.abs(speedUpAt) * COUNTS_PER_INCH)) {
+                    currentPowerLeft = maxSpeed + minSpeed;
+                    currentPowerRight = maxSpeed + minSpeed;
+                    stateAt = 2;
+                } else {
+                    if(maxSpeed > 0) {
+                        currentPowerLeft = minSpeed + ((maxSpeed) * ((Math.abs(newSideTargets) - Math.abs(leftMotor.getCurrentPosition())) / (Math.abs(slowDownAt) * COUNTS_PER_INCH)));
+                        currentPowerRight = minSpeed + ((maxSpeed) * ((Math.abs(newSideTargets) - Math.abs(rightMotor.getCurrentPosition())) / (Math.abs(slowDownAt) * COUNTS_PER_INCH)));
+                    }
+                    else {
+                        currentPowerLeft = -.08 + ((maxSpeed + minSpeed) * ((Math.abs(newSideTargets) - Math.abs(leftMotor.getCurrentPosition())) / (Math.abs(slowDownAt) * COUNTS_PER_INCH)));
+                        currentPowerRight = -.08 + ((maxSpeed + minSpeed) * ((Math.abs(newSideTargets) - Math.abs(rightMotor.getCurrentPosition())) / (Math.abs(slowDownAt) * COUNTS_PER_INCH)));
+                    }
+                    stateAt = 3;
+                }
+                leftMotor.setPower(currentPowerLeft);
+                rightMotor.setPower(currentPowerRight);
+                telemetry.addData("Power", currentPowerLeft);
+                telemetry.addData("At", stateAt);
+                telemetry.addData("Target", newSideTargets);
+                telemetry.addData("Current Pos" , leftMotor.getCurrentPosition());
+                telemetry.addData("Current Right", rightMotor.getCurrentPosition());
+                telemetry.update();
+            }
+        }
+        if(end == true) {
+            leftMotor.setPower(0);
+            rightMotor.setPower(0);
+        }
+    }
 }
 
 
