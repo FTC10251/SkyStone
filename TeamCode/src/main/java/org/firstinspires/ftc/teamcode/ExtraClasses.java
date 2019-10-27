@@ -79,6 +79,15 @@ public class ExtraClasses {
         }
         return angleDistance;
     }
+    static public double angleDistanceNoAbs(double currentAngle, double targetAngle) {
+        double distance1 = targetAngle - currentAngle;
+        double distance2 = (360 - currentAngle) - targetAngle;
+        double angleDistance = distance1;
+        if(distance1 > distance2) {
+            angleDistance = distance2;
+        }
+        return angleDistance;
+    }
     static public void setSpeedMode() {
     }
 

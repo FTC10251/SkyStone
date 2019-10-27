@@ -48,7 +48,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
  * @see <a href="http://modernroboticsinc.com/range-sensor">MR Range Sensor</a>
  */
 @TeleOp(name = "Sensor: MR range sensor", group = "Sensor")
-@Disabled   // comment out or remove this line to enable this opmode
+   // comment out or remove this line to enable this opmode
 public class SensorMRRangeSensor extends LinearOpMode {
 
     ModernRoboticsI2cRangeSensor rangeSensor;
@@ -65,7 +65,7 @@ public class SensorMRRangeSensor extends LinearOpMode {
             telemetry.addData("raw ultrasonic", rangeSensor.rawUltrasonic());
             telemetry.addData("raw optical", rangeSensor.rawOptical());
             telemetry.addData("cm optical", "%.2f cm", rangeSensor.cmOptical());
-            telemetry.addData("cm", "%.2f cm", rangeSensor.getDistance(DistanceUnit.CM));
+            telemetry.addData("cm ultrasound", "%.2f cm", rangeSensor.getDistance(DistanceUnit.CM));
             telemetry.update();
         }
     }
