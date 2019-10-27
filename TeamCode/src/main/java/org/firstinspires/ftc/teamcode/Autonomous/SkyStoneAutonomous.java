@@ -286,8 +286,8 @@ public class SkyStoneAutonomous extends LinearOpMode {
         lignUpWithWall();
         Thread.sleep(5000);
         encoderDriveProfiled(.2,.2,.4,10,2,2,270,false);
-        turnInCircleProfiled(25,.2,1,45, .1,.1,.4,.1,10,.1);
-        encoderDriveProfiled(.1,.1,.4,8,2,2,315,false);
+        turnInCircleProfiled(25,.2,1,45, .2,.2,.4,.1,10,.2);
+        encoderDriveProfiled(.2,.1,.4,8,2,2,315,true);
 
         /*turnInCircleProfiled(10,.2,-1,45,.1,.1,.4,.1,15,.1);
         encoderDriveProfiled(-.1,-.1,-.4,18,2,5,270,true);
