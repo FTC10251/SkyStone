@@ -30,6 +30,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackables;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.qualcomm.robotcore.hardware.DcMotor.RunMode.RUN_TO_POSITION;
 import static org.firstinspires.ftc.robotcore.external.navigation.AngleUnit.DEGREES;
 import static org.firstinspires.ftc.robotcore.external.navigation.AxesOrder.XYZ;
 import static org.firstinspires.ftc.robotcore.external.navigation.AxesOrder.YZX;
@@ -85,6 +86,9 @@ public class HDriveTeleop2020 extends LinearOpMode {
 
     float rightX;
     long rightStickTimer = 0;
+    boolean newAPressed2 = true;
+    int armPos = 0;
+    double time;
 
 
     //Robot Hardware
@@ -99,7 +103,7 @@ public class HDriveTeleop2020 extends LinearOpMode {
     Servo rightIntakeServo;
     Servo leftIntakeServo;
     Servo clawServo;
-    Servo armFlipper;
+    DcMotorEx armFlipper;
     WebcamName webcamName = null;
 
     DistanceSensor sensorRangeLeft;
@@ -159,7 +163,7 @@ public class HDriveTeleop2020 extends LinearOpMode {
         rightIntakeServo = hardwareMap.get(Servo.class, "rightIntakeServo");
         leftIntakeServo = hardwareMap.get(Servo.class, "leftIntakeServo");
         //clawServo = hardwareMap.get(Servo.class, "clawServo");
-        //armFlipper = hardwareMap.get(Servo.class, "armFlipper");
+        armFlipper = (DcMotorEx)hardwareMap.get(DcMotor.class, "armFlipper");
         sensorRangeLeft = hardwareMap.get(DistanceSensor.class, "rangeSensorLeft");
         sensorRangeRight = hardwareMap.get(DistanceSensor.class, "rangeSensorRight");
         webcamName = hardwareMap.get(WebcamName.class, "Webcam 1");
@@ -541,9 +545,78 @@ public class HDriveTeleop2020 extends LinearOpMode {
         //closes claw and moves arm all the way ove the robot
         if (gamepad2.y && newYPressed2){
             newYPressed2 = false;
+            switch(armPos) {
+                case 0 :
+                    // currently home
+                    clawServo.setPosition(.5);
+
+                    time = System.currentTimeMillis();
+
+                    armFlipper.setMode(RUN_TO_POSITION);
+                    armFlipper.setTargetPosition(1);
+                    break;
+                case 1 :
+                    // currently extended
+                    clawServo.setPosition(.28);
+                    time = System.currentTimeMillis();
+                    armFlipper.setMode(RUN_TO_POSITION);
+                    armFlipper.setTargetPosition(0);
+                    break;
+                default :
+                    telemetry.addData("Something went wrong and it is all darby's fault", 0);
+            }
+
+            armPos += 1;
+            armPos = armPos % 2;
+        } else if (!gamepad2.y) {
+            newYPressed2 = true;
+            if (armFlipper.isBusy() && System.currentTimeMillis() >= time + 1000) {
+                switch (armPos) {
+                    case 0:
+                        // trying to go home
+                        armFlipper.setPower(-1);
+                        break;
+                    case 1:
+                        // trying to extend
+                        armFlipper.setPower(1);
+                        break;
+                    default:
+                        telemetry.addData("Something went wrong and it is all darby's fault", 1);
+                }
+            }
+            else if (armFlipper.isBusy() && System.currentTimeMillis() >= time + 1000){
+                    switch(armPos) {
+                        case 0 :
+                            // trying to go home
+                            armFlipper.setPower(-1);
+                            break;
+                        case 1 :
+                            // trying to extend
+                            armFlipper.setPower(1);
+                            break;
+                        default :
+                            telemetry.addData("Something went wrong and it is all darby's fault", 69);
+                    }
+
+                }
+            }
+            if (!armFlipper.isBusy() && gamepad2.right_stick_x != 0) {
+                armFlipper.setPower(gamepad2.right_stick_x);
+            }
+            if(gamepad2.a && newAPressed2) {
+                if (ExtraClasses.closeEnough(clawServo.getPosition(), /* open*/ .5, .05)) {
+                    clawServo.setPosition(/* closed*/.28);
+                } else if (ExtraClasses.closeEnough(clawServo.getPosition(), /* closed*/ .28, .05)) {
+                    clawServo.setPosition(/* open*/.5);
+                } else {
+                    telemetry.addData("Something went wrong and it is all darby's fault", 2);
+                }
+            } else if(!gamepad2.a) {
+                newAPressed2 = false;
+            }
             //clawServo.setPosition(0/*enter position here*/);
             //armFlipper.setPosition(0/*enter position here*/);
-        } else{
+        else{
             newYPressed2 = false;
         }
 
