@@ -277,7 +277,8 @@ public class SkyStoneAutonomous extends LinearOpMode {
 
         waitForStart();
 
-
+        lignUpWithWall();
+        Thread.sleep(10000);
         //Block is in Left Starting position
         encoderDriveProfiled(.2,.1,.7,27,1, 7,0,true);
         turnInCircleProfiled(20,.2,1,110,-.2,-.3,-.7,5,20,-.3 );
@@ -285,12 +286,12 @@ public class SkyStoneAutonomous extends LinearOpMode {
         turnInCircleProfiled(40,.2,-1,20,-.2,-.1,-.5,2,5,0);
         lignUpWithWall();
         Thread.sleep(5000);
-        encoderDriveProfiled(.2,.2,.4,10,2,2,270,false);
-        turnInCircleProfiled(25,.2,1,45, .2,.2,.4,.1,10,.2);
-        encoderDriveProfiled(.2,.1,.4,8,2,2,315,true);
+        encoderDriveProfiled(.2,.6,.7,10,2,2,270,false);
+        turnInCircleProfiled(25,.2,1,45, .6,.6,.7,.1,10,.6);
+        encoderDriveProfiled(.6,.6,.7,8,2,2,315,false);
+        turnInCircleProfiled(10,.2,-1,45,.6,.1,.4,.1,15,0);
 
-        /*turnInCircleProfiled(10,.2,-1,45,.1,.1,.4,.1,15,.1);
-        encoderDriveProfiled(-.1,-.1,-.4,18,2,5,270,true);
+        /*encoderDriveProfiled(-.1,-.1,-.4,18,2,5,270,true);
         encoderDriveProfiled(.1,.1,.7,50,2,5,270,true);
         turnInCircleProfiled(40,.2,1,40,.1,.1,.4,2,10,0);
         turnInCircleProfiled(40,.2,1,40,-.1,-.1,-.4,2,10,0);
