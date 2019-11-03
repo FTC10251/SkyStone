@@ -94,7 +94,9 @@ public class SkyStoneAutonomous extends LinearOpMode {
     Orientation angles;
     PIDFCoefficients pidStuff;
     WebcamName webcamName = null;
-    ModernRoboticsI2cRangeSensor rangeSensor;
+    DistanceSensor rangeSensorLeft;
+    DistanceSensor rangeSensorFront;
+    DistanceSensor rangeSensorBack;
 
     //Vuforia Variables
     private static final float mmPerInch        = 25.4f;
@@ -134,7 +136,9 @@ public class SkyStoneAutonomous extends LinearOpMode {
         middleMotor = (DcMotorEx) hardwareMap.get(DcMotor.class, "middleMotor");
         middleMotor2 = (DcMotorEx) hardwareMap.get(DcMotor.class, "middleMotor2");
         webcamName = hardwareMap.get(WebcamName.class, "Webcam 1");
-        rangeSensor = hardwareMap.get(ModernRoboticsI2cRangeSensor.class, "sensor_range");
+        rangeSensorLeft = hardwareMap.get(DistanceSensor.class, "Range Sensor Left");
+        rangeSensorFront = hardwareMap.get(DistanceSensor.class, "Range Sensor Front");
+        rangeSensorBack = hardwareMap.get(DistanceSensor.class, "Range Sensor Back");
 
         /*
          * Initialize the drive system variables.
@@ -274,22 +278,34 @@ public class SkyStoneAutonomous extends LinearOpMode {
         telemetry.addLine("Ready to Begin");
         telemetry.addData("Starting Angle", initialAngle);
         telemetry.update();
-
         waitForStart();
-
+        encoderDriveProfiled(.2,.1,.8,29,1, 8,0,true);
+        Thread.sleep(100);
+        encoderDriveProfiled(-.2,-.2,-.4,10,1,5,0,true);
+        Thread.sleep(100);
+        turnInPlace(.1,90,3);
+        Thread.sleep(100);
+        encoderDriveProfiled(.2,.2,.9,85,1,15,90,true);
+        Thread.sleep(100);
+        turnInPlace(.1,180,3);
+        Thread.sleep(100);
+        lignUpWithFoundation();
+        Thread.sleep(100);
         lignUpWithWall();
-        Thread.sleep(10000);
+        Thread.sleep(100);
+        moveAwayFromWall();
+        Thread.sleep(100);
+        encoderDriveProfiled(-.3,-.3,-.7,15,2,5,180,true);
+        Thread.sleep(100);
+        turnInPlace(.1,270,3);
+        Thread.sleep(100);
+        encoderDriveProfiled(.3,.9,.9,40,2,15,270,false);
+        turnInCircleProfiled(30,.2, 1, 45, .9,.2,.8,0,10,0);
+        turnInCircleProfiled(30,.2,1,45,-.2,-.9,-.8,10,10,-.9);
+        encoderDriveProfiled(-.9,-.2,-.9,50,.2,15,270,false);
+        encoderDriveProfiled(.3,.2,.9,16,2,5,270,true);
         //Block is in Left Starting position
-        encoderDriveProfiled(.2,.1,.7,27,1, 7,0,true);
-        turnInCircleProfiled(20,.2,1,110,-.2,-.3,-.7,5,20,-.3 );
-        encoderDriveProfiled(-.3,-.2,-.9,49,2,15,250,false);
-        turnInCircleProfiled(40,.2,-1,20,-.2,-.1,-.5,2,5,0);
-        lignUpWithWall();
-        Thread.sleep(5000);
-        encoderDriveProfiled(.2,.6,.7,10,2,2,270,false);
-        turnInCircleProfiled(25,.2,1,45, .6,.6,.7,.1,10,.6);
-        encoderDriveProfiled(.6,.6,.7,8,2,2,315,false);
-        turnInCircleProfiled(10,.2,-1,45,.6,.1,.4,.1,15,0);
+        //turnInCircleProfiled(10,.2,-1,45,.6,.1,.4,.1,15,0);
 
         /*encoderDriveProfiled(-.1,-.1,-.4,18,2,5,270,true);
         encoderDriveProfiled(.1,.1,.7,50,2,5,270,true);
@@ -684,15 +700,81 @@ public class SkyStoneAutonomous extends LinearOpMode {
         }
     }
     public void lignUpWithWall() {
-        middleMotor2.setMode(RUN_WITHOUT_ENCODER);
-        middleMotor2.setPower(1);
-        double distance = rangeSensor.getDistance(DistanceUnit.CM);
-        while(distance > 8 && opModeIsActive()) {
-            distance = rangeSensor.getDistance(DistanceUnit.CM);
+        leftMotor.setMode(RUN_WITHOUT_ENCODER);
+        rightMotor.setMode(RUN_WITHOUT_ENCODER);
+        leftMotor.setPower(.6);
+        rightMotor.setPower(.6);
+        double distance = rangeSensorFront.getDistance(DistanceUnit.CM);
+        while(distance > 16 && opModeIsActive()) {
+            distance = rangeSensorFront.getDistance(DistanceUnit.CM);
+            telemetry.addData("Distance", distance);
+            telemetry.update();
+        }
+        leftMotor.setPower(0);
+        rightMotor.setPower(0);
+        leftMotor.setMode(RUN_USING_ENCODER);
+        rightMotor.setMode(RUN_USING_ENCODER);
+    }
+    public void turnInPlace(double minSpeed, double turnAngle, double errorAllowed) {
+        angles   = imu.getAngularOrientation().toAxesReference(AxesReference.INTRINSIC).toAxesOrder(AxesOrder.ZYX);
+        angleDouble = Double.parseDouble(formatAngle(angles.angleUnit, angles.firstAngle));
+        double distance1 = Math.abs(angleDouble - turnAngle);
+        double distance2 = Math.abs(Math.abs((360 - angleDouble)) - turnAngle);
+        double angleError = distance1;
+        if(distance1 > distance2) {
+            angleError = distance2;
+        }
+        while(Math.abs(angleError) > errorAllowed) {
+            angles   = imu.getAngularOrientation().toAxesReference(AxesReference.INTRINSIC).toAxesOrder(AxesOrder.ZYX);
+            angleDouble = extraClasses.convertAngle(Double.parseDouble(formatAngle(angles.angleUnit, angles.firstAngle)));
+            telemetry.addData("Current Angle", angleDouble);
+            telemetry.addData("Goal Angle", turnAngle);
+            distance1 = Math.abs(angleDouble - turnAngle);
+            distance2 = Math.abs(Math.abs((360 - angleDouble)) - turnAngle);
+            angleError = distance1;
+            if(distance1 > distance2) {
+                angleError = distance2;
+            }
+            if((turnAngle - angleDouble + 360) % 360 < 180) {
+                angleError = angleError;
+            }
+            else {
+                angleError = angleError * -1;
+            }
+            angleError = angleError / 100;
+            telemetry.addData("angle error", angleError);
+            telemetry.update();
+            leftMotor.setPower(minSpeed + angleError);
+            rightMotor.setPower(-minSpeed - angleError);
+            angleError = angleError * 100;
+        }
+        telemetry.addData("Angle Error", angleError);
+        telemetry.addLine("Done");
+        telemetry.update();
+        leftMotor.setPower(0);
+        rightMotor.setPower(0);
+    }
+    public void moveAwayFromWall() {
+        double distance = rangeSensorLeft.getDistance(DistanceUnit.CM);
+        while(distance < 100) {
+            distance = rangeSensorLeft.getDistance(DistanceUnit.CM);
+            middleMotor2.setPower(-.8);
             telemetry.addData("Distance", distance);
             telemetry.update();
         }
         middleMotor2.setPower(0);
+    }
+    public void lignUpWithFoundation() {
+        double distance = rangeSensorBack.getDistance(DistanceUnit.CM);
+        leftMotor.setPower(-.3);
+        rightMotor.setPower(-.3);
+        while(distance > 3) {
+            distance = rangeSensorBack.getDistance(DistanceUnit.CM);
+            telemetry.addData("Distance", distance);
+            telemetry.update();
+        }
+        leftMotor.setPower(0);
+        rightMotor.setPower(0);
     }
 }
 

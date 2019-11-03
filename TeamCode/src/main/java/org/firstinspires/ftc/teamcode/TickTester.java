@@ -2,10 +2,12 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.hardware.bosch.JustLoggingAccelerationIntegrator;
+import com.qualcomm.hardware.modernrobotics.ModernRoboticsI2cRangeSensor;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.MotorControlAlgorithm;
 import com.qualcomm.robotcore.hardware.PIDCoefficients;
 import com.qualcomm.robotcore.hardware.PIDFCoefficients;
@@ -14,6 +16,7 @@ import com.qualcomm.robotcore.hardware.Servo;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 import org.firstinspires.ftc.robotcore.external.navigation.Position;
 import org.firstinspires.ftc.robotcore.external.navigation.Velocity;
@@ -37,6 +40,7 @@ public class TickTester extends OpMode {
     Orientation angles;
     BNO055IMU imu;
     PIDFCoefficients pidStuff;
+    DistanceSensor rangeSensor;
     boolean state = false;
     boolean isPressedX = false;
     boolean isPressedTrigger = false;
@@ -78,6 +82,7 @@ public class TickTester extends OpMode {
         rightMotor = (DcMotorEx)hardwareMap.get(DcMotor.class, "rightMotor");
         middleMotor = (DcMotorEx)hardwareMap.get(DcMotor.class, "middleMotor");
         middleMotor2 = (DcMotorEx)hardwareMap.get(DcMotor.class,"middleMotor2");
+        rangeSensor = hardwareMap.get(DistanceSensor.class, "Range Sensor Front");
         leftMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         rightMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         middleMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
@@ -219,8 +224,7 @@ public class TickTester extends OpMode {
         telemetry.addData("Side Inches", leftMotor.getCurrentPosition()/COUNTS_PER_INCH);
         telemetry.addData("Mid Inches", middleMotor.getCurrentPosition()/COUNTS_PER_INCH_SIDE);
         telemetry.addData("Angle", ExtraClasses.convertAngle(Double.parseDouble(angleDouble)));
-
-        //telemetry.addData("Counts", leftMotor.get);
+        telemetry.addData("Distance", rangeSensor.getDistance(DistanceUnit.CM));
         telemetry.update();
         //telemetry.addData("Counter",counter);
         //telemetry.update();

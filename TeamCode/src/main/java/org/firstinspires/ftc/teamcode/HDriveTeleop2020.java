@@ -166,7 +166,7 @@ public class HDriveTeleop2020 extends LinearOpMode {
         rightIntakeServo = hardwareMap.get(Servo.class, "rightIntakeServo");
         leftIntakeServo = hardwareMap.get(Servo.class, "leftIntakeServo");
         //clawServo = hardwareMap.get(Servo.class, "clawServo");
-        armFlipper = (DcMotorEx) hardwareMap.get(DcMotor.class, "armFlipper");
+        //armFlipper = (DcMotorEx) hardwareMap.get(DcMotor.class, "armFlipper");
         sensorRangeLeft = hardwareMap.get(DistanceSensor.class, "rangeSensorLeft");
         sensorRangeRight = hardwareMap.get(DistanceSensor.class, "rangeSensorRight");
         webcamName = hardwareMap.get(WebcamName.class, "Webcam 1");
@@ -547,7 +547,7 @@ public class HDriveTeleop2020 extends LinearOpMode {
 
     public void moveArm() {
         //closes claw and moves arm all the way ove the robot
-        if (gamepad2.y && newYPressed2) {
+        /*if (gamepad2.y && newYPressed2) {
             newYPressed2 = false;
             switch (armPos) {
                 case 0:
@@ -604,7 +604,7 @@ public class HDriveTeleop2020 extends LinearOpMode {
         }
         if (!armFlipper.isBusy() && gamepad2.right_stick_x != 0) {
             armFlipper.setPower(gamepad2.right_stick_x);
-        }
+        }*/
         if (gamepad2.a && newAPressed2) {
             if (ExtraClasses.closeEnough(clawServo.getPosition(), /* open*/ .5, .05)) {
                 clawServo.setPosition(/* closed*/.28);
