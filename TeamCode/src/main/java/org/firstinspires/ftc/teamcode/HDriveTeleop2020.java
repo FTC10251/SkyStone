@@ -89,6 +89,9 @@ public class HDriveTeleop2020 extends LinearOpMode {
     boolean newAPressed2 = true;
     int armPos = 0;
     double time;
+    int toggleVal = 0;
+    boolean newToggle = true;
+
 
 
     //Robot Hardware
@@ -263,6 +266,7 @@ public class HDriveTeleop2020 extends LinearOpMode {
             autoScoreMode();
             runVuforia();
             moveArm();
+            controlIntake();
             telemetry.addData("Left Move", calculator.getLeftDrive());
             telemetry.addData("Right Move", calculator.getRightDrive());
             telemetry.addData("Middle Move", calculator.getMiddleDrive());
@@ -672,6 +676,28 @@ public class HDriveTeleop2020 extends LinearOpMode {
         } else {
             autoScoringModeFirstTime = true;
         }
+
+    }
+    public void controlIntake(){
+        boolean angleToggle = gamepad2.right_bumper;
+        double motorVal = gamepad2.right_trigger - gamepad2.left_trigger;
+
+        if (angleToggle && newToggle){
+            if (toggleVal == 0){
+                leftIntakeServo.setPosition(.5);
+                rightIntakeServo.setPosition(.5);
+            } else if (toggleVal == 1){
+                leftIntakeServo.setPosition(0);
+                rightIntakeServo.setPosition(0);
+            }
+            toggleVal += 1;
+            toggleVal = toggleVal % 2;
+        }
+        if (!angleToggle){
+            newToggle = true;
+        }
+        rightIntakeMotor.setPower(motorVal);
+        leftIntakeMotor.setPower(-motorVal);
     }
 
 }
