@@ -64,7 +64,9 @@ public class HDriveTeleop2020 extends LinearOpMode {
     double leftServoPos = .5;
     double rightServoPos = .5;
     double startingAngle = 0;
-    double goalYDistance = 0;
+    double rangeValuePrior = 50;
+    double rangeSensorDistanceMid = 50;
+    double filtered = 0;
 
     boolean fieldCentric = true;
     boolean isPressedX = false;
@@ -83,6 +85,7 @@ public class HDriveTeleop2020 extends LinearOpMode {
     boolean brakeMode = false;
     boolean rightTriggerWasPressed = false;
     boolean isFieldCentricButton = false;
+    boolean filteredValues = false;
 
     float rightX;
     long rightStickTimer = 0;
@@ -109,8 +112,9 @@ public class HDriveTeleop2020 extends LinearOpMode {
     DcMotorEx armFlipper;
     WebcamName webcamName = null;
 
-    DistanceSensor sensorRangeLeft;
-    DistanceSensor sensorRangeRight;
+    DistanceSensor rangeSensorLeft;
+    DistanceSensor rangeSensorFront;
+    DistanceSensor rangeSensorBack;
 
     //Vuforia Stuff
     private static final VuforiaLocalizer.CameraDirection CAMERA_CHOICE = BACK;
@@ -167,8 +171,9 @@ public class HDriveTeleop2020 extends LinearOpMode {
         leftIntakeServo = hardwareMap.get(Servo.class, "leftIntakeServo");
         //clawServo = hardwareMap.get(Servo.class, "clawServo");
         //armFlipper = (DcMotorEx) hardwareMap.get(DcMotor.class, "armFlipper");
-        sensorRangeLeft = hardwareMap.get(DistanceSensor.class, "rangeSensorLeft");
-        sensorRangeRight = hardwareMap.get(DistanceSensor.class, "rangeSensorRight");
+        rangeSensorFront = hardwareMap.get(DistanceSensor.class, "Range Sensor Front");
+        rangeSensorBack = hardwareMap.get(DistanceSensor.class, "Range Sensor Back");
+        rangeSensorLeft = hardwareMap.get(DistanceSensor.class, "Range Sensor Left");
         webcamName = hardwareMap.get(WebcamName.class, "Webcam 1");
         calculator = new HDriveFCCalc();
         dpadCalculator = new HDriveFCCalc();
@@ -255,8 +260,6 @@ public class HDriveTeleop2020 extends LinearOpMode {
         while (opModeIsActive()) {
             angles = imu.getAngularOrientation().toAxesReference(AxesReference.INTRINSIC).toAxesOrder(AxesOrder.ZYX);
             angleDouble = Double.parseDouble(ExcessStuff.formatAngle(angles.angleUnit, angles.firstAngle));
-            //telemetry.addData("Hold Angle", ExcessStuff.convertAngle(holdAngle));
-            //telemetry.addData("Current Angle", ExcessStuff.convertAngle(angleDouble));
             gamepadMovements();
             checkFieldCentricAndSlowMode();
             moveTheBase();
@@ -267,7 +270,7 @@ public class HDriveTeleop2020 extends LinearOpMode {
             runVuforia();
             moveArm();
             controlIntake();
-            telemetry.addData("Left Move", calculator.getLeftDrive());
+            /*telemetry.addData("Left Move", calculator.getLeftDrive());
             telemetry.addData("Right Move", calculator.getRightDrive());
             telemetry.addData("Middle Move", calculator.getMiddleDrive());
             telemetry.addData("Angle", angleDouble);
@@ -275,13 +278,7 @@ public class HDriveTeleop2020 extends LinearOpMode {
             telemetry.addData("Middle Power", middleMotor.getPower());
             telemetry.addData("Middle 2 Power", middleMotor2.getPower());
             telemetry.addData("Auto Scoring Mode", autoScoringMode);
-            try {
-                telemetry.addData("Pos (in)", "{X, Y, Z} = %.1f, %.1f, %.1f", translation.get(0) / mmPerInch, translation.get(1) / mmPerInch, translation.get(2) / mmPerInch);
-                telemetry.addData("Rot (deg)", "{Roll, Pitch, Heading} = %.0f, %.0f, %.0f", rotation.firstAngle, rotation.secondAngle, rotation.thirdAngle);
-            } catch (Exception e) {
-                telemetry.addData("Exception", e);
-            }
-            telemetry.update();
+            telemetry.update();*/
         }
     }
 
@@ -314,23 +311,25 @@ public class HDriveTeleop2020 extends LinearOpMode {
             xJoystick = 0;
 
         }
-        if (gamepad1.dpad_up || gamepad1.dpad_down || gamepad1.dpad_left || gamepad1.dpad_right) {
-            updatedDpadMovement = true;
-            dpadCalculator.calculateMovement(xJoystick, yJoystick, 0, angleDouble + offset);
-            middleMotor.setPower(dpadCalculator.getMiddleDrive());
-            middleMotor2.setPower(dpadCalculator.getMiddleDrive());
-            leftMotor.setPower(dpadCalculator.getLeftDrive());
-            //leftMotor2.setPower(dpadCalculator.getLeftDrive());
-            rightMotor.setPower(dpadCalculator.getRightDrive());
-            //rightMotor2.setPower(dpadCalculator.getRightDrive());
-        } else if ((leftMotor.getPower() != 0 || rightMotor.getPower() != 0 || middleMotor.getPower() != 0) && updatedDpadMovement) {
-            leftMotor.setPower(0);
-            //leftMotor2.setPower(0);
-            rightMotor.setPower(0);
-            //rightMotor2.setPower(0);
-            middleMotor.setPower(0);
-            middleMotor2.setPower(0);
-            updatedDpadMovement = false;
+        if(driverHasControl) {
+            if (gamepad1.dpad_up || gamepad1.dpad_down || gamepad1.dpad_left || gamepad1.dpad_right) {
+                updatedDpadMovement = true;
+                dpadCalculator.calculateMovement(xJoystick, yJoystick, 0, angleDouble + offset);
+                middleMotor.setPower(dpadCalculator.getMiddleDrive());
+                middleMotor2.setPower(dpadCalculator.getMiddleDrive());
+                leftMotor.setPower(dpadCalculator.getLeftDrive());
+                //leftMotor2.setPower(dpadCalculator.getLeftDrive());
+                rightMotor.setPower(dpadCalculator.getRightDrive());
+                //rightMotor2.setPower(dpadCalculator.getRightDrive());
+            } else if ((leftMotor.getPower() != 0 || rightMotor.getPower() != 0 || middleMotor.getPower() != 0) && updatedDpadMovement) {
+                leftMotor.setPower(0);
+                //leftMotor2.setPower(0);
+                rightMotor.setPower(0);
+                //rightMotor2.setPower(0);
+                middleMotor.setPower(0);
+                middleMotor2.setPower(0);
+                updatedDpadMovement = false;
+            }
         }
 
         if (gamepad1.right_trigger > .5 && !rightTriggerWasPressed) {
@@ -424,10 +423,6 @@ public class HDriveTeleop2020 extends LinearOpMode {
         lastRightPos = rightMotor.getCurrentPosition();
         xPos = (xPos + ((leftPosChange + rightPosChange) / 2) * Math.sin(Math.toRadians(extraClasses.convertAngle(angleDouble))));
         yPos = (yPos + ((leftPosChange + rightPosChange) / 2) * Math.cos(Math.toRadians(extraClasses.convertAngle(angleDouble))));
-        /*telemetry.addData("XPos", xPos);
-        telemetry.addData("YPos", yPos);
-        telemetry.addData("Angle", extraClasses.convertAngle(angleDouble));
-        telemetry.addData("loops", here);*/
     }
 
     public void maintainAngle() {
@@ -517,7 +512,6 @@ public class HDriveTeleop2020 extends LinearOpMode {
         targetVisible = false;
         for (VuforiaTrackable trackable : allTrackables) {
             if (((VuforiaTrackableDefaultListener) trackable.getListener()).isVisible()) {
-                telemetry.addData("Visible Target", trackable.getName());
                 targetVisible = true;
                 // getUpdatedRobotLocation() will return null if no new information is available since
                 // the last time that call was made, or if the trackable is not currently visible.
@@ -540,7 +534,6 @@ public class HDriveTeleop2020 extends LinearOpMode {
             rotation = Orientation.getOrientation(lastLocation, EXTRINSIC, XYZ, DEGREES);
             //telemetry.addData("Rot (deg)", "{Roll, Pitch, Heading} = %.0f, %.0f, %.0f", rotation.firstAngle, rotation.secondAngle, rotation.thirdAngle);
         } else {
-            telemetry.addData("Visible Target", "none");
         }
         //telemetry.update();
     }
@@ -605,7 +598,7 @@ public class HDriveTeleop2020 extends LinearOpMode {
         if (!armFlipper.isBusy() && gamepad2.right_stick_x != 0) {
             armFlipper.setPower(gamepad2.right_stick_x);
         }*/
-        if (gamepad2.a && newAPressed2) {
+        if (gamepad1.a && newAPressed2) {
             if (ExtraClasses.closeEnough(clawServo.getPosition(), /* open*/ .5, .05)) {
                 clawServo.setPosition(/* closed*/.28);
             } else if (ExtraClasses.closeEnough(clawServo.getPosition(), /* closed*/ .28, .05)) {
@@ -614,14 +607,14 @@ public class HDriveTeleop2020 extends LinearOpMode {
                 telemetry.addData("Something went wrong and it is all darby's fault - opening servo", 2);
                 clawServo.setPosition(/* open*/.5);
             }
-        } else if (!gamepad2.a) {
+        } else if (!gamepad1.a) {
             newAPressed2 = false;
         }
 
     }
 
     public void autoScoreMode() {
-        if (gamepad2.a && aWasPressed2 == false) {
+        if (gamepad1.a && aWasPressed2 == false) {
             aWasPressed2 = true;
             if (autoScoringMode == false) {
                 autoScoringMode = true;
@@ -629,26 +622,8 @@ public class HDriveTeleop2020 extends LinearOpMode {
                 autoScoringMode = false;
             }
 
-        } else if (gamepad2.a != true) {
+        } else if (gamepad1.a != true) {
             aWasPressed2 = false;
-        }
-
-        if (autoScoringMode && (gamepad2.right_bumper || gamepad2.left_bumper || gamepad2.right_trigger > .5 || gamepad2.left_trigger > .5)) {
-            if (gamepad2.right_trigger > .5) {
-                goalYDistance = 10;
-                double motorPower = 0;
-                if (!(sensorRangeLeft.getDistance(DistanceUnit.CM) < 10.5 && sensorRangeLeft.getDistance(DistanceUnit.CM) > 9.5)) {
-                    motorPower = (goalYDistance - sensorRangeLeft.getDistance(DistanceUnit.CM)) / 15;
-                }
-                leftMotor.setPower(motorPower);
-                rightMotor.setPower(motorPower);
-            } else if (gamepad2.left_trigger > .5) {
-                goalYDistance = 8;
-            } else if (gamepad2.right_bumper) {
-                goalYDistance = 8;
-            } else if (gamepad2.left_bumper) {
-                goalYDistance = 8;
-            }
         }
 
         //Driver does not have control of robot here
@@ -658,20 +633,53 @@ public class HDriveTeleop2020 extends LinearOpMode {
                 startingAngle = extraClasses.convertAngle(angleDouble);
             }
             driverHasControl = false;
-            //double middlePower = translation.get(0)/10;
-            double angleError = extraClasses.angleDistance(startingAngle, extraClasses.convertAngle(angleDouble));
-            double sideChange = (angleError) / 100;
-            double leftPower = -sideChange;
-            double rightPower = sideChange;
-            telemetry.addData("leftPowerThing", extraClasses.angleDistance(startingAngle, extraClasses.convertAngle(angleDouble)));
-            telemetry.addData("Left Power", leftPower);
-            telemetry.addData("Right Power", rightPower);
-            //leftPower = leftPower + (translation.get(1)/10 - distanceAwayFromFoundation);
-            //rightPower = rightPower + (translation.get(1)/10 - distanceAwayFromFoundation);
-            leftMotor.setPower(leftPower);
-            rightMotor.setPower(rightPower);
-            //middleMotor.setPower(middlePower);
-            //middleMotor2.setPower(middlePower);
+
+            //Find Angle Error
+            double goalAngle = 90; //Just the starting angle I think
+            double distance1 = Math.abs(angleDouble - goalAngle);
+            double distance2 = Math.abs(Math.abs((360 - angleDouble)) - goalAngle);
+            double angleError = distance1;
+            if(distance1 > distance2) {
+                angleError = distance2;
+            }
+            if((goalAngle - angleDouble + 360) % 360 < 180) {
+                angleError = angleError * -1;
+            }
+            else {
+                angleError = angleError;
+            }
+            angleError = angleError / 60;
+
+            //Find how far from the side wall it is
+            double setDistanceItShoudldBeBack = 18;
+            double rangeSensorDistanceBack = rangeSensorBack.getDistance(DistanceUnit.CM);
+            double distanceDifferenceBack = rangeSensorDistanceBack - setDistanceItShoudldBeBack;
+            double frontPowerError = distanceDifferenceBack / 50;
+
+            //Find how far from the foundation it is
+            double setDistanceItShoudldBeMid = 50;
+            if(filteredValues) {
+                rangeValuePrior = rangeValuePrior;
+            } else {
+                rangeValuePrior = rangeSensorDistanceMid;
+            }
+            rangeSensorDistanceMid = rangeSensorLeft.getDistance(DistanceUnit.CM);
+            double rangeSensorValueUsed = filterValues(rangeSensorDistanceMid, rangeValuePrior,10);
+            double distanceDifferenceMid = rangeSensorValueUsed - setDistanceItShoudldBeMid;
+            double middlePowerError = distanceDifferenceMid / 40;
+
+            leftMotor.setPower(-frontPowerError + angleError);
+            rightMotor.setPower(-frontPowerError + -angleError);
+            middleMotor2.setPower(middlePowerError);
+
+            telemetry.addData("Angle Error", angleError);
+            telemetry.addData("Front Error", distanceDifferenceBack);
+            telemetry.addData("Front Distance", rangeSensorBack.getDistance(DistanceUnit.CM));
+            telemetry.addData("Mid Distance", rangeSensorLeft.getDistance(DistanceUnit.CM));
+            telemetry.addData("Filtered Values", filteredValues);
+            telemetry.addData("Filtered", filtered);
+            telemetry.addData("Prior Mid", rangeValuePrior);
+            telemetry.update();
 
         } else {
             autoScoringModeFirstTime = true;
@@ -696,8 +704,24 @@ public class HDriveTeleop2020 extends LinearOpMode {
         if (!angleToggle){
             newToggle = true;
         }
-        rightIntakeMotor.setPower(motorVal);
-        leftIntakeMotor.setPower(-motorVal);
+        //rightIntakeMotor.setPower(motorVal);
+        //leftIntakeMotor.setPower(-motorVal);
     }
 
+    public double filterValues(double currentValue, double previousValue, double tolerance) {
+        if(Math.abs(currentValue - previousValue) < tolerance) {
+            filtered = 0;
+            filteredValues = false;
+            return currentValue;
+        } else {
+            filteredValues = true;
+            filtered++;
+            if(filtered == 1) {
+                telemetry.addData("error", currentValue);
+                telemetry.addData("filtered times", filtered);
+                telemetry.update();
+            }
+            return previousValue;
+        }
+    }
 }
