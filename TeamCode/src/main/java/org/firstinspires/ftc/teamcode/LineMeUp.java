@@ -63,6 +63,7 @@ import static com.qualcomm.robotcore.hardware.DcMotor.RunMode.STOP_AND_RESET_ENC
  * Created by Luke on 9/25/2016. Final Far Auto
  */
 @Autonomous(name= "The Lign Up Tool", group = "HDrive")
+@Disabled
 public class LineMeUp extends LinearOpMode {
     AutoClasses extraClasses;
     VuforiaLocalizer vuforia;

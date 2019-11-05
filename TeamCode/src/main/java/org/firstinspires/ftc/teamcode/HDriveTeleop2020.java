@@ -22,20 +22,12 @@ import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 import org.firstinspires.ftc.robotcore.external.navigation.Position;
 import org.firstinspires.ftc.robotcore.external.navigation.Velocity;
-import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
-import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackable;
-import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackableDefaultListener;
-import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackables;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import static com.qualcomm.robotcore.hardware.DcMotor.RunMode.RUN_TO_POSITION;
-import static org.firstinspires.ftc.robotcore.external.navigation.AngleUnit.DEGREES;
-import static org.firstinspires.ftc.robotcore.external.navigation.AxesOrder.XYZ;
-import static org.firstinspires.ftc.robotcore.external.navigation.AxesOrder.YZX;
-import static org.firstinspires.ftc.robotcore.external.navigation.AxesReference.EXTRINSIC;
-import static org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer.CameraDirection.BACK;
+
 
 
 @TeleOp(name = "SkyStone TeleOp", group = "HDrive")
@@ -116,30 +108,6 @@ public class HDriveTeleop2020 extends LinearOpMode {
     DistanceSensor rangeSensorFront;
     DistanceSensor rangeSensorBack;
 
-    //Vuforia Stuff
-    private static final VuforiaLocalizer.CameraDirection CAMERA_CHOICE = BACK;
-    private static final boolean PHONE_IS_PORTRAIT = false;
-    private static final String VUFORIA_KEY =
-            "AWTzyDD/////AAABmXc9YGYk9kC9krb6KdWZ9hVC7/8o9Z/ZcGqEsCKx4HeT+G32mHKxDwKa4Hen6V52ikzlRbrqGXZuhKZPL8psMmuEoGlZ5yvHZLZjn/QcnFhc0D6g4UrXRKgYPYdXacdIgu/+KV1Tv1pNqY3vi4hyikc7ecWKTH2DVxL3CVqmtSjvJ1phlRJLaEx3GZW1YZ/IWvbA3+EDBSi4Kxbh5C84PWP5Ta1BcbPVn29PFNh9JlxIBkQdLCkkG2yp9RdKoOJFSG8IaYiz72FCaOa8UPTcxE+XoIgwfdLQwfQfmuJvx1E3h8iySlXl0UJjQZ2f03PbhxMuidv6vsTT/yTO5JvgOmPdIxlfCllRMKI22YCkRPz+";
-    private static final float mmPerInch = 25.4f;
-    private static final float mmTargetHeight = (6) * mmPerInch;           // the height of the center of the target image above the floor
-    private static final float stoneZ = 2.00f * mmPerInch;
-    private static final float bridgeZ = 6.42f * mmPerInch;
-    private static final float bridgeY = 23 * mmPerInch;
-    private static final float bridgeX = 5.18f * mmPerInch;
-    private static final float bridgeRotY = 59;                                 // Units are degrees
-    private static final float bridgeRotZ = 180;
-    private static final float halfField = 72 * mmPerInch;
-    private static final float quadField = 36 * mmPerInch;
-    private OpenGLMatrix lastLocation = null;
-    private VuforiaLocalizer vuforia = null;
-    private boolean targetVisible = false;
-    private float phoneXRotate = 0;
-    private float phoneYRotate = 0;
-    private float phoneZRotate = 0;
-    public List<VuforiaTrackable> allTrackables;
-    VectorF translation;
-    Orientation rotation;
 
 
     Orientation angles;
@@ -221,38 +189,8 @@ public class HDriveTeleop2020 extends LinearOpMode {
 
         timeDifferenceBetweenLoops = System.currentTimeMillis();
 
-        //More Vuforia Stuff
-        int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
-        VuforiaLocalizer.Parameters vuforiaParameters = new VuforiaLocalizer.Parameters(cameraMonitorViewId);
-        vuforiaParameters.vuforiaLicenseKey = VUFORIA_KEY;
-        vuforiaParameters.cameraName = webcamName;
-        vuforia = ClassFactory.getInstance().createVuforia(vuforiaParameters);
-        VuforiaTrackables targetsSkyStone = this.vuforia.loadTrackablesFromAsset("Skystone");
-        VuforiaTrackable stoneTarget = targetsSkyStone.get(0);
-        stoneTarget.setName("Stone Target");
-        allTrackables = new ArrayList<VuforiaTrackable>();
-        allTrackables.addAll(targetsSkyStone);
-        stoneTarget.setLocation(OpenGLMatrix
-                .translation(0, 0, stoneZ)
-                .multiplied(Orientation.getRotationMatrix(EXTRINSIC, XYZ, DEGREES, 90, 0, -90)));
-        if (CAMERA_CHOICE == BACK) {
-            phoneYRotate = -90;
-        } else {
-            phoneYRotate = 90;
-        }
-        if (PHONE_IS_PORTRAIT) {
-            phoneXRotate = 90;
-        }
-        final float CAMERA_FORWARD_DISPLACEMENT = 4.0f * mmPerInch;   // eg: Camera is 4 Inches in front of robot-center
-        final float CAMERA_VERTICAL_DISPLACEMENT = 8.0f * mmPerInch;   // eg: Camera is 8 Inches above ground
-        final float CAMERA_LEFT_DISPLACEMENT = 0;     // eg: Camera is ON the robot's center line
-        OpenGLMatrix robotFromCamera = OpenGLMatrix
-                .translation(CAMERA_FORWARD_DISPLACEMENT, CAMERA_LEFT_DISPLACEMENT, CAMERA_VERTICAL_DISPLACEMENT)
-                .multiplied(Orientation.getRotationMatrix(EXTRINSIC, YZX, DEGREES, phoneYRotate, phoneZRotate, phoneXRotate));
-        for (VuforiaTrackable trackable : allTrackables) {
-            ((VuforiaTrackableDefaultListener) trackable.getListener()).setPhoneInformation(robotFromCamera, vuforiaParameters.cameraDirection);
-        }
-        targetsSkyStone.activate();
+
+
 
         telemetry.addLine("Ready to Begin");
         telemetry.update();
@@ -267,7 +205,6 @@ public class HDriveTeleop2020 extends LinearOpMode {
             checkEncoderModes();
             tankDriveOdometry();
             autoScoreMode();
-            runVuforia();
             moveArm();
             controlIntake();
             /*telemetry.addData("Left Move", calculator.getLeftDrive());
@@ -505,37 +442,6 @@ public class HDriveTeleop2020 extends LinearOpMode {
             //leftIntakeMotor.setPower(0);
             //rightIntakeMotor.setPower(0);
         }*/
-
-    }
-
-    public void runVuforia() {
-        targetVisible = false;
-        for (VuforiaTrackable trackable : allTrackables) {
-            if (((VuforiaTrackableDefaultListener) trackable.getListener()).isVisible()) {
-                targetVisible = true;
-                // getUpdatedRobotLocation() will return null if no new information is available since
-                // the last time that call was made, or if the trackable is not currently visible.
-                OpenGLMatrix robotLocationTransform = ((VuforiaTrackableDefaultListener) trackable.getListener()).getUpdatedRobotLocation();
-                if (robotLocationTransform != null) {
-                    lastLocation = robotLocationTransform;
-                }
-                break;
-            }
-        }
-
-        // Provide feedback as to where the robot is located (if we know).
-        if (targetVisible) {
-            // express position (translation) of robot in inches.
-            translation = lastLocation.getTranslation();
-            //telemetry.addData("Pos (in)", "{X, Y, Z} = %.1f, %.1f, %.1f",
-            //translation.get(0) / mmPerInch, translation.get(1) / mmPerInch, translation.get(2) / mmPerInch);
-
-            // express the rotation of the robot in degrees.
-            rotation = Orientation.getOrientation(lastLocation, EXTRINSIC, XYZ, DEGREES);
-            //telemetry.addData("Rot (deg)", "{Roll, Pitch, Heading} = %.0f, %.0f, %.0f", rotation.firstAngle, rotation.secondAngle, rotation.thirdAngle);
-        } else {
-        }
-        //telemetry.update();
     }
 
     public void moveArm() {
