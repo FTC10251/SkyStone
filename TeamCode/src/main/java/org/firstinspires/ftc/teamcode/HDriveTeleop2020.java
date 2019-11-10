@@ -67,6 +67,7 @@ public class HDriveTeleop2020 extends LinearOpMode {
     double rangeValuePrior = 50;
     double rangeSensorDistanceMid = 50;
     double filtered = 0;
+    double loops = 0;
 
     boolean fieldCentric = true;
     boolean isPressedX = false;
@@ -270,6 +271,7 @@ public class HDriveTeleop2020 extends LinearOpMode {
             runVuforia();
             moveArm();
             controlIntake();
+            averageLoops();
             /*telemetry.addData("Left Move", calculator.getLeftDrive());
             telemetry.addData("Right Move", calculator.getRightDrive());
             telemetry.addData("Middle Move", calculator.getMiddleDrive());
@@ -723,5 +725,10 @@ public class HDriveTeleop2020 extends LinearOpMode {
             }
             return previousValue;
         }
+    }
+    public void averageLoops (){
+        loops ++;
+        telemetry.addData("Totals Loops", loops);
+        telemetry.addData("Average loops per second:", 1000*(loops/System.currentTimeMillis()));
     }
 }
