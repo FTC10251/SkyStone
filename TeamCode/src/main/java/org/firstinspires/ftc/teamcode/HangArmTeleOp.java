@@ -8,7 +8,6 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.Servo;
 
 @TeleOp(name= "HangArm")
-@Disabled
 public class HangArmTeleOp extends OpMode{
     int latchPos = 0;
     DcMotorEx hangMotor;

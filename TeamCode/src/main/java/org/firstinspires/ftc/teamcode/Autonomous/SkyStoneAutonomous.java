@@ -278,50 +278,14 @@ public class SkyStoneAutonomous extends LinearOpMode {
         telemetry.addLine("Ready to Begin");
         telemetry.addData("Starting Angle", initialAngle);
         telemetry.update();
-        /*while(!isStarted()) {
-            while (!isStopRequested()) {
-
-                // check all the trackable targets to see which one (if any) is visible.
-                targetVisible = false;
-                for (VuforiaTrackable trackable : allTrackables) {
-                    if (((VuforiaTrackableDefaultListener)trackable.getListener()).isVisible()) {
-                        telemetry.addData("Visible Target", trackable.getName());
-                        targetVisible = true;
-                        // getUpdatedRobotLocation() will return null if no new information is available since
-                        // the last time that call was made, or if the trackable is not currently visible.
-                        OpenGLMatrix robotLocationTransform = ((VuforiaTrackableDefaultListener)trackable.getListener()).getUpdatedRobotLocation();
-                        if (robotLocationTransform != null) {
-                            lastLocation = robotLocationTransform;
-                        }
-                        break;
-                    }
-                }
-
-                // Provide feedback as to where the robot is located (if we know).
-                if (targetVisible) {
-                    // express position (translation) of robot in inches.
-                    VectorF translation = lastLocation.getTranslation();
-                    telemetry.addData("Pos (in)", "{X, Y, Z} = %.1f, %.1f, %.1f",
-                            translation.get(0) / mmPerInch, translation.get(1) / mmPerInch, translation.get(2) / mmPerInch);
-
-                    // express the rotation of the robot in degrees.
-                    Orientation rotation = Orientation.getOrientation(lastLocation, EXTRINSIC, XYZ, DEGREES);
-                    telemetry.addData("Rot (deg)", "{Roll, Pitch, Heading} = %.0f, %.0f, %.0f", rotation.firstAngle, rotation.secondAngle, rotation.thirdAngle);
-                }
-                else {
-                    telemetry.addData("Visible Target", "none");
-                }
-                telemetry.update();
-            }
-        }*/
         waitForStart();
-        encoderDriveProfiled(.2,.1,1,29,1, 6,0,true);
+        encoderDriveProfiled(.2,.1,.8,29,1, 8,0,true);
         Thread.sleep(100);
-        encoderDriveProfiled(-.2,-.2,-.7,10,1,6,0,true);
+        encoderDriveProfiled(-.2,-.2,-.4,10,1,5,0,true);
         Thread.sleep(100);
         turnInPlace(.1,90,3);
         Thread.sleep(100);
-        encoderDriveProfiled(.2,.2,1,85,1,15,90,true);
+        encoderDriveProfiled(.2,.2,.9,85,1,15,90,true);
         Thread.sleep(100);
         turnInPlace(.1,180,3);
         Thread.sleep(100);
@@ -331,13 +295,13 @@ public class SkyStoneAutonomous extends LinearOpMode {
         Thread.sleep(100);
         moveAwayFromWall();
         Thread.sleep(100);
-        encoderDriveProfiled(-.3,-.3,-.9,15,2,5,180,true);
+        encoderDriveProfiled(-.3,-.3,-.7,15,2,5,180,true);
         Thread.sleep(100);
         turnInPlace(.1,270,3);
         Thread.sleep(100);
         encoderDriveProfiled(.3,.9,.9,40,2,15,270,false);
         turnInCircleProfiled(30,.2, 1, 45, .9,.2,.8,0,10,0);
-        turnInCircleProfiled(30,.2,1,45,-.2,-.9,-.8,2,10,-.9);
+        turnInCircleProfiled(30,.2,1,45,-.2,-.9,-.8,10,10,-.9);
         encoderDriveProfiled(-.9,-.2,-.9,50,.2,15,270,false);
         encoderDriveProfiled(.3,.2,.9,16,2,5,270,true);
         //Block is in Left Starting position
@@ -361,6 +325,40 @@ public class SkyStoneAutonomous extends LinearOpMode {
         Thread.sleep(30000);
         targetsSkyStone.activate();
 
+        while (!isStopRequested()) {
+
+            // check all the trackable targets to see which one (if any) is visible.
+            targetVisible = false;
+            for (VuforiaTrackable trackable : allTrackables) {
+                if (((VuforiaTrackableDefaultListener)trackable.getListener()).isVisible()) {
+                    telemetry.addData("Visible Target", trackable.getName());
+                    targetVisible = true;
+                    // getUpdatedRobotLocation() will return null if no new information is available since
+                    // the last time that call was made, or if the trackable is not currently visible.
+                    OpenGLMatrix robotLocationTransform = ((VuforiaTrackableDefaultListener)trackable.getListener()).getUpdatedRobotLocation();
+                    if (robotLocationTransform != null) {
+                        lastLocation = robotLocationTransform;
+                    }
+                    break;
+                }
+            }
+
+            // Provide feedback as to where the robot is located (if we know).
+            if (targetVisible) {
+                // express position (translation) of robot in inches.
+                VectorF translation = lastLocation.getTranslation();
+                telemetry.addData("Pos (in)", "{X, Y, Z} = %.1f, %.1f, %.1f",
+                        translation.get(0) / mmPerInch, translation.get(1) / mmPerInch, translation.get(2) / mmPerInch);
+
+                // express the rotation of the robot in degrees.
+                Orientation rotation = Orientation.getOrientation(lastLocation, EXTRINSIC, XYZ, DEGREES);
+                telemetry.addData("Rot (deg)", "{Roll, Pitch, Heading} = %.0f, %.0f, %.0f", rotation.firstAngle, rotation.secondAngle, rotation.thirdAngle);
+            }
+            else {
+                telemetry.addData("Visible Target", "none");
+            }
+            telemetry.update();
+        }
 
 
         // Disable Tracking when we are done;
@@ -704,13 +702,8 @@ public class SkyStoneAutonomous extends LinearOpMode {
     public void lignUpWithWall() {
         leftMotor.setMode(RUN_WITHOUT_ENCODER);
         rightMotor.setMode(RUN_WITHOUT_ENCODER);
-        leftMotor.setPower(.8);
-        rightMotor.setPower(.8);
-        try {
-            Thread.sleep(1200);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        leftMotor.setPower(.6);
+        rightMotor.setPower(.6);
         double distance = rangeSensorFront.getDistance(DistanceUnit.CM);
         while(distance > 16 && opModeIsActive()) {
             distance = rangeSensorFront.getDistance(DistanceUnit.CM);
@@ -773,8 +766,8 @@ public class SkyStoneAutonomous extends LinearOpMode {
     }
     public void lignUpWithFoundation() {
         double distance = rangeSensorBack.getDistance(DistanceUnit.CM);
-        leftMotor.setPower(-.6);
-        rightMotor.setPower(-.6);
+        leftMotor.setPower(-.3);
+        rightMotor.setPower(-.3);
         while(distance > 3) {
             distance = rangeSensorBack.getDistance(DistanceUnit.CM);
             telemetry.addData("Distance", distance);

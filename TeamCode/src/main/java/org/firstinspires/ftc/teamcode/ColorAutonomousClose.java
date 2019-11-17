@@ -63,7 +63,6 @@ import static com.qualcomm.robotcore.hardware.DcMotor.RunMode.STOP_AND_RESET_ENC
  * Created by Luke on 9/25/2016. Final Close Auto mode
  */
 @Autonomous(name= "Close Autonomous", group = "HDrive")
-@Disabled
 public class ColorAutonomousClose extends LinearOpMode {
     AutoClasses extraClasses;
     VuforiaLocalizer vuforia;

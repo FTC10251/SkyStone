@@ -63,7 +63,6 @@ import static com.qualcomm.robotcore.hardware.DcMotor.RunMode.STOP_AND_RESET_ENC
  * Created by Luke on 9/25/2016. Final Far Auto
  */
 @Autonomous(name= "Fixed Far Auto", group = "HDrive")
-@Disabled
 public class AutonomousFixed extends LinearOpMode {
     AutoClasses extraClasses;
     VuforiaLocalizer vuforia;
