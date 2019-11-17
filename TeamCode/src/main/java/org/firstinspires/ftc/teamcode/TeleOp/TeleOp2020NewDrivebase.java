@@ -36,7 +36,7 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
     HDriveFCCalc dpadCalculator;
     ArmCalculator armCalculator;
     ExtraClasses extraClasses;
-    FollowPath followPath;
+    //FollowPath followPath;
 
     //Ints, Doubles, Booleans, and Floats
     int here = 0;
@@ -75,6 +75,8 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
     double previousX = 0;
     double previousY = 0;
     double previousTime = 0;
+    double leftIntakeServoPosition = .35;
+    double rightIntakeServoPosition = .65;
 
     boolean isPressedX = false;
     boolean armMode = false;
@@ -94,6 +96,8 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
     boolean pathFindingModeFirstTime = true;
     boolean xWasPressed = false;
     boolean newAPressed2 = true;
+    boolean intakeMode = false;
+    boolean leftBumperWasPressed = false;
 
     float rightX;
     long rightStickTimer = 0;
@@ -212,7 +216,6 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
             //checkFieldCentricAndSlowMode();
             moveTheBase();
             moveFoundationOutOfDepot();
-            runIntake();
             //checkEncoderModes();
             //tankDriveOdometry();
             //autoScoreMode();
@@ -372,34 +375,6 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
         }
     }
 
-    public void runIntake() {
-        //Set Trigger to Toggle and Check if its pressed
-        if (gamepad2.left_trigger > .5 && leftTriggerPressed == false) {
-            leftTriggerPressed = true;
-            if (leftTriggerState) {
-                leftTriggerState = false;
-            } else {
-                leftTriggerState = true;
-            }
-        } else {
-            leftTriggerPressed = false;
-        }
-        //Delete this Later
-        if (gamepad2.left_bumper && leftServoPos < 1) {
-            leftServoPos = leftServoPos + .04;
-        } else if (gamepad2.left_trigger == 1 && leftServoPos > 0) {
-            leftServoPos = leftServoPos - .04;
-        }
-        if (gamepad2.right_bumper && rightServoPos > 0) {
-            rightServoPos = rightServoPos - .04;
-        } else if (gamepad2.right_trigger == 1 && rightServoPos < 1) {
-            rightServoPos = rightServoPos + .04;
-        }
-        leftIntakeServo.setPosition(leftServoPos);
-        rightIntakeServo.setPosition(rightServoPos);
-        //Set the intake servos to the two predetermined postions
-
-    }
 
     public void moveArm() {
         //closes claw and moves arm all the way ove the robot
@@ -586,14 +561,29 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
 
     }
     public void controlIntake(){
-        if(!gamepad1.left_bumper) {
-            leftIntakeMotor.setPower(gamepad1.left_trigger);
-            rightIntakeMotor.setPower(gamepad1.right_trigger);
+        if(gamepad1.left_bumper && leftBumperWasPressed == false) {
+            leftBumperWasPressed = true;
+            if(intakeMode) {
+                intakeMode = false;
+            } else {
+                intakeMode = true;
+            }
         } else if(gamepad1.left_bumper) {
-            leftIntakeMotor.setPower(-1);
-            rightIntakeMotor.setPower(-1);
+            leftBumperWasPressed = false;
         }
 
+        if(intakeMode) {
+            leftIntakeMotor.setPower(1);
+            rightIntakeMotor.setPower(1);
+            leftIntakeServoPosition = leftIntakeServoPosition - .02;
+            rightIntakeServoPosition = rightIntakeServoPosition + .02;
+            if(rightIntakeServoPosition > 1) {
+                rightIntakeServoPosition = .65;
+                leftIntakeServoPosition = .35;
+            }
+        }
+        leftIntakeServo.setPosition(leftIntakeServoPosition);
+        rightIntakeServo.setPosition(rightIntakeServoPosition);
     }
 
     public double filterValues(double currentValue, double previousValue, double tolerance) {
@@ -649,13 +639,13 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
                 }
                 rangeSensorDistanceMid = rangeSensorLeft.getDistance(DistanceUnit.CM);
                 double rangeSensorValueUsed = filterValues(rangeSensorDistanceMid, rangeValuePrior, 10);
-                double distanceDifferenceMid = rangeSensorValueUsed - setDistanceItShoudldBeMid;
+                double distanceDifferenceMid = rangeSensorDistanceMid - setDistanceItShoudldBeMid;
                 double middlePowerError = distanceDifferenceMid / 40;
                 leftMotor.setPower(sideChange);
                 leftMotor2.setPower(sideChange);
                 rightMotor.setPower(-sideChange);
                 rightMotor2.setPower(-sideChange);
-                middleMotor.setPower(middlePowerError);
+                middleMotor.setPower(-middlePowerError);
 
                 if (extraClasses.closeEnough(angleDouble, goalAngle, 3) && extraClasses.closeEnough(rangeSensorDistanceMid, setDistanceItShoudldBeMid, 3)) {
                     foundationState = 1;
@@ -682,19 +672,19 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
                     } else {
                         angleError = angleError * -1;
                     }
-                    angleError = angleError / 100;
+                    angleError = angleError / 50;
 
-                    double setDistanceItShouldBe = 11;
+                    double setDistanceItShouldBe = 10;
                     double rangeSensorDistanceBack = rangeSensorBack.getDistance(DistanceUnit.CM);
-                    double sidePower = (rangeSensorDistanceBack / setDistanceItShouldBe) / 100;
-                    if(sidePower > .3) {
-                        sidePower = .3;
+                    double sidePower = (rangeSensorDistanceBack / setDistanceItShouldBe) / 40;
+                    if(sidePower > .5) {
+                        sidePower = .5;
                     }
 
-                    leftMotor.setPower(-sidePower + angleError);
-                    leftMotor2.setPower(-sidePower + angleError);
-                    rightMotor.setPower(-sidePower - angleError);
-                    rightMotor2.setPower(-sidePower - angleError);
+                    leftMotor.setPower(-sidePower - angleError);
+                    leftMotor2.setPower(-sidePower - angleError);
+                    rightMotor.setPower(-sidePower + angleError);
+                    rightMotor2.setPower(-sidePower + angleError);
 
                     if (rangeSensorDistanceBack < setDistanceItShouldBe) {
                         //hookServo.setPosition(1);
@@ -708,11 +698,11 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
                 }
             }  else if(foundationState == 2) {
                 timeDifference = System.currentTimeMillis() - startingTime;
-                if(startingTime > 4000) {
-                    leftMotor.setPower(.1);
-                    leftMotor2.setPower(.1);
-                    rightMotor.setPower(.1);
-                    rightMotor2.setPower(.1);
+                if(timeDifference > 500) {
+                    leftMotor.setPower(.2);
+                    leftMotor2.setPower(.2);
+                    rightMotor.setPower(.2);
+                    rightMotor2.setPower(.2);
                 }
             }
         }
@@ -736,11 +726,11 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
                 ArrayList<Point> Points = new ArrayList<>();
                 //followPath.createNewPath(Points, getVelocity(), getLocation(), .75, 1, .4);
             }
-            followPath.seek();
-            leftMotor.setPower(followPath.getLeftPower());
-            leftMotor2.setPower(followPath.getLeftPower());
-            rightMotor.setPower(followPath.getRightPower());
-            rightMotor2.setPower(followPath.getRightPower());
+            //followPath.seek();
+            //leftMotor.setPower(followPath.getLeftPower());
+            //leftMotor2.setPower(followPath.getLeftPower());
+            //rightMotor.setPower(followPath.getRightPower());
+            //rightMotor2.setPower(followPath.getRightPower());
             driverHasControl = false;
 
         }
