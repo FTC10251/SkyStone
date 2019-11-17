@@ -1,8 +1,5 @@
 package org.firstinspires.ftc.teamcode.PurePursuit;
 
-
-
-
 import org.firstinspires.ftc.teamcode.ManualImports.Point;
 
 import java.util.ArrayList;
@@ -78,4 +75,79 @@ public class MathFunctions {
         return allPoints;
 
     }
+    public static double findY(double slope, double yIntercept, double x) {
+        double y = (slope * x) + yIntercept;
+        return y;
+    }
+    public static double findSlope(double x1, double y1, double x2, double y2) {
+        double slope = (y2 - y1) / (x2 - x1);
+        return slope;
+    }
+    public static double findYIntercept(double slope, double x, double y) {
+        double yIntercept = y - (slope * x);
+        return yIntercept;
+    }
+    public static Point findSecondPoint(double slope, double distance, double x, double y, double direction) {
+        double newX = x + direction * (distance / Math.sqrt((1 + Math.pow(slope, 2))));
+        double yIntercept = findYIntercept(slope,x,y);
+        double newY = (slope * newX) + yIntercept;
+        return new Point(newX, newY);
+    }
+    public static double distanceBetween2Points(double x1, double y1, double x2, double y2) {
+        double distance = Math.sqrt((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1));
+        return distance;
+    }
+    public static double distanceBetweenPointAndLine(double x, double y, double slope, double yIntercept) {
+        double inverseSlope = -1/slope;
+        double  yInterceptPerpendicular = findYIntercept(inverseSlope,x,y);
+        double xSecondPoint = (yIntercept - yInterceptPerpendicular) / (inverseSlope - slope);
+        double ySecondPoint = findY(inverseSlope,yInterceptPerpendicular,xSecondPoint);
+        double distance = distanceBetween2Points(x,y,xSecondPoint, ySecondPoint);
+        return distance;
+    }
+    public static Point secondPointAlongPerpendicularLine(double x, double y, double slope, double yIntercept) {
+        double inverseSlope = -1/slope;
+        double  yInterceptPerpendicular = findYIntercept(inverseSlope,x,y);
+        double xSecondPoint = (yIntercept - yInterceptPerpendicular) / (inverseSlope - slope);
+        double ySecondPoint = findY(inverseSlope,yInterceptPerpendicular,xSecondPoint);
+        Point secondPoint = new Point(xSecondPoint, ySecondPoint);
+        return secondPoint;
+    }
+    public static Point SubtractVectors(Point desiredVelocity, Point currentVelocity) {
+        double xDiff = desiredVelocity.x * Math.cos(Math.toRadians(desiredVelocity.y)) - (currentVelocity.x * Math.cos(Math.toRadians(desiredVelocity.y)));
+        double yDiff = desiredVelocity.x * Math.sin(Math.toRadians(desiredVelocity.y)) - (currentVelocity.x * Math.sin(Math.toRadians(desiredVelocity.y)));
+        double magnitude = Math.sqrt(Math.pow(xDiff,2) + Math.pow(yDiff,2));
+        double angle = Math.toDegrees(Math.atan2(yDiff, xDiff));
+        //System.out.println(yDiff);
+        Point returnPoint = new Point (magnitude,angle);
+        return returnPoint;
+    }
+    public static Point AddVectors(Point desiredVelocity, Point currentVelocity) {
+        double xDiff = desiredVelocity.x * Math.cos(Math.toRadians(desiredVelocity.y)) + (currentVelocity.x * Math.cos(Math.toRadians(desiredVelocity.y)));
+        double yDiff = desiredVelocity.x * Math.sin(Math.toRadians(desiredVelocity.y)) + (currentVelocity.x * Math.sin(Math.toRadians(desiredVelocity.y)));
+        double magnitude = Math.sqrt(Math.pow(xDiff,2) + Math.pow(yDiff,2));
+        double angle = Math.toDegrees(Math.atan2(yDiff, xDiff));
+        return new Point(magnitude,angle);
+    }
+    public static Point Limit(Point inputVector, double maxMagnitude) {
+        if(inputVector.x > maxMagnitude) {
+            inputVector.x = maxMagnitude;
+        }
+        if(inputVector.x < -maxMagnitude) {
+            inputVector.x = -maxMagnitude;
+        }
+        return new Point(inputVector.x,inputVector.y);
+    }
+    public static Point Normalize(Point velocity) {
+        Point returnVelocity = new Point();
+        returnVelocity.x = 1;
+        returnVelocity.y = velocity.y;
+        return returnVelocity;
+    }
+    public static Point MultiplyVelocity(Point velocty, double multiplier) {
+        Point returnVelocity = new Point();
+        returnVelocity.x = returnVelocity.x * multiplier;
+        return returnVelocity;
+    }
+
 }
