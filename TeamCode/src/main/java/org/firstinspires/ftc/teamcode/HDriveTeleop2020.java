@@ -87,6 +87,8 @@ public class HDriveTeleop2020 extends LinearOpMode {
     boolean rightTriggerWasPressed = false;
     boolean isFieldCentricButton = false;
     boolean filteredValues = false;
+    boolean leftBumperWasPressed = false;
+    boolean intakeMode = false;
 
     float rightX;
     long rightStickTimer = 0;
@@ -264,7 +266,6 @@ public class HDriveTeleop2020 extends LinearOpMode {
             gamepadMovements();
             checkFieldCentricAndSlowMode();
             moveTheBase();
-            runIntake();
             checkEncoderModes();
             tankDriveOdometry();
             autoScoreMode();
@@ -443,73 +444,6 @@ public class HDriveTeleop2020 extends LinearOpMode {
             middleMotor2.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         }
     }
-
-    public void runIntake() {
-        //Set Trigger to Toggle and Check if its pressed
-        if (gamepad2.left_trigger > .5 && leftTriggerPressed == false) {
-            leftTriggerPressed = true;
-            if (leftTriggerState) {
-                leftTriggerState = false;
-            } else {
-                leftTriggerState = true;
-            }
-        } else {
-            leftTriggerPressed = false;
-        }
-        //Delete this Later
-        if (gamepad2.left_bumper && leftServoPos < 1) {
-            leftServoPos = leftServoPos + .04;
-        } else if (gamepad2.left_trigger == 1 && leftServoPos > 0) {
-            leftServoPos = leftServoPos - .04;
-        }
-        if (gamepad2.right_bumper && rightServoPos > 0) {
-            rightServoPos = rightServoPos - .04;
-        } else if (gamepad2.right_trigger == 1 && rightServoPos < 1) {
-            rightServoPos = rightServoPos + .04;
-        }
-        leftIntakeServo.setPosition(leftServoPos);
-        rightIntakeServo.setPosition(rightServoPos);
-        //Set the intake servos to the two predetermined postions
-        /*if(gamepad2.left_bumper && leftBumperPressed == false) {
-            leftBumperPressed = true;
-            if(intakeState == 0) {
-                intakeState = 1;
-                leftIntakeServo.setPosition(.5);
-                rightIntakeServo.setPosition(.5);
-            } else if(intakeState == 1) {
-                intakeState = 0;
-                leftIntakeServo.setPosition(1);
-                rightIntakeServo.setPosition(1);
-            }
-        }
-        else {
-            leftBumperPressed = false;
-        }
-
-        //Actually Run the Intake
-        if(leftTriggerState) {
-            double leftDistance = sensorRangeLeft.getDistance(DistanceUnit.CM);
-            double rightDistance = sensorRangeRight.getDistance(DistanceUnit.CM);
-            if((leftDistance - rightDistance > 4)) {
-                //leftIntakeMotor.setPower(-.4);
-                //rightIntakeMotor.setPower(.2);
-            }
-            else if((leftDistance - rightDistance) < -4) {
-                //leftIntakeMotor.setPower(.2);
-                //rightIntakeMotor.setPower(-.4);
-            }
-            else if(Math.abs((leftDistance - rightDistance)) < 4) {
-                //leftIntakeMotor.setPower(-.4);
-                //rightIntakeMotor.setPower(-.4);
-            }
-        }
-        else {
-            //leftIntakeMotor.setPower(0);
-            //rightIntakeMotor.setPower(0);
-        }*/
-
-    }
-
     public void runVuforia() {
         targetVisible = false;
         for (VuforiaTrackable trackable : allTrackables) {
@@ -689,25 +623,20 @@ public class HDriveTeleop2020 extends LinearOpMode {
 
     }
     public void controlIntake(){
-        boolean angleToggle = gamepad2.right_bumper;
-        double motorVal = gamepad2.right_trigger - gamepad2.left_trigger;
-
-        if (angleToggle && newToggle){
-            if (toggleVal == 0){
-                leftIntakeServo.setPosition(.5);
-                rightIntakeServo.setPosition(.5);
-            } else if (toggleVal == 1){
-                leftIntakeServo.setPosition(0);
-                rightIntakeServo.setPosition(0);
-            }
-            toggleVal += 1;
-            toggleVal = toggleVal % 2;
-        }
-        if (!angleToggle){
-            newToggle = true;
-        }
-        //rightIntakeMotor.setPower(motorVal);
-        //leftIntakeMotor.setPower(-motorVal);
+       if(gamepad1.left_bumper && leftBumperWasPressed == false) {
+           leftBumperWasPressed = true;
+           if(intakeMode) {
+               intakeMode = false;
+           } else {
+               intakeMode = true;
+           }
+       } else if(gamepad1.left_bumper) {
+           leftBumperWasPressed = false;
+       }
+       if(intakeMode == true) {
+           leftIntakeMotor.setPower(1);
+           rightIntakeMotor.setPower(1);
+       }
     }
 
     public double filterValues(double currentValue, double previousValue, double tolerance) {

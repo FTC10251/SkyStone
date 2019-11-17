@@ -75,9 +75,9 @@ import static org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocaliz
 public class SkyStoneAutonomousUpdated extends LinearOpMode {
     //Vuforia
     private static final String VUFORIA_KEY =
-            "Aff5Onj/////AAABmWU00gJ3W031oMf/yab8x+lDTcSp4Ipj3tbjxGCvrixJIcImUGnhiWcbd+U0kjaqRapa8gT1pti8r6x9DZjPKc1Z33pt6uSXJ5nU6HliFApbRiW3nfGQjMaXbItmKyFyA4kkVbxz3Q/UHL5eQbOwpBR880DPsrqElLqI/A6d9MtxwR+HxPGwKjkGI/PQ8LLkoRDK0ea609oynQOlKybmI/a923orWWI+oPWmB6+41EbnAjtnxVK6BZ6e0Y8rXebNcD7/OjVsdZ+pTEfJzR4YYyDt7yCmLKknqW0WGdF0D0zBBBAt4sYwtB6e9CA8FxjxzDOMoUmlZ/pQFXwSdW4I07ZRzatuXJ2FG+hSvxATv1BG";
+            "AQD7qV//////AAABmetA12LIIEPGqARlxRlpSeB78FHaKW23WxZ6eL692V0Xej0Jguf/s4qT3sxWQLGsv/gB/ewgs4P2Iqg08++3Uav5Tt/Pr27Jvr2sz6tvmPq3jENTD3l/kNUeno0Ko48xuc5xV8QT+7FkGuZ71BUQH4+iRXFWnQ7DBdQCL+flYnOOGxuNkfv0yVK9KhMlYifB/OAv+Ipkdex5orcWPnd2sXhKiHdLssleApDTBl+037zRwmiBZdJCvIJtf6bkk8qDB8+o2k0tlZ3IK2s8Kg9eNKCokA92wtTtsuqXGlNnrJOfT2kP85715fcmAwu6xzaq78q/7ay9zEiluf4bllNXNsg4CXNVIaIaWenkEFTUpyGB";
     static final double     COUNTS_PER_INCH         = /*(COUNTS_PER_MOTOR_REV * DRIVE_GEAR_REDUCTION) /
-            (WHEEL_DIAMETER_INCHES * 3.1415)*/ 91.125;
+            (WHEEL_DIAMETER_INCHES * 3.1415)*/ 45;
 
     BNO055IMU imu;
     ExtraClasses extraClasses;
@@ -180,7 +180,6 @@ public class SkyStoneAutonomousUpdated extends LinearOpMode {
                 rightMotor.getCurrentPosition(),
                 middleMotor.getCurrentPosition());
         telemetry.update();
-        middleMotor.setDirection(DcMotor.Direction.REVERSE);
         rightMotor.setDirection(DcMotorSimple.Direction.REVERSE);
         rightMotor2.setDirection(DcMotorSimple.Direction.REVERSE);
         pidStuff = leftMotor.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER);
@@ -233,7 +232,9 @@ public class SkyStoneAutonomousUpdated extends LinearOpMode {
         telemetry.addLine("Ready to Begin");
         telemetry.addData("Starting Angle", initialAngle);
         telemetry.update();
-        while(!isStarted()) {
+        targetsSkyStone.activate();
+        waitForStart(); //get rid of this later
+        /*while(isStarted()) {
             while (!isStopRequested()) {
 
                 // check all the trackable targets to see which one (if any) is visible.
@@ -264,19 +265,20 @@ public class SkyStoneAutonomousUpdated extends LinearOpMode {
                     telemetry.addData("Rot (deg)", "{Roll, Pitch, Heading} = %.0f, %.0f, %.0f", rotation.firstAngle, rotation.secondAngle, rotation.thirdAngle);
                     double xTranslation = lastLocation.getTranslation().get(0);
                     blockPosition = getPosition(xTranslation);
+                    telemetry.addData("blockPosition", blockPosition);
                 }
                 else {
                     telemetry.addData("Visible Target", "none");
                 }
                 telemetry.update();
             }
-        }
+        }*/
         //Set Intake Position
         moveIntake();
 
         //Move forward to pick up block
-        encoderDriveProfiled(.2,.1,1,29,1, 6,0,true);
-        Thread.sleep(100);
+        encoderDriveProfiled(.2,.1,.5,29,1, 6,0,true);
+        Thread.sleep(300);
 
         //Move Back after picking up block
         encoderDriveProfiled(-.2,-.2,-.7,10,1,6,0,true);
@@ -285,15 +287,15 @@ public class SkyStoneAutonomousUpdated extends LinearOpMode {
         rightIntakeMotor.setPower(0);
 
         //Turn towards foundation
-        turnInPlace(.1,90,3);
-        Thread.sleep(100);
+        turnInPlace(.05,90,3);
+        Thread.sleep(1000);
 
         //move towards foundation
-        encoderDriveProfiled(.2,.2,1,85,1,15,90,true);
+        encoderDriveProfiled(.1,.1,.5,85,2,15,90,true);
         Thread.sleep(100);
 
         //turn towards foundation to hook it
-        turnInPlace(.1,180,3);
+        turnInPlace(.05,180,3);
         Thread.sleep(100);
 
         //move forward to pick up the founcation
@@ -780,14 +782,14 @@ public class SkyStoneAutonomousUpdated extends LinearOpMode {
             else {
                 angleError = angleError * -1;
             }
-            angleError = angleError / 100;
+            angleError = angleError / 250;
             telemetry.addData("angle error", angleError);
             telemetry.update();
             leftMotor.setPower(minSpeed + angleError);
             leftMotor2.setPower(minSpeed + angleError);
             rightMotor.setPower(-minSpeed - angleError);
             rightMotor2.setPower(-minSpeed - angleError);
-            angleError = angleError * 100;
+            angleError = angleError * 250;
         }
         telemetry.addData("Angle Error", angleError);
         telemetry.addLine("Done");
@@ -807,11 +809,11 @@ public class SkyStoneAutonomousUpdated extends LinearOpMode {
     }
     public void lignUpWithFoundation() {
         double distance = rangeSensorBack.getDistance(DistanceUnit.CM);
-        leftMotor.setPower(-.6);
-        leftMotor2.setPower(-.6);
-        rightMotor.setPower(-.6);
-        rightMotor2.setPower(-.6);
-        while(distance > 3) {
+        leftMotor.setPower(-.3);
+        leftMotor2.setPower(-.3);
+        rightMotor.setPower(-.3);
+        rightMotor2.setPower(-.3);
+        while(distance > 12) {
             distance = rangeSensorBack.getDistance(DistanceUnit.CM);
             telemetry.addData("Distance", distance);
             telemetry.update();

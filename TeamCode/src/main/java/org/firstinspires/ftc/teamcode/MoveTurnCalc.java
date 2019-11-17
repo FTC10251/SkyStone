@@ -32,7 +32,7 @@ package org.firstinspires.ftc.teamcode;
 
             }
 
-            calculator.calculateMovement2(xJoy, yJoy, turnJoy , currentAngle);
+           // calculator.calculateMovement2(xJoy, yJoy, turnJoy , currentAngle);
             middlePower = calculator.getMiddleDrive() * 2;
             leftYPower = calculator.getLeftDrive();
             rightYPower = calculator.getRightDrive();
