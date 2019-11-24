@@ -40,6 +40,7 @@ public class TickTester extends OpMode {
 
     Servo leftIntakeServo;
     Servo rightIntakeServo;
+    Servo hookServo;
 
     String angleDouble = "hi";
     Orientation angles;
@@ -90,9 +91,10 @@ public class TickTester extends OpMode {
         rightMotor = (DcMotorEx)hardwareMap.get(DcMotor.class, "Right Motor Front");
         rightMotor2 = (DcMotorEx) hardwareMap.get(DcMotor.class, "Right Motor Back");
         middleMotor = (DcMotorEx)hardwareMap.get(DcMotor.class, "Middle Motor");
-        rangeSensor = hardwareMap.get(DistanceSensor.class, "Range Sensor Front");
+        rangeSensor = hardwareMap.get(DistanceSensor.class, "Range Sensor Left");
         rightIntakeServo = hardwareMap.get(Servo.class, "Intake Servo Right");
         leftIntakeServo = hardwareMap.get(Servo.class, "Intake Servo Left");
+        hookServo = hardwareMap.get(Servo.class, "Claw Servo");
         leftMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         rightMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         middleMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
@@ -129,20 +131,11 @@ public class TickTester extends OpMode {
 
     @Override
     public void loop() {
-        leftIntakeServo.setPosition(leftIntakeServoPos);
-        rightIntakeServo.setPosition(rightIntakeServoPos);
+        hookServo.setPosition(leftIntakeServoPos);
         if(gamepad1.left_bumper) {
             leftIntakeServoPos = leftIntakeServoPos + .01;
-        } else if(gamepad1.left_trigger > .5) {
+        } else if(gamepad1.left_trigger == 1) {
             leftIntakeServoPos = leftIntakeServoPos - .01;
-        } else {
-
-        }
-
-        if(gamepad1.right_bumper) {
-            rightIntakeServoPos = rightIntakeServoPos + .01;
-        } else if(gamepad1.right_trigger > .5) {
-            rightIntakeServoPos = rightIntakeServoPos - .01;
         } else {
 
         }
@@ -153,8 +146,8 @@ public class TickTester extends OpMode {
         rightMotor.setPower(gamepad1.left_stick_y);
         rightMotor2.setPower(gamepad1.left_stick_y);
         middleMotor.setPower(gamepad1.left_stick_x);
-        telemetry.addData("Left Intake Servo", leftIntakeServo.getPosition());
-        telemetry.addData("Right Intake Servo", rightIntakeServo.getPosition());
+        telemetry.addData("Hook Servo", hookServo.getPosition());
+        telemetry.addData("Hook Servo should", leftIntakeServoPos);
         telemetry.addData("Left Motor ", leftMotor.getCurrentPosition());
         telemetry.addData("Left Motor 2", leftMotor2.getCurrentPosition());
         telemetry.addData("Right Motor", rightMotor.getCurrentPosition());

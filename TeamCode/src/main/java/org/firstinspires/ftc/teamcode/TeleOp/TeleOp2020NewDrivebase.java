@@ -36,11 +36,11 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
     HDriveFCCalc dpadCalculator;
     ArmCalculator armCalculator;
     ExtraClasses extraClasses;
-    //FollowPath followPath;
+    FollowPath followPath;
 
     //Ints, Doubles, Booleans, and Floats
     int here = 0;
-    double offset = 180;
+    double offset = 0;
     double bicep = 18;
     double forearm = 17.25;
     double speed = 1;
@@ -55,9 +55,6 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
     double lastMidPos = 0;
     double xPos = 0;
     double yPos = 0;
-    double leftServoPos = .5;
-    double rightServoPos = .5;
-    double startingAngle = 0;
     double rangeValuePrior = 50;
     double rangeSensorDistanceMid = 50;
     double foundationState = 0;
@@ -69,22 +66,18 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
     double timeBefore = 0;
     double velX,velY,posX,posY;
     double autoScoringMode = 0;
-    double blockPosY = 0;
-    double blockPosX = 0;
     double rotation = 0;
-    double previousX = 0;
-    double previousY = 0;
-    double previousTime = 0;
     double leftIntakeServoPosition = .35;
     double rightIntakeServoPosition = .65;
 
-    boolean isPressedX = false;
-    boolean armMode = false;
+    int blockPosY = 0;
+    int blockPosX = 0;
+    int intakeMode = 0;
+    int intakeState = 0;
+
     boolean sideMoved = false;
     boolean dpadWasPressed = false;
-    boolean updatedDpadMovement = false;
     boolean rightStickMoved = false;
-    boolean leftTriggerState = false;
     boolean leftTriggerPressed = false;
     boolean aWasPressed = false;
     boolean driverHasControl = true;
@@ -96,15 +89,12 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
     boolean pathFindingModeFirstTime = true;
     boolean xWasPressed = false;
     boolean newAPressed2 = true;
-    boolean intakeMode = false;
     boolean leftBumperWasPressed = false;
+    boolean dontScore = false;
 
     float rightX;
     long rightStickTimer = 0;
-    Point velocity = new Point();
-
-
-
+    int[][] blockPos = new int[2][10];
 
 
     //Robot Hardware
@@ -115,18 +105,18 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
     DcMotorEx middleMotor;
     DcMotorEx rightIntakeMotor;
     DcMotorEx leftIntakeMotor;
-    DcMotorEx armFlipper;
+    DcMotorEx arm;
     Servo rightIntakeServo;
     Servo leftIntakeServo;
     Servo clawServo;
     Servo hookServo;
     WebcamName webcamName = null;
 
+    //Sensors
     DistanceSensor rangeSensorLeft;
     DistanceSensor rangeSensorBack;
 
-
-
+    //Misc
     Orientation angles;
     BNO055IMU imu;
     PIDFCoefficients pidStuff;
@@ -155,7 +145,7 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
         leftIntakeServo = hardwareMap.get(Servo.class, "Intake Servo Left");
         hookServo = hardwareMap.get(Servo.class, "Hook Servo");
         //clawServo = hardwareMap.get(Servo.class, "clawServo");
-        //armFlipper = (DcMotorEx) hardwareMap.get(DcMotor.class, "armFlipper");
+        arm = (DcMotorEx) hardwareMap.get(DcMotor.class, "Arm");
         rangeSensorBack = hardwareMap.get(DistanceSensor.class, "Range Sensor Back");
         rangeSensorLeft = hardwareMap.get(DistanceSensor.class, "Range Sensor Left");
         webcamName = hardwareMap.get(WebcamName.class, "Webcam 1");
@@ -163,6 +153,7 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
         dpadCalculator = new HDriveFCCalc();
         armCalculator = new ArmCalculator(bicep, forearm);
         extraClasses = new ExtraClasses(leftMotor, rightMotor, middleMotor, middleMotor);
+        middleMotor.setDirection(DcMotorSimple.Direction.REVERSE);
         rightIntakeMotor.setDirection(DcMotor.Direction.REVERSE);
         rightMotor.setDirection(DcMotorSimple.Direction.REVERSE);
         rightMotor2.setDirection(DcMotorSimple.Direction.REVERSE);
@@ -172,7 +163,7 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
         angleDouble = Double.parseDouble(formatAngle(angles.angleUnit, angles.firstAngle));
         holdAngle = angleDouble;
 
-        middleMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        hookServo.setPosition(.75);
 
         leftMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         leftMotor2.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
@@ -201,28 +192,25 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
         middleMotor.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, pidStuff);
 
         timeDifferenceBetweenLoops = System.currentTimeMillis();
-
-
-
-
         telemetry.addLine("Ready to Begin");
         telemetry.update();
+
+        //Start of loop
         waitForStart();
         timeBefore = System.currentTimeMillis();
         while (opModeIsActive()) {
             angles = imu.getAngularOrientation().toAxesReference(AxesReference.INTRINSIC).toAxesOrder(AxesOrder.ZYX);
             angleDouble = Double.parseDouble(formatAngle(angles.angleUnit, angles.firstAngle));
-            //gamepadMovements();
-            //checkFieldCentricAndSlowMode();
+
+
             moveTheBase();
             moveFoundationOutOfDepot();
-            //checkEncoderModes();
             //tankDriveOdometry();
-            //autoScoreMode();
+            autoScoreMode();
             //moveArm();
             controlIntake();
             pathFindingButton();
-            trackVelocityandLocation();
+
             timeDifferencePosition = (System.currentTimeMillis() - timeBefore)/1000;
             velX = velX + (imu.getAcceleration().xAccel * timeDifferencePosition);
             velY = velY + (imu.getAcceleration().yAccel * timeDifferencePosition);
@@ -243,69 +231,6 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
         }
     }
 
-    public void gamepadMovements() {
-
-        double yJoystick = 0;
-        double xJoystick = 0;
-        if (gamepad2.dpad_up) {
-
-        }
-        if (gamepad2.dpad_down) {
-
-        }
-        if (gamepad1.dpad_up) {
-            dpadWasPressed = true;
-            yJoystick = -.3;
-        } else if (gamepad1.dpad_down) {
-            dpadWasPressed = true;
-            yJoystick = .3;
-        } else {
-            yJoystick = 0;
-        }
-        if (gamepad1.dpad_left) {
-            dpadWasPressed = true;
-            xJoystick = -.3;
-        } else if (gamepad1.dpad_right) {
-            dpadWasPressed = true;
-            xJoystick = .3;
-        } else {
-            xJoystick = 0;
-
-        }
-        if(driverHasControl) {
-            if (gamepad1.dpad_up || gamepad1.dpad_down || gamepad1.dpad_left || gamepad1.dpad_right) {
-                updatedDpadMovement = true;
-                dpadCalculator.calculateMovement(xJoystick, yJoystick, 0, angleDouble + offset);
-                middleMotor.setPower(dpadCalculator.getMiddleDrive());
-                leftMotor.setPower(dpadCalculator.getLeftDrive());
-                leftMotor2.setPower(dpadCalculator.getLeftDrive());
-                rightMotor.setPower(dpadCalculator.getRightDrive());
-                rightMotor2.setPower(dpadCalculator.getRightDrive());
-            } else if ((leftMotor.getPower() != 0 || rightMotor.getPower() != 0 || middleMotor.getPower() != 0) && updatedDpadMovement) {
-                leftMotor.setPower(0);
-                leftMotor2.setPower(0);
-                rightMotor.setPower(0);
-                rightMotor2.setPower(0);
-                middleMotor.setPower(0);
-                updatedDpadMovement = false;
-            }
-        }
-
-    }
-
-    public void checkFieldCentricAndSlowMode() {
-        if (gamepad2.x && isPressedX) {
-            isPressedX = false;
-            if (armMode) {
-                armMode = false;
-            } else {
-                armMode = true;
-            }
-        } else if (!gamepad2.x) {
-            isPressedX = true;
-        }
-    }
-
     public void moveTheBase() {
         if (!gamepad1.dpad_left && !gamepad1.dpad_right && !gamepad1.dpad_down && !gamepad1.dpad_up) {
             leftX = gamepad1.left_stick_x;
@@ -323,7 +248,7 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
                 }
             }
             if (gamepad1.b == true) {
-                offset = angleDouble + 180;
+                offset = angleDouble + 0;
                 offset = -offset;
             }
 
@@ -365,15 +290,6 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
         sideChangePower = (extraClasses.convertAngle(angleDouble) - extraClasses.convertAngle(holdAngle)) / 75;
     }
 
-    public void checkEncoderModes() {
-        if ((!leftMotor.getMode().equals(DcMotor.RunMode.RUN_USING_ENCODER) || !rightMotor.getMode().equals(DcMotor.RunMode.RUN_USING_ENCODER) || !middleMotor.getMode().equals(DcMotor.RunMode.RUN_USING_ENCODER))) {
-            leftMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            leftMotor2.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            rightMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            rightMotor2.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            middleMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        }
-    }
 
 
     public void moveArm() {
@@ -457,21 +373,23 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
             if (autoScoringMode == 0) {
                 autoScoringMode = 1;
             } else if (autoScoringMode == 1) {
-                autoScoringMode = 2;
+                if(!dontScore) {
+                    autoScoringMode = 2;
+                }
             } else if (autoScoringMode == 2) {
                 autoScoringMode = 0;
             }
 
         } else if (gamepad1.a != true) {
             aWasPressed = false;
+            dontScore = false;
             autoScoreState = 0;
         }
 
         //Driver does not have control of robot here
-        if (autoScoringMode == 0 || autoScoringMode == 1) {
+        if ( autoScoringMode == 2 && !dontScore) {
             if (autoScoringModeFirstTime) {
                 autoScoringModeFirstTime = false;
-                startingAngle = extraClasses.convertAngle(angleDouble);
             }
 
             if(autoScoreState == 0) {
@@ -527,6 +445,7 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
             } else if(autoScoreState == 1) {
                 //armFlipper.setPower(0);
                 //clawServo.setPosition(0);
+                blockPos[blockPosX][blockPosY] = 1;
                 autoScoreState = 2;
             }
         } else {
@@ -534,9 +453,25 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
         }
         if(autoScoringMode == 1) {
             if (gamepad1.dpad_left) {
-                blockPosX = 0;
+                if(blockPos[0][blockPosY] == 0) { //checks whether that position has scored yet
+                    blockPosX = 0;
+                    dontScore = false;
+                } else if(blockPos[1][blockPosY] == 0) {
+                    dontScore = false;
+                    blockPosX = 1;
+                } else {
+                    dontScore = true;
+                }
             } else if (gamepad1.dpad_right) {
-                blockPosX = 1;
+                if(blockPos[1][blockPosY] == 0) {
+                    blockPosX = 1;
+                    dontScore = false;
+                } else if(blockPos[0][blockPosY] == 0) {
+                    dontScore = false;
+                    blockPosX = 0;
+                } else {
+                    dontScore = true;
+                }
             }
             if (gamepad1.dpad_up && dpadWasPressed == false) {
                 dpadWasPressed = true;
@@ -557,22 +492,32 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
             } else if(gamepad1.left_trigger < .5) {
                 leftTriggerPressed = false;
             }
+            if(gamepad1.start) {
+                blockPosX = 0;
+                blockPosY = 0;
+                rotation = 0;
+            }
         }
 
     }
     public void controlIntake(){
         if(gamepad1.left_bumper && leftBumperWasPressed == false) {
             leftBumperWasPressed = true;
-            if(intakeMode) {
-                intakeMode = false;
+            if(intakeMode == 0) {
+                intakeMode = 1;
+            } else if(intakeMode == 1){
+                intakeMode = 2;
+            } else if(intakeMode == 2) {
+                intakeMode = 3;
             } else {
-                intakeMode = true;
+                intakeMode = 0;
             }
         } else if(gamepad1.left_bumper) {
             leftBumperWasPressed = false;
+            intakeState = 0;
         }
 
-        if(intakeMode) {
+        if(intakeMode == 1) {
             leftIntakeMotor.setPower(1);
             rightIntakeMotor.setPower(1);
             leftIntakeServoPosition = leftIntakeServoPosition - .02;
@@ -580,6 +525,10 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
             if(rightIntakeServoPosition > 1) {
                 rightIntakeServoPosition = .65;
                 leftIntakeServoPosition = .35;
+            }
+        } else if(intakeMode == 2) {
+            if(intakeState == 0) {
+
             }
         }
         leftIntakeServo.setPosition(leftIntakeServoPosition);
@@ -600,8 +549,10 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
             yWasPressed = true;
             if (autoMovingFoundation == false) {
                 autoMovingFoundation = true;
+                hookServo.setPosition(.37);
             } else {
                 autoMovingFoundation = false;
+                hookServo.setPosition(.75);
                 foundationState = 0;
             }
 
@@ -610,7 +561,7 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
         }
 
         if(autoMovingFoundation) {
-            driverHasControl = false;
+            /*driverHasControl = false;
             if (foundationState == 0) {
                 double goalAngle = 0;
                 double distance1 = Math.abs(extraClasses.convertAngle(angleDouble) - goalAngle);
@@ -704,7 +655,7 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
                     rightMotor.setPower(.2);
                     rightMotor2.setPower(.2);
                 }
-            }
+            }*/
         }
     }
     public void pathFindingButton() {
@@ -724,7 +675,7 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
             if(pathFindingModeFirstTime) {
                 pathFindingModeFirstTime = false;
                 ArrayList<Point> Points = new ArrayList<>();
-                //followPath.createNewPath(Points, getVelocity(), getLocation(), .75, 1, .4);
+                followPath.createNewPath(Points, getVelocity(), getLocation(), .75, 1, .4);
             }
             //followPath.seek();
             //leftMotor.setPower(followPath.getLeftPower());
@@ -735,25 +686,17 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
 
         }
     }
-    public void trackVelocityandLocation() {
+    public Point getVelocity() {
         //Velocity part
-        double currentTime = System.currentTimeMillis();
-        double timeChange = currentTime - previousTime;
-        double currentSideEncoder = leftMotor.getCurrentPosition();
-        double currentMidEncoder = middleMotor.getCurrentPosition();
-        double currentX = currentMidEncoder * Math.cos(Math.toRadians(angleDouble) + currentSideEncoder * Math.sin(Math.toRadians(angleDouble)));
-        double currentY = currentMidEncoder * Math.sin(Math.toRadians(angleDouble) + currentSideEncoder * Math.sin(Math.toRadians(angleDouble)));
-        double xChange = currentX - previousX;
-        double yChange = currentY - previousY;
-        double xVelocity = currentX / timeChange;
-        double yVelocity = currentY / timeChange;
-        double velocityMagnitude = Math.sqrt(Math.pow(xChange,2) + Math.pow(yChange,2));
-        velocity = new Point(velocityMagnitude,angleDouble);
-
-        //Location part
-        previousTime = currentTime;
-        previousX = currentSideEncoder;
-        previousY = currentMidEncoder;
+        double velocityMagnitude = Math.sqrt(Math.pow(leftMotor.getVelocity(),2) + Math.pow(middleMotor.getVelocity(),2));
+        Point velocity = new Point(velocityMagnitude,angleDouble);
+        return velocity;
+    }
+    public Point getLocation() {
+        double locationX = 0;
+        double locationY = 0;
+        Point location = new Point(locationX,locationY);
+        return location;
     }
     static String formatAngle(AngleUnit angleUnit, double angle) {
         return formatDegrees(AngleUnit.DEGREES.fromUnit(angleUnit, angle));

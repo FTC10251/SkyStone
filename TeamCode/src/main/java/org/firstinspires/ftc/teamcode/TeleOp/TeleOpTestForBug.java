@@ -185,7 +185,7 @@ public class TeleOpTestForBug extends LinearOpMode {
 
         pidStuff = leftMotor.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER);
         pidStuff.p = 10;
-        pidStuff.i = 2;
+        pidStuff.i = 10;
         pidStuff.d = 0;
         pidStuff.f = 14;
         pidStuff.algorithm = MotorControlAlgorithm.PIDF;
