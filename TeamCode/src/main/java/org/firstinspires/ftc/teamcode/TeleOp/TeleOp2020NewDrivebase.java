@@ -110,6 +110,7 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
     Servo leftIntakeServo;
     Servo clawServo;
     Servo hookServo;
+    Servo holdServo;
     WebcamName webcamName = null;
 
     //Sensors
@@ -144,7 +145,8 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
         rightIntakeServo = hardwareMap.get(Servo.class, "Intake Servo Right");
         leftIntakeServo = hardwareMap.get(Servo.class, "Intake Servo Left");
         hookServo = hardwareMap.get(Servo.class, "Hook Servo");
-        //clawServo = hardwareMap.get(Servo.class, "clawServo");
+        clawServo = hardwareMap.get(Servo.class, "Claw Servo");
+        holdServo = hardwareMap.get(Servo.class, "Hold Servo");
         arm = (DcMotorEx) hardwareMap.get(DcMotor.class, "Arm");
         rangeSensorBack = hardwareMap.get(DistanceSensor.class, "Range Sensor Back");
         rangeSensorLeft = hardwareMap.get(DistanceSensor.class, "Range Sensor Left");
@@ -165,11 +167,14 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
 
         hookServo.setPosition(.75);
 
+        arm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
         leftMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         leftMotor2.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         rightMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         rightMotor2.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         middleMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        arm.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
 
         leftMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
@@ -217,6 +222,9 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
             posX = posX + velX * timeDifferencePosition;
             posY = posY + velY * timeDifferencePosition;
             timeBefore = System.currentTimeMillis();
+            telemetry.addData("Arm Pos", arm.getCurrentPosition());
+            telemetry.addData("Arm Mode", intakeMode);
+            telemetry.addData("Arm State", intakeState);
             telemetry.addData("Adjusted Angle", extraClasses.convertAngle(angleDouble));
             telemetry.addData("Auto Scoring Mode", autoScoringMode);
             telemetry.addData("Back Distance", rangeSensorBack.getDistance(DistanceUnit.CM));
@@ -503,32 +511,75 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
     public void controlIntake(){
         if(gamepad1.left_bumper && leftBumperWasPressed == false) {
             leftBumperWasPressed = true;
-            if(intakeMode == 0) {
+            if(intakeMode == 0) { //nothing
                 intakeMode = 1;
-            } else if(intakeMode == 1){
+                intakeState = 0;
+            } else if(intakeMode == 1){ //activate intake
                 intakeMode = 2;
-            } else if(intakeMode == 2) {
+                intakeState = 0;
+            } else if(intakeMode == 2) { //start arm motion
                 intakeMode = 3;
-            } else {
-                intakeMode = 0;
+                intakeState = 0;
             }
         } else if(gamepad1.left_bumper) {
             leftBumperWasPressed = false;
-            intakeState = 0;
         }
 
         if(intakeMode == 1) {
-            leftIntakeMotor.setPower(1);
-            rightIntakeMotor.setPower(1);
-            leftIntakeServoPosition = leftIntakeServoPosition - .02;
-            rightIntakeServoPosition = rightIntakeServoPosition + .02;
-            if(rightIntakeServoPosition > 1) {
-                rightIntakeServoPosition = .65;
-                leftIntakeServoPosition = .35;
+            if(arm.getCurrentPosition() > -400) {
+                arm.setTargetPosition(-500);
+                if(arm.getMode() != DcMotor.RunMode.RUN_TO_POSITION) {
+                    arm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                }
+                arm.setPower(.5);
+            }
+            if(arm.getCurrentPosition() <= -400) {
+                arm.setPower(0);
+                leftIntakeMotor.setPower(1);
+                rightIntakeMotor.setPower(1);
+                leftIntakeServoPosition = leftIntakeServoPosition - .02;
+                rightIntakeServoPosition = rightIntakeServoPosition + .02;
+                if (rightIntakeServoPosition > 1) {
+                    rightIntakeServoPosition = .65;
+                    leftIntakeServoPosition = .35;
+                }
             }
         } else if(intakeMode == 2) {
+            leftIntakeMotor.setPower(0);
+            rightIntakeMotor.setPower(1);
             if(intakeState == 0) {
-
+                clawServo.setPosition(.66);
+                arm.setTargetPosition(-150);
+                arm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                arm.setPower(.4);
+                intakeState = 1;
+            } else if(intakeState == 1) {
+                if(extraClasses.closeEnough(arm.getCurrentPosition(),-150,30)) {
+                    intakeState = 2;
+                    arm.setPower(0);
+                    startingTime = System.currentTimeMillis();
+                }
+            } else if(intakeState == 2) {
+                double timeDifference = System.currentTimeMillis() - startingTime;
+                if(timeDifference > 1000) {
+                    clawServo.setPosition(.28);
+                    startingTime = System.currentTimeMillis();
+                    intakeState = 3;
+                }
+            } else if(intakeState == 3) {
+                double timeDifference = System.currentTimeMillis() - startingTime;
+                if(timeDifference > 1000) {
+                    arm.setTargetPosition(-500);
+                    arm.setPower(.5);
+                }
+            }
+        }
+        if(intakeMode == 3) {
+            arm.setTargetPosition(-3000);
+            arm.setPower(1);
+            if(extraClasses.closeEnough(arm.getCurrentPosition(),-3000,50)) {
+                intakeMode = 0;
+                arm.setPower(0);
             }
         }
         leftIntakeServo.setPosition(leftIntakeServoPosition);
