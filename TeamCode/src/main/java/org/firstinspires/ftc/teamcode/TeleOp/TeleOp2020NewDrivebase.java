@@ -67,8 +67,8 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
     double velX,velY,posX,posY;
     double autoScoringMode = 0;
     double rotation = 0;
-    double leftIntakeServoPosition = .35;
-    double rightIntakeServoPosition = .65;
+    double leftIntakeServoPosition = .52;
+    double rightIntakeServoPosition = .2;
 
     int blockPosY = 0;
     int blockPosX = 0;
@@ -212,7 +212,7 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
             moveFoundationOutOfDepot();
             //tankDriveOdometry();
             autoScoreMode();
-            //moveArm();
+            moveArm();
             controlIntake();
             pathFindingButton();
 
@@ -272,7 +272,7 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
                 leftMotor2.setPower(speed * calculator.getLeftDrive() /*+ sideChangePower*/);
                 rightMotor.setPower(speed * calculator.getRightDrive() /*- sideChangePower*/);
                 rightMotor2.setPower(speed * calculator.getRightDrive() /*- sideChangePower*/);
-                middleMotor.setPower(speed * calculator.getMiddleDrive() * 4);
+                middleMotor.setPower(speed * calculator.getMiddleDrive() * 2);
             }
             driverHasControl = true;
         }
@@ -360,14 +360,24 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
         if (!armFlipper.isBusy() && gamepad2.right_stick_x != 0) {
             armFlipper.setPower(gamepad2.right_stick_x);
         }*/
-        if (gamepad1.a && newAPressed2) {
-            if (ExtraClasses.closeEnough(clawServo.getPosition(), /* open*/ .5, .05)) {
+        if(gamepad2.dpad_down) {
+            if(arm.getMode() != DcMotor.RunMode.RUN_USING_ENCODER) {
+                arm.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            }
+            arm.setPower(.3);
+        } else if(gamepad2.dpad_up) {
+            if(arm.getMode() != DcMotor.RunMode.RUN_USING_ENCODER) {
+                arm.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            }
+            arm.setPower(-.3);
+        } else {
+            arm.setPower(0);
+        }
+        if (gamepad2.a && newAPressed2) {
+            if (ExtraClasses.closeEnough(clawServo.getPosition(), /* open*/ .6, .1)) {
                 clawServo.setPosition(/* closed*/.28);
-            } else if (ExtraClasses.closeEnough(clawServo.getPosition(), /* closed*/ .28, .05)) {
-                clawServo.setPosition(/* open*/.5);
-            } else {
-                telemetry.addData("Something went wrong and it is all darby's fault - opening servo", 2);
-                clawServo.setPosition(/* open*/.5);
+            } else if (ExtraClasses.closeEnough(clawServo.getPosition(), /* closed*/ .28, .1)) {
+                clawServo.setPosition(/* open*/.6);
             }
         } else if (!gamepad1.a) {
             newAPressed2 = false;
@@ -509,6 +519,7 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
 
     }
     public void controlIntake(){
+        holdServo.setPosition(.68);
         if(gamepad1.left_bumper && leftBumperWasPressed == false) {
             leftBumperWasPressed = true;
             if(intakeMode == 0) { //nothing
@@ -521,7 +532,7 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
                 intakeMode = 3;
                 intakeState = 0;
             }
-        } else if(gamepad1.left_bumper) {
+        } else if(!gamepad1.left_bumper) {
             leftBumperWasPressed = false;
         }
 
@@ -539,22 +550,22 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
                 rightIntakeMotor.setPower(1);
                 leftIntakeServoPosition = leftIntakeServoPosition - .02;
                 rightIntakeServoPosition = rightIntakeServoPosition + .02;
-                if (rightIntakeServoPosition > 1) {
-                    rightIntakeServoPosition = .65;
-                    leftIntakeServoPosition = .35;
+                if (rightIntakeServoPosition > .7) {
+                    rightIntakeServoPosition = .33;
+                    leftIntakeServoPosition = .52;
                 }
             }
         } else if(intakeMode == 2) {
             leftIntakeMotor.setPower(0);
-            rightIntakeMotor.setPower(1);
+            rightIntakeMotor.setPower(0);
             if(intakeState == 0) {
                 clawServo.setPosition(.66);
-                arm.setTargetPosition(-150);
+                arm.setTargetPosition(-0);
                 arm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
                 arm.setPower(.4);
                 intakeState = 1;
             } else if(intakeState == 1) {
-                if(extraClasses.closeEnough(arm.getCurrentPosition(),-150,30)) {
+                if(extraClasses.closeEnough(arm.getCurrentPosition(),-0,30)) {
                     intakeState = 2;
                     arm.setPower(0);
                     startingTime = System.currentTimeMillis();

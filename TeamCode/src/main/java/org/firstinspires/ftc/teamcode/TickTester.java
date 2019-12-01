@@ -95,8 +95,7 @@ public class TickTester extends OpMode {
         arm = (DcMotorEx) hardwareMap.get(DcMotor.class, "Arm");
         rangeSensor = hardwareMap.get(DistanceSensor.class, "Range Sensor Left");
         rightIntakeServo = hardwareMap.get(Servo.class, "Intake Servo Right");
-        leftIntakeServo = hardwareMap.get(Servo.class, "Intake Servo Left");
-        hookServo = hardwareMap.get(Servo.class, "Hold Servo");
+        leftIntakeServo = hardwareMap.get(Servo.class, "Hold Servo");
         leftMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         rightMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         middleMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
@@ -131,17 +130,14 @@ public class TickTester extends OpMode {
         leftMotor2.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER,pidStuff);
         rightMotor2.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER,pidStuff);
 
-        leftIntakeServo.setPosition(0);
-        rightIntakeServo.setPosition(1);
-
     }
 
     @Override
     public void loop() {
         if(gamepad1.left_bumper) {
-            leftIntakeServoPos = leftIntakeServoPos + .01;
+            leftIntakeServoPos = leftIntakeServoPos + .02;
         } else if(gamepad1.left_trigger == 1) {
-            leftIntakeServoPos = leftIntakeServoPos - .01;
+            leftIntakeServoPos = leftIntakeServoPos - .02;
         } else {
 
         }
@@ -155,7 +151,6 @@ public class TickTester extends OpMode {
         rightMotor2.setPower(gamepad1.left_stick_y);
         middleMotor.setPower(gamepad1.left_stick_x);
         telemetry.addData("Arm", arm.getCurrentPosition());
-        telemetry.addData("Hook Servo", hookServo.getPosition());
         telemetry.addData("Hook Servo should", leftIntakeServoPos);
         telemetry.addData("Left Motor ", leftMotor.getCurrentPosition());
         telemetry.addData("Left Motor 2", leftMotor2.getCurrentPosition());
