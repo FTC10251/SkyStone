@@ -5,31 +5,18 @@ import android.graphics.Point;
 import android.util.Range;
 
 import com.qualcomm.hardware.bosch.BNO055IMU;
-import com.qualcomm.hardware.bosch.JustLoggingAccelerationIntegrator;
 import com.qualcomm.hardware.modernrobotics.ModernRoboticsI2cRangeSensor;
+import com.qualcomm.hardware.modernrobotics.ModernRoboticsTouchSensor;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.eventloop.opmode.OpMode;
-import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.hardware.AnalogInput;
-import com.qualcomm.robotcore.hardware.CRServo;
-import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorController;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.DistanceSensor;
-import com.qualcomm.robotcore.hardware.GyroSensor;
-import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.MotorControlAlgorithm;
-import com.qualcomm.robotcore.hardware.OpticalDistanceSensor;
-import com.qualcomm.robotcore.hardware.PIDCoefficients;
 import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.hardware.Servo;
-import com.qualcomm.robotcore.hardware.ServoController;
-import com.qualcomm.robotcore.hardware.TouchSensor;
-import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcontroller.external.samples.HardwarePushbot;
 import org.firstinspires.ftc.robotcore.external.ClassFactory;
@@ -44,6 +31,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 
 import com.qualcomm.hardware.modernrobotics.ModernRoboticsI2cGyro;
+import com.qualcomm.robotcore.hardware.TouchSensor;
 
 import org.firstinspires.ftc.robotcore.external.navigation.Position;
 import org.firstinspires.ftc.robotcore.external.navigation.RelicRecoveryVuMark;
@@ -89,6 +77,9 @@ public class SkyStoneAutonomousUpdated extends LinearOpMode {
     double startPos;
     double angleDouble = 0;
     double blockPosition = 0;
+    public static double holdServoPos = .58;
+    public static double servoClosedPos = .15;
+    public static double servoOpenPos = .56;
     boolean firstTime = true;
     boolean finished = true;
     DcMotorEx leftMotor;
@@ -110,6 +101,7 @@ public class SkyStoneAutonomousUpdated extends LinearOpMode {
     WebcamName webcamName = null;
     DistanceSensor rangeSensorLeft;
     DistanceSensor rangeSensorBack;
+    TouchSensor touchSensor;
 
     //Vuforia Variables
     private static final float mmPerInch = 25.4f;
@@ -162,6 +154,9 @@ public class SkyStoneAutonomousUpdated extends LinearOpMode {
         webcamName = hardwareMap.get(WebcamName.class, "Webcam 1");
         rangeSensorLeft = hardwareMap.get(DistanceSensor.class, "Range Sensor Left");
         rangeSensorBack = hardwareMap.get(DistanceSensor.class, "Range Sensor Back");
+        touchSensor = hardwareMap.get(TouchSensor.class, "Touch Sensor");
+
+        // set the digital channel to input.
 
         /*
          * Initialize the drive system variables.
@@ -248,10 +243,10 @@ public class SkyStoneAutonomousUpdated extends LinearOpMode {
         telemetry.update();
         targetsSkyStone.activate();
         hookServo.setPosition(.75);
-        leftIntakeServo.setPosition(.52);
+        leftIntakeServo.setPosition(1);
         rightIntakeServo.setPosition(.33);
-        clawServo.setPosition(.28);
-        holdServo.setPosition(.68);
+        clawServo.setPosition(servoClosedPos);
+        holdServo.setPosition(holdServoPos);
         while (!isStarted() && !isStopRequested()) {
             // check all the trackable targets to see which one (if any) is visible.
             targetVisible = false;
@@ -287,22 +282,20 @@ public class SkyStoneAutonomousUpdated extends LinearOpMode {
             }
             telemetry.update();
         }
-        autoScore();
-        Thread.sleep(60000);
         //Set Intake Position
         moveIntakeAndArm();
 
         //Move forward to pick up block
         if(blockPosition == 0) { //Left
             encoderDriveProfiled(.2,.4,.5,8,1,6,0,false);
-            turnInCircleProfiled(30,2,1,40, .5,.1,.4,0,4,0);
-            leftIntakeServo.setPosition(.2);
+            turnInCircleProfiled(30,2,1,30, .5,.1,.4,0,10,0);
+            leftIntakeServo.setPosition(.75);
             rightIntakeServo.setPosition(.7);
             Thread.sleep(300);
-            turnInCircleProfiled(30,2,1,40, -.1,-.1,-.4,2,4,0);
+            turnInCircleProfiled(10,2,1,30, -.1,-.1,-.4,2,4,0);
         } else if(blockPosition == 1) { //Mid
             encoderDriveProfiled(.2, .1, .5, 29, 1, 6, 0, true);
-            leftIntakeServo.setPosition(.2);
+            leftIntakeServo.setPosition(.75);
             rightIntakeServo.setPosition(.7);
             Thread.sleep(300);
 
@@ -311,7 +304,7 @@ public class SkyStoneAutonomousUpdated extends LinearOpMode {
         } else { //Right
             encoderDriveProfiled(.2,.4,.5,8,1,6,0,false);
             turnInCircleProfiled(30,2,-1,40, .5,.1,.4,0,4,0);
-            leftIntakeServo.setPosition(.2);
+            leftIntakeServo.setPosition(.75);
             rightIntakeServo.setPosition(.7);
             Thread.sleep(300);
             turnInCircleProfiled(30,2,-1,40, -.1,-.1,-.4,0,4,0);
@@ -831,7 +824,7 @@ public class SkyStoneAutonomousUpdated extends LinearOpMode {
         double maxSpeed = -.5;
         double minSpeed = -.1;
         double goalDistance = 4;
-        while (distance > goalDistance) {
+        while (!touchSensor.isPressed()) {
             distance = rangeSensorBack.getDistance(DistanceUnit.CM);
             double sidePower = minSpeed + ((maxSpeed - minSpeed) * ((distance - goalDistance)) / 50);
             telemetry.addData("Distance", distance);
@@ -850,7 +843,7 @@ public class SkyStoneAutonomousUpdated extends LinearOpMode {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        hookServo.setPosition(.37);
+        hookServo.setPosition(.3);
         try {
             Thread.sleep(500);
         } catch (InterruptedException e) {
@@ -998,14 +991,14 @@ public class SkyStoneAutonomousUpdated extends LinearOpMode {
     }
 
     public void autoScore() {
-        double goalAngle = 0;
+        double goalAngle = 180;
         double distanceDifferenceMid = 100;
         double distanceDifferenceBack = 100;
         while(!extraClasses.closeEnough(angleDouble, goalAngle, 3) || Math.abs(distanceDifferenceMid) > 2 || Math.abs(distanceDifferenceBack) > 2) {
             angles = imu.getAngularOrientation().toAxesReference(AxesReference.INTRINSIC).toAxesOrder(AxesOrder.ZYX);
-            angleDouble = Double.parseDouble(formatAngle(angles.angleUnit, angles.firstAngle));
+            angleDouble = extraClasses.convertAngle(Double.parseDouble(formatAngle(angles.angleUnit, angles.firstAngle)));
 
-            goalAngle = 0; //Just the starting angle I think
+            goalAngle = 180; //Just the starting angle I think
             double distance1 = Math.abs(angleDouble - goalAngle);
             double distance2 = Math.abs(Math.abs((360 - angleDouble)) - goalAngle);
             double angleError = distance1;
@@ -1021,60 +1014,81 @@ public class SkyStoneAutonomousUpdated extends LinearOpMode {
             angleAdjustPower = angleError / 60;
 
             //Find how far from the side wall it is
-            double setDistanceItShoudldBeBack = 24;
+            double setDistanceItShoudldBeBack = 33;
             double rangeSensorDistanceBack = rangeSensorBack.getDistance(DistanceUnit.CM);
             distanceDifferenceBack = rangeSensorDistanceBack - setDistanceItShoudldBeBack;
-            double frontPowerError = distanceDifferenceBack / 50;
+            double frontPowerError = distanceDifferenceBack / 35;
 
             //Find how far from the foundation it is
-            double setDistanceItShoudldBeMid = 58;
+            double setDistanceItShoudldBeMid = 57;
             double rangeSensorDistanceMid = rangeSensorLeft.getDistance(DistanceUnit.CM);
             double rangeSensorValueUsed = rangeSensorDistanceMid;
             distanceDifferenceMid = rangeSensorValueUsed - setDistanceItShoudldBeMid;
-            double middlePowerError = distanceDifferenceMid / 40;
+            double middlePowerError = distanceDifferenceMid / 15;
 
             leftMotor.setPower(-frontPowerError + angleAdjustPower);
             leftMotor2.setPower(-frontPowerError + angleAdjustPower);
             rightMotor.setPower(-frontPowerError + -angleAdjustPower);
             rightMotor2.setPower(-frontPowerError + -angleAdjustPower);
             middleMotor.setPower(middlePowerError);
+            telemetry.addData("Angle", angleDouble);
+            telemetry.addData("Angle Difference", angleError);
+            telemetry.addData("Mid Reading", rangeSensorDistanceMid);
+            telemetry.addData("Back Reading", rangeSensorDistanceBack);
+            telemetry.addData("Mid Difference", distanceDifferenceMid);
+            telemetry.addData("Back Difference", distanceDifferenceBack);
+            telemetry.update();
         }
         leftMotor.setPower(0);
         leftMotor2.setPower(0);
         rightMotor.setPower(0);
         rightMotor2.setPower(0);
         middleMotor.setPower(0);
-        arm.setTargetPosition(-3500);
+        telemetry.addLine("Done");
+        telemetry.addData("Angle", angleDouble);
+        telemetry.addData("Mid Reading", rangeSensorLeft.getDistance(DistanceUnit.CM));
+        telemetry.addData("Back Reading", rangeSensorBack.getDistance(DistanceUnit.CM));
+        telemetry.update();
+        arm.setMode(RUN_TO_POSITION);
+        arm.setTargetPosition(-3300);
         arm.setPower(.5);
+        try {
+            Thread.sleep(20000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
         arm.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        while(arm.isBusy()) {
+        while(!extraClasses.closeEnough(arm.getCurrentPosition(),-3300,50)) {
 
         }
-        clawServo.setPosition(.68);
+        arm.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        clawServo.setPosition(servoOpenPos);
         try {
-            Thread.sleep(400);
+            Thread.sleep(1000);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
         arm.setTargetPosition(-100);
         arm.setPower(.5);
+        arm.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
 
     }
 
     public void moveIntakeAndArm() {
-        holdServo.setPosition(.68);
+        holdServo.setPosition(holdServoPos);
         arm.setTargetPosition(-500);
         arm.setMode(RUN_TO_POSITION);
         arm.setPower(.5);
-        clawServo.setPosition(.6);
+        clawServo.setPosition(servoOpenPos);
 
         leftIntakeMotor.setPower(1);
         rightIntakeMotor.setPower(1);
     }
     public void pickUpSkystone() {
-        leftIntakeServo.setPosition(.52);
-        rightIntakeServo.setPosition(.33);
-        holdServo.setPosition(.68);
+        leftIntakeServo.setPosition(1);
+        rightIntakeServo.setPosition(.75);
+        holdServo.setPosition(holdServoPos);
         arm.setTargetPosition(-50);
         arm.setMode(RUN_TO_POSITION);
         arm.setPower(.5);
@@ -1087,7 +1101,7 @@ public class SkyStoneAutonomousUpdated extends LinearOpMode {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        clawServo.setPosition(.28);
+        clawServo.setPosition(servoClosedPos);
         try {
             Thread.sleep(300);
         } catch (InterruptedException e) {

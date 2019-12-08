@@ -3,16 +3,23 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.hardware.bosch.JustLoggingAccelerationIntegrator;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.Servo;
 
+import org.firstinspires.ftc.robotcore.external.matrices.OpenGLMatrix;
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 
+import java.util.Locale;
+
+@TeleOp(name = "Hirsh's stupid program")
 public class RoboPosTune extends LinearOpMode {
     BNO055IMU imu;
     ExtraClasses extraClasses;
@@ -59,25 +66,30 @@ public class RoboPosTune extends LinearOpMode {
         leftIntakeMotor = (DcMotorEx) hardwareMap.get(DcMotor.class, "Intake Motor Left");
         arm = (DcMotorEx) hardwareMap.get(DcMotor.class, "Arm");
         clawServo = hardwareMap.get(Servo.class, "Claw Servo");
+        rangeSensorLeft = hardwareMap.get(DistanceSensor.class, "Range Sensor Left");
+        rangeSensorBack = hardwareMap.get(DistanceSensor.class, "Range Sensor Back");
+        leftMotor.setDirection(DcMotorSimple.Direction.REVERSE);
+        leftMotor2.setDirection(DcMotorSimple.Direction.REVERSE);
+        clawServo.setPosition(.15);
         waitForStart();
         while (opModeIsActive()) {
-
             angles = imu.getAngularOrientation().toAxesReference(AxesReference.INTRINSIC).toAxesOrder(AxesOrder.ZYX);
-            angleDouble = Double.parseDouble(ExcessStuff.formatAngle(angles.angleUnit, angles.firstAngle));
+            angleDouble = extraClasses.convertAngle(Double.parseDouble(formatAngle(angles.angleUnit, angles.firstAngle)));
+
             if (gamepad1.left_trigger != 0 && newLeftTriggerPressed){
-                back --;
+                back++;
                 newLeftTriggerPressed = false;
 
             }else if (gamepad1.right_trigger !=0  && newRightTriggerPressed){
-                back ++;
+                mid++;
                 newRightTriggerPressed = false;
             }
             if (gamepad1.left_bumper && newLeftBumperPressed){
-                mid --;
+                back--;
                 newLeftBumperPressed = false;
 
             }else if (gamepad1.right_bumper && newRightBumperPressed){
-                mid ++;
+                mid--;
                 newRightBumperPressed = false;
             }
             if (gamepad1.left_trigger == 0){
@@ -121,40 +133,48 @@ public class RoboPosTune extends LinearOpMode {
             double setDistanceItShoudldBeBack = back;
             double rangeSensorDistanceBack = rangeSensorBack.getDistance(DistanceUnit.CM);
             distanceDifferenceBack = rangeSensorDistanceBack - setDistanceItShoudldBeBack;
-            double frontPowerError = distanceDifferenceBack / 50;
+            double frontPowerError = distanceDifferenceBack / 35;
 
             //Find how far from the foundation it is
             double setDistanceItShoudldBeMid = mid;
             double rangeSensorDistanceMid = rangeSensorLeft.getDistance(DistanceUnit.CM);
             double rangeSensorValueUsed = rangeSensorDistanceMid;
             distanceDifferenceMid = rangeSensorValueUsed - setDistanceItShoudldBeMid;
-            double middlePowerError = distanceDifferenceMid / 40;
+            double middlePowerError = distanceDifferenceMid / 15;
 
             leftMotor.setPower(-frontPowerError + angleAdjustPower);
             leftMotor2.setPower(-frontPowerError + angleAdjustPower);
             rightMotor.setPower(-frontPowerError + -angleAdjustPower);
             rightMotor2.setPower(-frontPowerError + -angleAdjustPower);
             middleMotor.setPower(middlePowerError);
+            telemetry.addData("Angle", angleDouble);
+            telemetry.addData("Angle Difference", angleError);
+            telemetry.addData("Mid Reading", rangeSensorDistanceMid);
+            telemetry.addData("Back Reading", rangeSensorDistanceBack);
+            telemetry.addData("Mid Difference", distanceDifferenceMid);
+            telemetry.addData("Back Difference", distanceDifferenceBack);
+            telemetry.addData("Back Distance", rangeSensorBack.getDistance(DistanceUnit.CM));
+            telemetry.addData("Mid Distance", rangeSensorLeft.getDistance(DistanceUnit.CM));
+            telemetry.update();
         }
-        leftMotor.setPower(0);
-        leftMotor2.setPower(0);
-        rightMotor.setPower(0);
-        rightMotor2.setPower(0);
-        middleMotor.setPower(0);
-        arm.setTargetPosition(-3500);
-        arm.setPower(.5);
-        arm.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        if(arm.isBusy()) {
+        else {
+            leftMotor.setPower(0);
+            leftMotor2.setPower(0);
+            rightMotor.setPower(0);
+            rightMotor2.setPower(0);
+            middleMotor.setPower(0);
+        }
 
-        }
-        clawServo.setPosition(.68);
-        try {
-            Thread.sleep(400);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        arm.setTargetPosition(-100);
-        arm.setPower(.5);
+    }
+    String formatAngle(AngleUnit angleUnit, double angle) {
+        return formatDegrees(AngleUnit.DEGREES.fromUnit(angleUnit, angle));
+    }
 
+    String formatDegrees(double degrees) {
+        return String.format(Locale.getDefault(), "%.1f", AngleUnit.DEGREES.normalize(degrees));
+    }
+
+    String format(OpenGLMatrix transformationMatrix) {
+        return (transformationMatrix != null) ? transformationMatrix.formatAsTransform() : "null";
     }
 }

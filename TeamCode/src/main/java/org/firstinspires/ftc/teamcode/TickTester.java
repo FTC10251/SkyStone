@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.hardware.bosch.JustLoggingAccelerationIntegrator;
 import com.qualcomm.hardware.modernrobotics.ModernRoboticsI2cRangeSensor;
+import com.qualcomm.hardware.modernrobotics.ModernRoboticsTouchSensor;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -13,6 +14,7 @@ import com.qualcomm.robotcore.hardware.MotorControlAlgorithm;
 import com.qualcomm.robotcore.hardware.PIDCoefficients;
 import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.hardware.TouchSensor;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
@@ -42,6 +44,7 @@ public class TickTester extends OpMode {
     Servo leftIntakeServo;
     Servo rightIntakeServo;
     Servo hookServo;
+    TouchSensor touchSensor;
 
     String angleDouble = "hi";
     Orientation angles;
@@ -93,9 +96,10 @@ public class TickTester extends OpMode {
         rightMotor2 = (DcMotorEx) hardwareMap.get(DcMotor.class, "Right Motor Back");
         middleMotor = (DcMotorEx)hardwareMap.get(DcMotor.class, "Middle Motor");
         arm = (DcMotorEx) hardwareMap.get(DcMotor.class, "Arm");
-        rangeSensor = hardwareMap.get(DistanceSensor.class, "Range Sensor Left");
+        rangeSensor = hardwareMap.get(DistanceSensor.class, "Range Sensor Back");
         rightIntakeServo = hardwareMap.get(Servo.class, "Intake Servo Right");
-        leftIntakeServo = hardwareMap.get(Servo.class, "Hold Servo");
+        leftIntakeServo = hardwareMap.get(Servo.class, "Rotation Servo");
+        touchSensor = hardwareMap.get(TouchSensor.class, "Touch Sensor");
         leftMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         rightMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         middleMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
@@ -145,12 +149,20 @@ public class TickTester extends OpMode {
         rightIntakeServo.setPosition(leftIntakeServoPos);
         angles   = imu.getAngularOrientation().toAxesReference(AxesReference.INTRINSIC).toAxesOrder(AxesOrder.ZYX);
         angleDouble = formatAngle(angles.angleUnit, angles.firstAngle);
-        leftMotor.setPower(gamepad1.left_stick_y);
-        leftMotor2.setPower(gamepad1.left_stick_y);
-        rightMotor.setPower(gamepad1.left_stick_y);
-        rightMotor2.setPower(gamepad1.left_stick_y);
-        middleMotor.setPower(gamepad1.left_stick_x);
+        /*if(gamepad1.left_trigger == 1) {
+            leftIntakeServo.setPosition(leftIntakeServo.getPosition() - .01);
+        }
+        if(gamepad1.left_bumper) {
+            leftIntakeServo.setPosition(leftIntakeServo.getPosition() + .01);
+        }
+        if(gamepad1.right_bumper){
+            rightIntakeServo.setPosition(rightIntakeServo.getPosition() + .01);
+        }
+        if(gamepad1.right_trigger == 1) {
+            rightIntakeServo.setPosition(rightIntakeServo.getPosition() + .01);
+        }*/
         telemetry.addData("Arm", arm.getCurrentPosition());
+        telemetry.addData("Arm Angle", armAngle(arm.getCurrentPosition()));
         telemetry.addData("Hook Servo should", leftIntakeServoPos);
         telemetry.addData("Left Motor ", leftMotor.getCurrentPosition());
         telemetry.addData("Left Motor 2", leftMotor2.getCurrentPosition());
@@ -158,33 +170,21 @@ public class TickTester extends OpMode {
         telemetry.addData("Right motor2 ", rightMotor2.getCurrentPosition());
         telemetry.addData("PRedicted Distance", leftMotor.getCurrentPosition()/COUNTS_PER_INCH);
         telemetry.addData("Angle", ExtraClasses.convertAngle(Double.parseDouble(angleDouble)));
+        telemetry.addData("Touch Sensor", touchSensor.isPressed());
         telemetry.addData("Distance", rangeSensor.getDistance(DistanceUnit.CM));
+        telemetry.addData("Left Intake", leftIntakeServo.getPosition());
+        telemetry.addData("Right Intake", rightIntakeServo.getPosition());
         telemetry.update();
     }
-    public double elbowAngle(double currentPos) {
-        return 0;
-    }
-    public double shoulderAngle(double currentPos) {
-        double finalPos = ((-currentPos+4330)/(2350*4)) * 360;
-        return finalPos;
+    public double armAngle (double currentArmPos) {
+        double angle = Math.abs(currentArmPos) / 13.333 + 50;
+        return angle;
     }
     String formatAngle(AngleUnit angleUnit, double angle) {
         return formatDegrees(AngleUnit.DEGREES.fromUnit(angleUnit, angle));
     }
     String formatDegrees(double degrees) {
         return String.format(Locale.getDefault(), "%.1f", AngleUnit.DEGREES.normalize(degrees));
-    }
-    public void resetEncoders() {
-        leftMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        rightMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        middleMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-
-        leftMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        rightMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        middleMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-
-
-
     }
     public double convertAngle(String angle) {
         double angleUsed = Double.parseDouble(angle);
