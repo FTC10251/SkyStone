@@ -163,8 +163,8 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
         holdServo = hardwareMap.get(Servo.class, "Hold Servo");
         rotationServo = hardwareMap.get(Servo.class, "Rotation Servo");
         arm = (DcMotorEx) hardwareMap.get(DcMotor.class, "Arm");
-        rangeSensorBack = hardwareMap.get(DistanceSensor.class, "Range Sensor Back");
-        rangeSensorLeft = hardwareMap.get(DistanceSensor.class, "Range Sensor Left");
+        //rangeSensorBack = hardwareMap.get(DistanceSensor.class, "Range Sensor Back");
+        //rangeSensorLeft = hardwareMap.get(DistanceSensor.class, "Range Sensor Left");
         touchSensor = hardwareMap.get(TouchSensor.class,"Touch Sensor");
         webcamName = hardwareMap.get(WebcamName.class, "Webcam 1");
         calculator = new HDriveFCCalc();
@@ -182,8 +182,6 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
         holdAngle = angleDouble;
 
         hookServo.setPosition(.75);
-        rotationServo.setPosition(.6);
-        holdServo.setPosition(holdServoPos);
         arm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
         leftMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
@@ -246,8 +244,8 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
             telemetry.addData("Arm Mode", intakeMode);
             telemetry.addData("Arm State", intakeState);
             telemetry.addData("Auto Scoring Mode", autoScoringMode);
-            telemetry.addData("Back Distance", rangeSensorBack.getDistance(DistanceUnit.CM));
-            telemetry.addData("Left Distance", rangeSensorLeft.getDistance(DistanceUnit.CM));
+            //telemetry.addData("Back Distance", rangeSensorBack.getDistance(DistanceUnit.CM));
+            //telemetry.addData("Left Distance", rangeSensorLeft.getDistance(DistanceUnit.CM));
             telemetry.addData("Angle actual", extraClasses.convertAngle(angleDouble + offset));
             telemetry.addData("Acceleration", imu.getAcceleration());
             telemetry.addData("Block Pos X", blockPosX);
@@ -623,31 +621,24 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
         }
 
         if(intakeMode == 1) {
-            if(arm.getCurrentPosition() > -400) {
-                arm.setTargetPosition(-500);
-                if(arm.getMode() != DcMotor.RunMode.RUN_TO_POSITION) {
-                    arm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-                }
-                arm.setPower(.5);
+            arm.setTargetPosition(-500);
+            if(arm.getMode() != DcMotor.RunMode.RUN_TO_POSITION) {
+                arm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             }
+            arm.setPower(.5);
             if(arm.getCurrentPosition() <= -400) {
                 arm.setPower(0);
                 leftIntakeMotor.setPower(1);
                 rightIntakeMotor.setPower(1);
-                leftIntakeServoPosition = leftIntakeServoPosition - .02;
-                rightIntakeServoPosition = rightIntakeServoPosition + .02;
+                leftIntakeServoPosition = leftIntakeServoPosition - .01;
+                rightIntakeServoPosition = rightIntakeServoPosition + .01;
                 if (rightIntakeServoPosition > .55) {
                     rightIntakeServoPosition = .1;
                     leftIntakeServoPosition = 1;
                 }
             }
-        } else if(intakeMode == 2) {
-            leftIntakeServoPosition = .6;
-            rightIntakeServoPosition = .5;
-            leftIntakeMotor.setPower(0);
-            rightIntakeMotor.setPower(0);
         }
-        /*else if(intakeMode == 2) {
+        else if(intakeMode == 2) {
             leftIntakeMotor.setPower(0);
             rightIntakeMotor.setPower(0);
             rightIntakeServoPosition = .4;
@@ -690,7 +681,7 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
                 intakeMode = 0;
                 arm.setPower(0);
             }
-        }*/
+        }
         leftIntakeServo.setPosition(leftIntakeServoPosition);
         rightIntakeServo.setPosition(rightIntakeServoPosition);
     }
