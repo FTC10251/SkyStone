@@ -163,7 +163,7 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
         holdServo = hardwareMap.get(Servo.class, "Hold Servo");
         rotationServo = hardwareMap.get(Servo.class, "Rotation Servo");
         arm = (DcMotorEx) hardwareMap.get(DcMotor.class, "Arm");
-        //rangeSensorBack = hardwareMap.get(DistanceSensor.class, "Range Sensor Back");
+        rangeSensorBack = hardwareMap.get(DistanceSensor.class, "Range Sensor Back");
         //rangeSensorLeft = hardwareMap.get(DistanceSensor.class, "Range Sensor Left");
         touchSensor = hardwareMap.get(TouchSensor.class,"Touch Sensor");
         webcamName = hardwareMap.get(WebcamName.class, "Webcam 1");
@@ -244,7 +244,7 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
             telemetry.addData("Arm Mode", intakeMode);
             telemetry.addData("Arm State", intakeState);
             telemetry.addData("Auto Scoring Mode", autoScoringMode);
-            //telemetry.addData("Back Distance", rangeSensorBack.getDistance(DistanceUnit.CM));
+            telemetry.addData("Back Distance", rangeSensorBack.getDistance(DistanceUnit.CM));
             //telemetry.addData("Left Distance", rangeSensorLeft.getDistance(DistanceUnit.CM));
             telemetry.addData("Angle actual", extraClasses.convertAngle(angleDouble + offset));
             telemetry.addData("Acceleration", imu.getAcceleration());
@@ -621,13 +621,12 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
         }
 
         if(intakeMode == 1) {
-            arm.setTargetPosition(-500);
+            arm.setTargetPosition(-400);
             if(arm.getMode() != DcMotor.RunMode.RUN_TO_POSITION) {
                 arm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             }
             arm.setPower(.5);
-            if(arm.getCurrentPosition() <= -400) {
-                arm.setPower(0);
+            if(arm.getCurrentPosition() <= -350) {
                 leftIntakeMotor.setPower(1);
                 rightIntakeMotor.setPower(1);
                 leftIntakeServoPosition = leftIntakeServoPosition - .01;

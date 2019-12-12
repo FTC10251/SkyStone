@@ -92,7 +92,7 @@ public class DetectBlockWithCamera extends LinearOpMode {
 
     @Override
     public void runOpMode() throws InterruptedException {
-        webcamName = hardwareMap.get(WebcamName.class, "Webcam 2");
+        webcamName = hardwareMap.get(WebcamName.class, "Webcam 1");
         int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
         VuforiaLocalizer.Parameters parameters = new VuforiaLocalizer.Parameters(cameraMonitorViewId);
         parameters.vuforiaLicenseKey = VUFORIA_KEY;

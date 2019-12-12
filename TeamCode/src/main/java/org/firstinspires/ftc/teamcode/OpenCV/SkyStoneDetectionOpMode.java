@@ -41,6 +41,7 @@ public class SkyStoneDetectionOpMode extends LinearOpMode
 {
     OpenCvCamera webcam;
     SkystoneDetector skyStoneDetector;
+    SamplePipeline samplePipeline;
 
     @Override
     public void runOpMode()
@@ -56,7 +57,7 @@ public class SkyStoneDetectionOpMode extends LinearOpMode
          * single-parameter constructor instead (commented out below)
          */
         int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
-        webcam = OpenCvCameraFactory.getInstance().createWebcam(hardwareMap.get(WebcamName.class, "Webcam 2"), cameraMonitorViewId);
+        webcam = OpenCvCameraFactory.getInstance().createWebcam(hardwareMap.get(WebcamName.class, "Webcam 1"), cameraMonitorViewId);
 
         // OR...  Do Not Activate the Camera Monitor View
         //webcam = OpenCvCameraFactory.getInstance().createWebcam(hardwareMap.get(WebcamName.class, "Webcam 1"));
@@ -72,7 +73,8 @@ public class SkyStoneDetectionOpMode extends LinearOpMode
          * (while a streaming session is in flight) *IS* supported.
          */
         skyStoneDetector = new SkystoneDetector();
-        webcam.setPipeline(skyStoneDetector);
+        samplePipeline = new SamplePipeline();
+        webcam.setPipeline(samplePipeline);
 
         /*
          * Tell the webcam to start streaming images to us! Note that you must make sure
@@ -217,12 +219,12 @@ public class SkyStoneDetectionOpMode extends LinearOpMode
             Imgproc.rectangle(
                     input,
                     new Point(
-                            input.cols()/4,
-                            input.rows()/4),
+                            input.cols()/4f,
+                            input.rows()/4f),
                     new Point(
                             input.cols()*(3f/4f),
                             input.rows()*(3f/4f)),
-                    new Scalar(0, 255, 0), 4);
+                    new Scalar(0, 255, 0), 2);
 
             /**
              * NOTE: to see how to get data from your pipeline to your OpMode as well as how
