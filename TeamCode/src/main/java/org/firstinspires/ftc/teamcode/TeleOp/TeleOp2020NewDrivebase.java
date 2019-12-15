@@ -103,6 +103,8 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
     boolean firstTimeHoldArm = true;
     boolean hookUp = true;
     boolean backWasPressed = false;
+    boolean driverHasControlArm = true;
+    boolean driverIsMovingArm = false;
 
     float rightX;
     long rightStickTimer = 0;
@@ -220,19 +222,18 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
         waitForStart();
         timeBefore = System.currentTimeMillis();
         while (opModeIsActive()) {
+            driverIsMovingArm = false;
             angles = imu.getAngularOrientation().toAxesReference(AxesReference.INTRINSIC).toAxesOrder(AxesOrder.ZYX);
             angleDouble = Double.parseDouble(formatAngle(angles.angleUnit, angles.firstAngle));
             rotationServo.setPosition(.6);
-
-            holdArm();
+            manualScore();
+            controlIntake();
             moveTheBase();
             moveFoundationOutOfDepot();
             //tankDriveOdometry();
             //autoScoreMode();
-            manualScore();
-            moveArm();
-            controlIntake();
             //pathFindingButton();
+            holdArm();
 
             timeDifferencePosition = (System.currentTimeMillis() - timeBefore)/1000;
             velX = velX + (imu.getAcceleration().xAccel * timeDifferencePosition);
@@ -255,6 +256,8 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
             telemetry.addData("Back Distance", setDistanceItShouldBeBack);
             telemetry.addData("Hold Arm Pos", gamepad1.back);
             telemetry.addData("Hook Pos", hookUp);
+            telemetry.addData("Left Motor Back Pos", leftMotor2.getCurrentPosition());
+            telemetry.addData("Left Motor Front pos", leftMotor.getCurrentPosition());
             telemetry.update();
         }
     }
@@ -330,70 +333,6 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
 
 
 
-    public void moveArm() {
-        //closes claw and moves arm all the way ove the robot
-        /*if (gamepad2.y && newYPressed2) {
-            newYPressed2 = false;
-            switch (armPos) {
-                case 0:
-                    // currently home
-                    clawServo.setPosition(.5);
-                    time = System.currentTimeMillis();
-                    armFlipper.setMode(RUN_TO_POSITION);
-                    armFlipper.setTargetPosition(1);
-                    break;
-                case 1:
-                    // currently extended
-                    clawServo.setPosition(.28);
-                    time = System.currentTimeMillis();
-                    armFlipper.setMode(RUN_TO_POSITION);
-                    armFlipper.setTargetPosition(0);
-                    break;
-                default:
-                    telemetry.addData("Something went wrong and it is all darby's fault", 0);
-            }
-
-            armPos += 1;
-            armPos = armPos % 2;
-        } else if (!gamepad2.y) {
-            newYPressed2 = true;
-            if (armFlipper.isBusy() && System.currentTimeMillis() >= time + 1000) {
-                switch (armPos) {
-                    case 0:
-                        // trying to go home
-                        armFlipper.setPower(-1);
-                        break;
-                    case 1:
-                        // trying to extend
-                        armFlipper.setPower(1);
-                        break;
-                    default:
-                        telemetry.addData("Something went wrong and it is all darby's fault", 1);
-                }
-            }
-        } else if (armFlipper.isBusy() && System.currentTimeMillis() >= time + 1000) {
-            switch (armPos) {
-                case 0:
-                    // trying to go home
-                    armFlipper.setPower(-1);
-                    break;
-                case 1:
-                    // trying to extend
-                    armFlipper.setPower(1);
-                    break;
-                default:
-                    telemetry.addData("Something went wrong and it is all darby's fault", 69);
-            }
-
-
-        }
-        if (!armFlipper.isBusy() && gamepad2.right_stick_x != 0) {
-            armFlipper.setPower(gamepad2.right_stick_x);
-        }*/
-
-
-    }
-
     public void manualScore() {
         /*if (gamepad1.a && aWasPressed == false) {
             aWasPressed = true;
@@ -448,20 +387,19 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
         } else if(!gamepad1.x) {
             xWasPressed = false;
         }
+
         if (gamepad1.right_bumper) {
             if (arm.getMode() != DcMotor.RunMode.RUN_USING_ENCODER) {
                 arm.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
             }
             arm.setPower(.5);
+            driverIsMovingArm = true;
         } else if (gamepad1.right_trigger > .5) {
             if (arm.getMode() != DcMotor.RunMode.RUN_USING_ENCODER) {
                 arm.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
             }
             arm.setPower(-.5);
-        } else {
-            if(intakeMode != 1 && intakeMode != 2 && intakeMode != 3 ) {
-                arm.setPower(0);
-            }
+            driverIsMovingArm = true;
         }
     }
     public void autoScoreMode() {
@@ -626,6 +564,7 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
                 arm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             }
             arm.setPower(.5);
+            driverIsMovingArm = true;
             if(arm.getCurrentPosition() <= -350) {
                 leftIntakeMotor.setPower(1);
                 rightIntakeMotor.setPower(1);
@@ -648,8 +587,16 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
                 arm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
                 arm.setPower(.4);
                 intakeState = 1;
+                startingTime = System.currentTimeMillis();
+                driverIsMovingArm = true;
             } else if(intakeState == 1) {
-                if(extraClasses.closeEnough(arm.getCurrentPosition(),-0,30)) {
+                boolean timeOut = false;
+                double timeDifference = System.currentTimeMillis() - startingTime;
+                driverIsMovingArm = true;
+                if(timeDifference > 1500) {
+                    timeOut = true;
+                }
+                if(extraClasses.closeEnough(arm.getCurrentPosition(),-0,30) || timeOut) {
                     intakeState = 2;
                     arm.setPower(0);
                     startingTime = System.currentTimeMillis();
@@ -666,6 +613,7 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
                 if(timeDifference > 1000) {
                     arm.setTargetPosition(-300);
                     arm.setPower(.5);
+                    driverIsMovingArm = true;
                 }
                 if(timeDifference > 2500) {
                     leftIntakeServoPosition = 1;
@@ -676,6 +624,7 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
         if(intakeMode == 3) {
             arm.setTargetPosition(-2200);
             arm.setPower(.7);
+            driverIsMovingArm = true;
             if(extraClasses.closeEnough(arm.getCurrentPosition(),-2200,50)) {
                 intakeMode = 0;
                 arm.setPower(0);
@@ -695,17 +644,18 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
         }
     }
     public void holdArm() {
-        if(intakeMode == 0 && gamepad1.right_trigger == 0 && !gamepad1.right_bumper) {
-            arm.setTargetPosition((int) holdArmPos);
-            if (arm.getMode() != DcMotor.RunMode.RUN_TO_POSITION) {
-                arm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        if(driverIsMovingArm == false) {
+            if (intakeMode == 0) {
+                arm.setTargetPosition((int) holdArmPos);
+                if (arm.getMode() != DcMotor.RunMode.RUN_TO_POSITION) {
+                    arm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
-            }
-            arm.setPower(.4);
-            if (firstTimeHoldArm) {
-                firstTimeHoldArm = false;
-                holdArmPos = arm.getCurrentPosition();
-
+                }
+                arm.setPower(.4);
+                if (firstTimeHoldArm) {
+                    firstTimeHoldArm = false;
+                    holdArmPos = arm.getCurrentPosition();
+                }
             }
         } else {
             firstTimeHoldArm = true;

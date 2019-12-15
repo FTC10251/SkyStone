@@ -61,7 +61,7 @@ import static org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocaliz
 /**
  * Created by Luke on 9/25/2016. Final Far Auto
  */
-@Autonomous(name = "Competition Auto Red", group = "HDrive")
+@Autonomous(name = "Competition Auto Red ", group = "HDrive")
 public class CompAuto extends LinearOpMode {
     //Vuforia
     private static final String VUFORIA_KEY =

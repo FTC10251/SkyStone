@@ -282,6 +282,8 @@ public class SkyStoneAutonomousUpdated extends LinearOpMode {
             }
             telemetry.update();
         }
+        autoScore();
+        System.exit(0);
         //Set Intake Position
         moveIntakeAndArm();
 
@@ -1014,7 +1016,7 @@ public class SkyStoneAutonomousUpdated extends LinearOpMode {
             angleAdjustPower = angleError / 60;
 
             //Find how far from the side wall it is
-            double setDistanceItShoudldBeBack = 33;
+            double setDistanceItShoudldBeBack = 32;
             double rangeSensorDistanceBack = rangeSensorBack.getDistance(DistanceUnit.CM);
             distanceDifferenceBack = rangeSensorDistanceBack - setDistanceItShoudldBeBack;
             double frontPowerError = distanceDifferenceBack / 35;
@@ -1026,11 +1028,11 @@ public class SkyStoneAutonomousUpdated extends LinearOpMode {
             distanceDifferenceMid = rangeSensorValueUsed - setDistanceItShoudldBeMid;
             double middlePowerError = distanceDifferenceMid / 15;
 
-            leftMotor.setPower(-frontPowerError + angleAdjustPower);
-            leftMotor2.setPower(-frontPowerError + angleAdjustPower);
-            rightMotor.setPower(-frontPowerError + -angleAdjustPower);
-            rightMotor2.setPower(-frontPowerError + -angleAdjustPower);
-            middleMotor.setPower(middlePowerError);
+            //leftMotor.setPower(frontPowerError + angleAdjustPower);
+            //leftMotor2.setPower(frontPowerError + angleAdjustPower);
+            //rightMotor.setPower(frontPowerError + -angleAdjustPower);
+            //rightMotor2.setPower(frontPowerError + -angleAdjustPower);
+            //middleMotor.setPower(middlePowerError);
             telemetry.addData("Angle", angleDouble);
             telemetry.addData("Angle Difference", angleError);
             telemetry.addData("Mid Reading", rangeSensorDistanceMid);

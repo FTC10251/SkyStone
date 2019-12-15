@@ -66,7 +66,7 @@ public class RoboPosTune extends LinearOpMode {
         leftIntakeMotor = (DcMotorEx) hardwareMap.get(DcMotor.class, "Intake Motor Left");
         arm = (DcMotorEx) hardwareMap.get(DcMotor.class, "Arm");
         clawServo = hardwareMap.get(Servo.class, "Claw Servo");
-        rangeSensorLeft = hardwareMap.get(DistanceSensor.class, "Range Sensor Left");
+        //rangeSensorLeft = hardwareMap.get(DistanceSensor.class, "Range Sensor Left");
         rangeSensorBack = hardwareMap.get(DistanceSensor.class, "Range Sensor Back");
         leftMotor.setDirection(DcMotorSimple.Direction.REVERSE);
         leftMotor2.setDirection(DcMotorSimple.Direction.REVERSE);
@@ -136,25 +136,25 @@ public class RoboPosTune extends LinearOpMode {
             double frontPowerError = distanceDifferenceBack / 35;
 
             //Find how far from the foundation it is
-            double setDistanceItShoudldBeMid = mid;
+            /*double setDistanceItShoudldBeMid = mid;
             double rangeSensorDistanceMid = rangeSensorLeft.getDistance(DistanceUnit.CM);
             double rangeSensorValueUsed = rangeSensorDistanceMid;
             distanceDifferenceMid = rangeSensorValueUsed - setDistanceItShoudldBeMid;
-            double middlePowerError = distanceDifferenceMid / 15;
+            double middlePowerError = distanceDifferenceMid / 15;*/
 
             leftMotor.setPower(-frontPowerError + angleAdjustPower);
             leftMotor2.setPower(-frontPowerError + angleAdjustPower);
             rightMotor.setPower(-frontPowerError + -angleAdjustPower);
             rightMotor2.setPower(-frontPowerError + -angleAdjustPower);
-            middleMotor.setPower(middlePowerError);
+            //middleMotor.setPower(middlePowerError);
             telemetry.addData("Angle", angleDouble);
             telemetry.addData("Angle Difference", angleError);
-            telemetry.addData("Mid Reading", rangeSensorDistanceMid);
+            //telemetry.addData("Mid Reading", rangeSensorDistanceMid);
             telemetry.addData("Back Reading", rangeSensorDistanceBack);
             telemetry.addData("Mid Difference", distanceDifferenceMid);
             telemetry.addData("Back Difference", distanceDifferenceBack);
             telemetry.addData("Back Distance", rangeSensorBack.getDistance(DistanceUnit.CM));
-            telemetry.addData("Mid Distance", rangeSensorLeft.getDistance(DistanceUnit.CM));
+            //telemetry.addData("Mid Distance", rangeSensorLeft.getDistance(DistanceUnit.CM));
             telemetry.update();
         }
         else {
