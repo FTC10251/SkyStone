@@ -22,7 +22,7 @@ public class SetUpClaw extends LinearOpMode {
         while(opModeIsActive()) {
             clawServo.setPosition(SkyStoneAutonomousUpdated.servoOpenPos);
             holdServo.setPosition(SkyStoneAutonomousUpdated.holdServoPos);
-            rotationServo.setPosition(.6);
+            rotationServo.setPosition(.54);
             leftIntakeServo.setPosition(1);
         }
     }

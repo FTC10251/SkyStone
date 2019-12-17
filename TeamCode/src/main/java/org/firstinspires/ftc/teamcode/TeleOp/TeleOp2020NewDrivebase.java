@@ -225,7 +225,7 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
             driverIsMovingArm = false;
             angles = imu.getAngularOrientation().toAxesReference(AxesReference.INTRINSIC).toAxesOrder(AxesOrder.ZYX);
             angleDouble = Double.parseDouble(formatAngle(angles.angleUnit, angles.firstAngle));
-            rotationServo.setPosition(.6);
+            rotationServo.setPosition(.54);
             manualScore();
             controlIntake();
             moveTheBase();

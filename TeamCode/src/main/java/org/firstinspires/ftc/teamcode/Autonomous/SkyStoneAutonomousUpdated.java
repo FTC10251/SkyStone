@@ -62,6 +62,9 @@ import static org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocaliz
 
 /**
  * Created by Luke on 9/25/2016. Final Far Auto
+ *
+ * Notes:
+ * Positive Direction is intakeSide
  */
 @Autonomous(name = "SkyStone Auto Updated", group = "HDrive")
 public class SkyStoneAutonomousUpdated extends LinearOpMode {
@@ -95,6 +98,7 @@ public class SkyStoneAutonomousUpdated extends LinearOpMode {
     Servo hookServo;
     Servo clawServo;
     Servo holdServo;
+    Servo rotationServo;
 
     Orientation angles;
     PIDFCoefficients pidStuff;
@@ -151,6 +155,7 @@ public class SkyStoneAutonomousUpdated extends LinearOpMode {
         hookServo = hardwareMap.get(Servo.class, "Hook Servo");
         clawServo = hardwareMap.get(Servo.class, "Claw Servo");
         holdServo = hardwareMap.get(Servo.class, "Hold Servo");
+        rotationServo = hardwareMap.get(Servo.class, "Rotation Servo");
         webcamName = hardwareMap.get(WebcamName.class, "Webcam 1");
         rangeSensorLeft = hardwareMap.get(DistanceSensor.class, "Range Sensor Left");
         rangeSensorBack = hardwareMap.get(DistanceSensor.class, "Range Sensor Back");
@@ -243,10 +248,6 @@ public class SkyStoneAutonomousUpdated extends LinearOpMode {
         telemetry.update();
         targetsSkyStone.activate();
         hookServo.setPosition(.75);
-        leftIntakeServo.setPosition(1);
-        rightIntakeServo.setPosition(.33);
-        clawServo.setPosition(servoClosedPos);
-        holdServo.setPosition(holdServoPos);
         while (!isStarted() && !isStopRequested()) {
             // check all the trackable targets to see which one (if any) is visible.
             targetVisible = false;
@@ -282,8 +283,6 @@ public class SkyStoneAutonomousUpdated extends LinearOpMode {
             }
             telemetry.update();
         }
-        autoScore();
-        System.exit(0);
         //Set Intake Position
         moveIntakeAndArm();
 
@@ -294,7 +293,7 @@ public class SkyStoneAutonomousUpdated extends LinearOpMode {
             leftIntakeServo.setPosition(.75);
             rightIntakeServo.setPosition(.7);
             Thread.sleep(300);
-            turnInCircleProfiled(10,2,1,30, -.1,-.1,-.4,2,4,0);
+            turnInCircleProfiled(30,2,1,30, -.1,-.1,-.4,2,4,0);
         } else if(blockPosition == 1) { //Mid
             encoderDriveProfiled(.2, .1, .5, 29, 1, 6, 0, true);
             leftIntakeServo.setPosition(.75);
@@ -1028,10 +1027,10 @@ public class SkyStoneAutonomousUpdated extends LinearOpMode {
             distanceDifferenceMid = rangeSensorValueUsed - setDistanceItShoudldBeMid;
             double middlePowerError = distanceDifferenceMid / 15;
 
-            //leftMotor.setPower(frontPowerError + angleAdjustPower);
-            //leftMotor2.setPower(frontPowerError + angleAdjustPower);
-            //rightMotor.setPower(frontPowerError + -angleAdjustPower);
-            //rightMotor2.setPower(frontPowerError + -angleAdjustPower);
+            leftMotor.setPower(-frontPowerError + angleAdjustPower);
+            leftMotor2.setPower(-frontPowerError + angleAdjustPower);
+            rightMotor.setPower(-frontPowerError + -angleAdjustPower);
+            rightMotor2.setPower(-frontPowerError + -angleAdjustPower);
             //middleMotor.setPower(middlePowerError);
             telemetry.addData("Angle", angleDouble);
             telemetry.addData("Angle Difference", angleError);
@@ -1039,6 +1038,8 @@ public class SkyStoneAutonomousUpdated extends LinearOpMode {
             telemetry.addData("Back Reading", rangeSensorDistanceBack);
             telemetry.addData("Mid Difference", distanceDifferenceMid);
             telemetry.addData("Back Difference", distanceDifferenceBack);
+            telemetry.addData("Front Power Error", frontPowerError);
+            telemetry.addData("angle Adjust Power", angleAdjustPower);
             telemetry.update();
         }
         leftMotor.setPower(0);
@@ -1079,6 +1080,7 @@ public class SkyStoneAutonomousUpdated extends LinearOpMode {
 
     public void moveIntakeAndArm() {
         holdServo.setPosition(holdServoPos);
+        rotationServo.setPosition(.54);
         arm.setTargetPosition(-500);
         arm.setMode(RUN_TO_POSITION);
         arm.setPower(.5);
@@ -1091,6 +1093,7 @@ public class SkyStoneAutonomousUpdated extends LinearOpMode {
         leftIntakeServo.setPosition(1);
         rightIntakeServo.setPosition(.75);
         holdServo.setPosition(holdServoPos);
+        rotationServo.setPosition(.54);
         arm.setTargetPosition(-50);
         arm.setMode(RUN_TO_POSITION);
         arm.setPower(.5);
@@ -1125,6 +1128,21 @@ public class SkyStoneAutonomousUpdated extends LinearOpMode {
             position = 2;
         }
         return position;
+    }
+
+    public void ThreadSleepUpdated(double waitTime) {
+        double startingTime = System.currentTimeMillis();
+        boolean isDone = false;
+        telemetry.addData("Starting Sleep", waitTime);
+        telemetry.update();
+        while(!isDone && opModeIsActive()) {
+            double timeDifference = System.currentTimeMillis() - startingTime;
+            if(timeDifference > waitTime) {
+                isDone = true;
+            }
+        }
+        telemetry.addLine("Finished Sleep");
+        telemetry.update();
     }
 }
 
