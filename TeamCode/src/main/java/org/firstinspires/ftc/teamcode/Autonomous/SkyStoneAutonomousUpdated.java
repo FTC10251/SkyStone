@@ -283,6 +283,8 @@ public class SkyStoneAutonomousUpdated extends LinearOpMode {
             }
             telemetry.update();
         }
+        autoScore();
+
         //Set Intake Position
         moveIntakeAndArm();
 
@@ -640,10 +642,10 @@ public class SkyStoneAutonomousUpdated extends LinearOpMode {
             rightMotor.setTargetPosition(newSideTargets);
             rightMotor2.setTargetPosition(newSideTargets);
 
-            leftMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            leftMotor2.setMode(RUN_USING_ENCODER);
-            rightMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            rightMotor2.setMode(RUN_USING_ENCODER);
+            leftMotor.setMode(RUN_TO_POSITION);
+            leftMotor2.setMode(RUN_TO_POSITION);
+            rightMotor.setMode(RUN_TO_POSITION);
+            rightMotor2.setMode(RUN_TO_POSITION);
 
             double currentPowerLeft = 0;
             double currentPowerRight = 0;
@@ -993,9 +995,41 @@ public class SkyStoneAutonomousUpdated extends LinearOpMode {
 
     public void autoScore() {
         double goalAngle = 180;
+        double setDistanceItShouldBeBack = 35;
+        double setDistanceItShouldBeMid = 57;
         double distanceDifferenceMid = 100;
-        double distanceDifferenceBack = 100;
-        while(!extraClasses.closeEnough(angleDouble, goalAngle, 3) || Math.abs(distanceDifferenceMid) > 2 || Math.abs(distanceDifferenceBack) > 2) {
+        double distanceDifferenceBack = rangeSensorBack.getDistance(DistanceUnit.CM) - setDistanceItShouldBeBack;
+        double distanceDifferenceBackInches = distanceDifferenceBack / 2.54;
+        telemetry.addData("Starting Distance CM", rangeSensorBack.getDistance(DistanceUnit.CM));
+        telemetry.addData("Starting Distance Inches", distanceDifferenceBackInches);
+        telemetry.addData("Starting Distance Actual", rangeSensorBack.getDistance(DistanceUnit.CM) / 2.54);
+        telemetry.update();
+        try {
+            Thread.sleep(10000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        encoderDriveProfiled(-.1,-.1,-.3, distanceDifferenceBackInches, (distanceDifferenceBackInches / 3), distanceDifferenceBackInches / 3, 0, true);
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        telemetry.addData("Distance", rangeSensorBack.getDistance(DistanceUnit.CM));
+        telemetry.addData("Left Pos", leftMotor.getCurrentPosition());
+        telemetry.update();
+        try {
+            Thread.sleep(20000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        System.exit(0);
+        rotationServo.setPosition(.54);
+        arm.setTargetPosition(-3570);
+        arm.setPower(.7);
+        double startingPos = arm.getCurrentPosition();
+        boolean scored = false;
+        while(!scored) {
             angles = imu.getAngularOrientation().toAxesReference(AxesReference.INTRINSIC).toAxesOrder(AxesOrder.ZYX);
             angleDouble = extraClasses.convertAngle(Double.parseDouble(formatAngle(angles.angleUnit, angles.firstAngle)));
 
@@ -1015,23 +1049,21 @@ public class SkyStoneAutonomousUpdated extends LinearOpMode {
             angleAdjustPower = angleError / 60;
 
             //Find how far from the side wall it is
-            double setDistanceItShoudldBeBack = 32;
             double rangeSensorDistanceBack = rangeSensorBack.getDistance(DistanceUnit.CM);
-            distanceDifferenceBack = rangeSensorDistanceBack - setDistanceItShoudldBeBack;
+            distanceDifferenceBack = rangeSensorDistanceBack - setDistanceItShouldBeBack;
             double frontPowerError = distanceDifferenceBack / 35;
 
             //Find how far from the foundation it is
-            double setDistanceItShoudldBeMid = 57;
             double rangeSensorDistanceMid = rangeSensorLeft.getDistance(DistanceUnit.CM);
             double rangeSensorValueUsed = rangeSensorDistanceMid;
-            distanceDifferenceMid = rangeSensorValueUsed - setDistanceItShoudldBeMid;
+            distanceDifferenceMid = rangeSensorValueUsed - setDistanceItShouldBeMid;
             double middlePowerError = distanceDifferenceMid / 15;
 
             leftMotor.setPower(-frontPowerError + angleAdjustPower);
             leftMotor2.setPower(-frontPowerError + angleAdjustPower);
             rightMotor.setPower(-frontPowerError + -angleAdjustPower);
             rightMotor2.setPower(-frontPowerError + -angleAdjustPower);
-            //middleMotor.setPower(middlePowerError);
+            middleMotor.setPower(middlePowerError);
             telemetry.addData("Angle", angleDouble);
             telemetry.addData("Angle Difference", angleError);
             telemetry.addData("Mid Reading", rangeSensorDistanceMid);
@@ -1040,7 +1072,13 @@ public class SkyStoneAutonomousUpdated extends LinearOpMode {
             telemetry.addData("Back Difference", distanceDifferenceBack);
             telemetry.addData("Front Power Error", frontPowerError);
             telemetry.addData("angle Adjust Power", angleAdjustPower);
-            telemetry.update();
+
+            if(!extraClasses.closeEnough(arm.getCurrentPosition(), -3200, 30) && opModeIsActive()) {
+                double speed = .1 + (.5 * (1 - ((arm.getCurrentPosition()) - startingPos) / -3200));
+                telemetry.addData("Speed", speed);
+                telemetry.update();
+                arm.setPower(speed);
+            }
         }
         leftMotor.setPower(0);
         leftMotor2.setPower(0);
@@ -1052,9 +1090,6 @@ public class SkyStoneAutonomousUpdated extends LinearOpMode {
         telemetry.addData("Mid Reading", rangeSensorLeft.getDistance(DistanceUnit.CM));
         telemetry.addData("Back Reading", rangeSensorBack.getDistance(DistanceUnit.CM));
         telemetry.update();
-        arm.setMode(RUN_TO_POSITION);
-        arm.setTargetPosition(-3300);
-        arm.setPower(.5);
         try {
             Thread.sleep(20000);
         } catch (InterruptedException e) {
