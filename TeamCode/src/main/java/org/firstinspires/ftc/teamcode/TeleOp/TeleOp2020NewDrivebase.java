@@ -70,7 +70,7 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
     double autoScoringMode = 0;
     double rotation = 0;
     double leftIntakeServoPosition = 1;
-    double rightIntakeServoPosition = 1;
+    double rightIntakeServoPosition = .6;
     double holdServoPos = .58;
     double servoClosedPos = .15;
     double servoOpenPos = .56;
@@ -226,7 +226,7 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
             angles = imu.getAngularOrientation().toAxesReference(AxesReference.INTRINSIC).toAxesOrder(AxesOrder.ZYX);
             angleDouble = Double.parseDouble(formatAngle(angles.angleUnit, angles.firstAngle));
             rotationServo.setPosition(.54);
-            manualScore();
+            //manualScore();
             controlIntake();
             moveTheBase();
             moveFoundationOutOfDepot();
@@ -241,7 +241,7 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
             posX = posX + velX * timeDifferencePosition;
             posY = posY + velY * timeDifferencePosition;
             timeBefore = System.currentTimeMillis();
-            telemetry.addData("Arm Pos", arm.getCurrentPosition());
+            /*telemetry.addData("Arm Pos", arm.getCurrentPosition());
             telemetry.addData("Arm Mode", intakeMode);
             telemetry.addData("Arm State", intakeState);
             telemetry.addData("Auto Scoring Mode", autoScoringMode);
@@ -258,7 +258,7 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
             telemetry.addData("Hook Pos", hookUp);
             telemetry.addData("Left Motor Back Pos", leftMotor2.getCurrentPosition());
             telemetry.addData("Left Motor Front pos", leftMotor.getCurrentPosition());
-            telemetry.update();
+            telemetry.update();*/
         }
     }
 
@@ -334,7 +334,7 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
 
 
     public void manualScore() {
-        /*if (gamepad1.a && aWasPressed == false) {
+        if (gamepad1.a && aWasPressed == false) {
             aWasPressed = true;
             if(manualScoreMode) {
                 manualScoreMode = false;
@@ -344,7 +344,7 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
 
         } else if (gamepad1.a != true) {
             aWasPressed = false;
-        }*/
+        }
 
         if(manualScoreMode) {
             double goalAngle = 270; //Just the starting angle I think
@@ -366,11 +366,25 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
             leftX = gamepad1.right_stick_x * .2;
             leftY = gamepad1.right_stick_y * .2;
 
-            leftMotor.setPower(calculator.getLeftDrive() - angleAdjustPower);
-            leftMotor2.setPower(calculator.getLeftDrive() - angleAdjustPower);
-            rightMotor.setPower(calculator.getRightDrive() + angleAdjustPower);
-            rightMotor2.setPower(calculator.getRightDrive() + angleAdjustPower);
+            setDistanceItShouldBeBack = 36;
+            double rangeSensorDistanceBack = rangeSensorBack.getDistance(DistanceUnit.CM);
+            double adjustedRangeSensorReading = rangeSensorDistanceBack - 2;
+            //double xDistance = Math.abs(Math.sin(Math.toRadians(armAngle(arm.getCurrentPosition()))) * 46.5);
+            //setDistanceItShouldBeBack = xDistance;
+            double distanceDifferenceBack = rangeSensorDistanceBack - setDistanceItShouldBeBack;
+            double frontPowerError = distanceDifferenceBack / 75;
+
+            //Find how far from the foundation it is
+
+            leftMotor.setPower(frontPowerError + calculator.getLeftDrive() - angleAdjustPower);
+            leftMotor2.setPower(frontPowerError + calculator.getLeftDrive() - angleAdjustPower);
+            rightMotor.setPower(frontPowerError + calculator.getRightDrive() + angleAdjustPower);
+            rightMotor2.setPower(frontPowerError + calculator.getRightDrive() + angleAdjustPower);
             middleMotor.setPower(calculator.getMiddleDrive());
+            telemetry.addData("Front Power Error", frontPowerError);
+            telemetry.addData("angleAdjustPower", angleAdjustPower);
+            telemetry.addData("Back Distance", rangeSensorDistanceBack);
+            telemetry.update();
         } else if (!gamepad2.a) {
             newAPressed2 = false;
         }

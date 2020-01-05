@@ -51,6 +51,7 @@ public class TickTester extends OpMode {
     BNO055IMU imu;
     PIDFCoefficients pidStuff;
     DistanceSensor rangeSensor;
+    DistanceSensor rangeSensorLeft;
     boolean state = false;
     boolean isPressedX = false;
     boolean isPressedTrigger = false;
@@ -97,8 +98,9 @@ public class TickTester extends OpMode {
         middleMotor = (DcMotorEx)hardwareMap.get(DcMotor.class, "Middle Motor");
         arm = (DcMotorEx) hardwareMap.get(DcMotor.class, "Arm");
         rangeSensor = hardwareMap.get(DistanceSensor.class, "Range Sensor Back");
+        rangeSensorLeft = hardwareMap.get(DistanceSensor.class, "Range Sensor Left");
         rightIntakeServo = hardwareMap.get(Servo.class, "Intake Servo Right");
-        leftIntakeServo = hardwareMap.get(Servo.class, "Rotation Servo");
+        leftIntakeServo = hardwareMap.get(Servo.class, "Intake Servo Left");
         touchSensor = hardwareMap.get(TouchSensor.class, "Touch Sensor");
         leftMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         rightMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
@@ -142,25 +144,16 @@ public class TickTester extends OpMode {
             leftIntakeServoPos = leftIntakeServoPos + .02;
         } else if(gamepad1.left_trigger == 1) {
             leftIntakeServoPos = leftIntakeServoPos - .02;
-        } else {
-
+        }
+        if(gamepad1.right_bumper) {
+            rightIntakeServoPos = rightIntakeServoPos + .02;
+        } else if(gamepad1.right_trigger == 1) {
+            rightIntakeServoPos = rightIntakeServoPos - .02;
         }
         leftIntakeServo.setPosition(leftIntakeServoPos);
-        rightIntakeServo.setPosition(leftIntakeServoPos);
+        rightIntakeServo.setPosition(rightIntakeServoPos);
         angles   = imu.getAngularOrientation().toAxesReference(AxesReference.INTRINSIC).toAxesOrder(AxesOrder.ZYX);
         angleDouble = formatAngle(angles.angleUnit, angles.firstAngle);
-        /*if(gamepad1.left_trigger == 1) {
-            leftIntakeServo.setPosition(leftIntakeServo.getPosition() - .01);
-        }
-        if(gamepad1.left_bumper) {
-            leftIntakeServo.setPosition(leftIntakeServo.getPosition() + .01);
-        }
-        if(gamepad1.right_bumper){
-            rightIntakeServo.setPosition(rightIntakeServo.getPosition() + .01);
-        }
-        if(gamepad1.right_trigger == 1) {
-            rightIntakeServo.setPosition(rightIntakeServo.getPosition() + .01);
-        }*/
         telemetry.addData("Arm", arm.getCurrentPosition());
         telemetry.addData("Arm Angle", armAngle(arm.getCurrentPosition()));
         telemetry.addData("Hook Servo should", leftIntakeServoPos);
@@ -172,6 +165,7 @@ public class TickTester extends OpMode {
         telemetry.addData("Angle", ExtraClasses.convertAngle(Double.parseDouble(angleDouble)));
         telemetry.addData("Touch Sensor", touchSensor.isPressed());
         telemetry.addData("Distance", rangeSensor.getDistance(DistanceUnit.CM));
+        telemetry.addData("Distance", rangeSensorLeft.getDistance(DistanceUnit.CM));
         telemetry.addData("Left Intake", leftIntakeServo.getPosition());
         telemetry.addData("Right Intake", rightIntakeServo.getPosition());
         telemetry.update();
