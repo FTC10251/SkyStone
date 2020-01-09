@@ -74,7 +74,7 @@ public class SkyStoneDetectionOpMode extends LinearOpMode
          */
         skyStoneDetector = new SkystoneDetector();
         samplePipeline = new SamplePipeline();
-        webcam.setPipeline(samplePipeline);
+        webcam.setPipeline(skyStoneDetector);
 
         /*
          * Tell the webcam to start streaming images to us! Note that you must make sure

@@ -286,13 +286,19 @@ public class AutonomousBugTest extends LinearOpMode {
         }
 
         //Set Intake Position
-        moveIntakeAndArm();
+        //moveIntakeAndArm();
+        Thread.sleep(1500);
         leftIntakeServo.setPosition(.96);
         rightIntakeServo.setPosition(.33);
+        //Thread.sleep(1);
 
-
+        encoderDriveProfiled(.2,.4,.5,18,1,6,0,false);
+        turnInCircleProfiled(20,2,1,30, .4,.1,.4,0,10,0);
+        leftIntakeServo.setPosition(.55);
+        rightIntakeServo.setPosition(.55);
+        Thread.sleep(300);
         //Move forward to pick up block
-        if(blockPosition == 0) { //Left
+        /*if(blockPosition == 0) { //Left
             encoderDriveProfiled(.2,.4,.5,18,1,6,0,false);
             turnInCircleProfiled(20,2,1,30, .4,.1,.4,0,10,0);
             leftIntakeServo.setPosition(.55);
@@ -315,13 +321,13 @@ public class AutonomousBugTest extends LinearOpMode {
             Thread.sleep(300);
             turnInCircleProfiled(30,2,-1,40, -.1,-.1,-.4,0,4,0);
 
-        }
+        }*/
 
         Thread.sleep(100);
         leftIntakeMotor.setPower(0);
         rightIntakeMotor.setPower(0);
-        pickUpSkystone();
-
+        //pickUpSkystone();
+/*
         //Turn towards foundation
         turnInPlace(.05, 90, 3);
         Thread.sleep(1000);
@@ -392,8 +398,8 @@ public class AutonomousBugTest extends LinearOpMode {
 
 
         //Block is in Right Starting Position
-        Thread.sleep(30000);
-        targetsSkyStone.activate();
+        //Thread.sleep(30000);
+        //targetsSkyStone.activate();
 
 
         // Disable Tracking when we are done;
@@ -1079,11 +1085,11 @@ public class AutonomousBugTest extends LinearOpMode {
         rightIntakeServo.setPosition(.4);
         holdServo.setPosition(holdServoPos);
         rotationServo.setPosition(.54);
-        arm.setTargetPosition(0);
+        arm.setTargetPosition(-10);
         arm.setMode(RUN_TO_POSITION);
         arm.setPower(.5);
 
-        while(!extraClasses.closeEnough(arm.getCurrentPosition(),-20,20)) {
+        while(!extraClasses.closeEnough(arm.getCurrentPosition(),-10,20)) {
             telemetry.addData("Arm Pos",arm.getCurrentPosition());
             telemetry.update();
         }
