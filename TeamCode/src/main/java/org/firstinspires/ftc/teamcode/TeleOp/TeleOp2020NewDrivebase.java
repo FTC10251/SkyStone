@@ -49,7 +49,7 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
     ExtraClasses extraClasses;
     FollowPath followPath;
 
-    /*Ints, Doubles, Booleans, and Floats*/
+    //Ints, Doubles, Booleans, and Floats
     int here = 0;
     double offset = 0;
     double bicep = 18;
