@@ -248,7 +248,7 @@ public class SkyStoneAutonomousUpdated extends LinearOpMode {
         telemetry.addData("Starting Angle", initialAngle);
         telemetry.update();
         targetsSkyStone.activate();
-        hookServo.setPosition(.75);
+        //hookServo.setPosition(.75);
         while (!isStarted() && !isStopRequested()) {
             // check all the trackable targets to see which one (if any) is visible.
             targetVisible = false;
@@ -284,8 +284,6 @@ public class SkyStoneAutonomousUpdated extends LinearOpMode {
             }
             telemetry.update();
         }
-        lignUpWithFoundation();
-        Thread.sleep(20000);
 
         //Set Intake Position
         moveIntakeAndArm();
