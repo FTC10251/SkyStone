@@ -195,7 +195,7 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
         angleDouble = Double.parseDouble(formatAngle(angles.angleUnit, angles.firstAngle));
         holdAngle = angleDouble;
 
-        hookServo.setPosition(.75);
+        hookServo.setPosition(.54);
         arm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
         leftMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
@@ -237,7 +237,7 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
             driverIsMovingArm = false;
             angles = imu.getAngularOrientation().toAxesReference(AxesReference.INTRINSIC).toAxesOrder(AxesOrder.ZYX);
             angleDouble = Double.parseDouble(formatAngle(angles.angleUnit, angles.firstAngle));
-            //rotationServo.setPosition(.54);
+            rotationServo.setPosition(.54);
             //manualScore();
             controlIntake();
             moveTheBase();
@@ -652,7 +652,7 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
             }
             if(gamepad2.left_bumper && !lbWasPressed){
                 lbWasPressed = true;
-                arm.setTargetPosition(-2200);
+                arm.setTargetPosition(-3500);
                 arm.setPower(.7);
                 driverIsMovingArm = true;
                 if(extraClasses.closeEnough(arm.getCurrentPosition(),-2200,50)) {
