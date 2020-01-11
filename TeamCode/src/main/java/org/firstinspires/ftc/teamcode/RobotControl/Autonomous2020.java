@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode.RobotControl;
 
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
@@ -21,6 +22,7 @@ import java.util.Locale;
 import static com.qualcomm.robotcore.hardware.DcMotor.RunMode.RUN_USING_ENCODER;
 import static com.qualcomm.robotcore.hardware.DcMotor.RunMode.STOP_AND_RESET_ENCODER;
 @Autonomous(name = "Daniel's Autonomous")
+@Disabled
 public class Autonomous2020 extends LinearOpMode {
     BNO055IMU imu;
     private ElapsedTime runtime = new ElapsedTime();// Use a Pushbot's hardware
