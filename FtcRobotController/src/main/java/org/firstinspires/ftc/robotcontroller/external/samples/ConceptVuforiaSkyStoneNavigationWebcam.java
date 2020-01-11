@@ -29,6 +29,7 @@
 
 package org.firstinspires.ftc.robotcontroller.external.samples;
 
+
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.ColorSpace;
@@ -103,6 +104,7 @@ public class ConceptVuforiaSkyStoneNavigationWebcam extends LinearOpMode {
     private static final VuforiaLocalizer.CameraDirection CAMERA_CHOICE = BACK;
     private static final boolean PHONE_IS_PORTRAIT = false  ;
     public static final String TAG = "Vuforia Navigation Sample";
+
     /*
      * IMPORTANT: You need to obtain your own license key to use Vuforia. The string below with which
      * 'parameters.vuforiaLicenseKey' is initialized is for illustration only, and will not function.
@@ -148,6 +150,9 @@ public class ConceptVuforiaSkyStoneNavigationWebcam extends LinearOpMode {
     WebcamName webcamName = null;
 
     int captureCounter = 0;
+    double redAverage = 0;
+    double greenAverage = 0;
+    double blueAverage = 0;
     File captureDirectory = AppUtil.ROBOT_DATA_DIR;
 
     private boolean targetVisible = false;
@@ -376,6 +381,16 @@ public class ConceptVuforiaSkyStoneNavigationWebcam extends LinearOpMode {
         // Disable Tracking when we are done;
         targetsSkyStone.deactivate();
     }
+    public void averagePixels(double x1, double y1, double x2, double y2, double x3, double y3, double x4, double y4, Bitmap bitmap) {
+        int color1 = bitmap.getPixel((int)x1,(int)y1);
+        int color2 = bitmap.getPixel((int)x2,(int)y2);
+        int color3 = bitmap.getPixel((int)x3,(int)y3);
+        int color4 = bitmap.getPixel((int)x4,(int)y4);
+
+        redAverage = ((Color.red(color1) + Color.red(color2) + Color.red(color3) + Color.red(color4)))/4;
+        blueAverage = ((Color.blue(color1) + Color.blue(color2) + Color.blue(color3) + Color.blue(color4)))/4;
+        greenAverage = ((Color.green(color1) + Color.green(color2) + Color.green(color3) + Color.green(color4)))/4;
+    }
     void captureFrameToFile() {
         //telemetry.addLine("Working");
         loops++;
@@ -385,15 +400,41 @@ public class ConceptVuforiaSkyStoneNavigationWebcam extends LinearOpMode {
             {
                 Bitmap bitmap = vuforia.convertFrameToBitmap(frame);
                 if (bitmap != null) {
-                    telemetry.addData("Loops", loops);
+                    double bHeight = bitmap.getHeight();
+                    double bWidth = bitmap.getWidth();
+                    averagePixels(bWidth * (.25), bHeight * (.6666), bWidth * (.25), bHeight * (.75), bWidth * (.75), bHeight * (.666),bWidth * (.75), bHeight * (.75), bitmap);
+                    double redAverage1 = redAverage;
+                    double greenAverage1 = greenAverage;
+                    double blueAverage1 = blueAverage;
+
+                    averagePixels(bWidth * (.4555), bHeight * (.666), bWidth * (.4554), bHeight * (.75), bWidth * (.54), bHeight * (.66),bWidth * (.54), bHeight * (.75), bitmap);
+                    double redAverage2 = redAverage;
+                    double greenAverage2 = greenAverage;
+                    double blueAverage2 = blueAverage;
+
+                    averagePixels(bWidth * (.75), bHeight * (.6666), bWidth * (.75), bHeight * (.75), bWidth * (.875), bHeight * (.6666),bWidth * (.875), bHeight * (.75), bitmap);
+                    double redAverage3 = redAverage;
+                    double greenAverage3 = greenAverage;
+                    double blueAverage3 = blueAverage;
+
+
+                    telemetry.addData("Red Average 1", redAverage1);
+                    telemetry.addData("Green Average 1", greenAverage1);
+                    telemetry.addData("Blue Average 1", blueAverage1);
+                    telemetry.addData("Red Average 2", redAverage2);
+                    telemetry.addData("Green Average 2", greenAverage2);
+                    telemetry.addData("Blue Average 2", blueAverage2);
+                    telemetry.addData("Red Average 3", redAverage3);
+                    telemetry.addData("Green Average 3", greenAverage3);
+                    telemetry.addData("Blue Average 3", blueAverage3);
+                    telemetry.addData("Width", bitmap.getWidth());
+                    telemetry.addData("Height", bitmap.getHeight());
+                    telemetry.update();
                     int color = bitmap.getPixel(1,1);
                     int red = Color.red(color);
                     int blue = Color.blue(color);
                     int green = Color.green(color);
-                   telemetry.addData("Red", red);
-                    telemetry.addData("Green", green);
-                    telemetry.addData("Blue", blue);
-                    telemetry.addData("Bitmap", bitmap.getPixel(0,0));
+
                     /*File file = new File(captureDirectory, String.format(Locale.getDefault(), "VuforiaFrame-%d.png", captureCounter++));
 
                     try {
@@ -410,7 +451,6 @@ public class ConceptVuforiaSkyStoneNavigationWebcam extends LinearOpMode {
                 }
             }
         }));
-        telemetry.update();
     }
 
 }

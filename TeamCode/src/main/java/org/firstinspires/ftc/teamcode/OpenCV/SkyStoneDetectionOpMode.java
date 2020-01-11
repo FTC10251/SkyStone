@@ -74,7 +74,7 @@ public class SkyStoneDetectionOpMode extends LinearOpMode
          */
         skyStoneDetector = new SkystoneDetector();
         samplePipeline = new SamplePipeline();
-        webcam.setPipeline(skyStoneDetector);
+        webcam.setPipeline(samplePipeline);
 
         /*
          * Tell the webcam to start streaming images to us! Note that you must make sure
@@ -219,10 +219,30 @@ public class SkyStoneDetectionOpMode extends LinearOpMode
             Imgproc.rectangle(
                     input,
                     new Point(
-                            input.cols()/4f,
-                            input.rows()/4f),
+                            input.cols()*(1f/4f),
+                            input.rows()*(2f/3f)),
                     new Point(
-                            input.cols()*(3f/4f),
+                            input.cols()*(3f/8f),
+                            input.rows()*(3f/4f)),
+                    new Scalar(0, 255, 0), 2);
+
+            Imgproc.rectangle(
+                    input,
+                    new Point(
+                            input.cols()*(5f/11f),
+                            input.rows()*(2/3f)),
+                    new Point(
+                            input.cols()*(6f/11f),
+                            input.rows()*(3f/4f)),
+                    new Scalar(0, 255, 0), 2);
+
+            Imgproc.rectangle(
+                    input,
+                    new Point(
+                            input.cols()*(6f/8f),
+                            input.rows()*(2/3f)),
+                    new Point(
+                            input.cols()*(7f/8f),
                             input.rows()*(3f/4f)),
                     new Scalar(0, 255, 0), 2);
 
