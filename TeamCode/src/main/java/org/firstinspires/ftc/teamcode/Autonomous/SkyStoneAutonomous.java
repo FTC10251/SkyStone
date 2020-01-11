@@ -772,6 +772,7 @@ public class SkyStoneAutonomous extends LinearOpMode {
         }
         middleMotor2.setPower(0);
     }
+
     public void lignUpWithFoundation() {
         double distance = rangeSensorBack.getDistance(DistanceUnit.CM);
         leftMotor.setPower(-.6);

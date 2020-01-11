@@ -114,6 +114,7 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
     boolean backWasPressed = false;
     boolean driverHasControlArm = true;
     boolean driverIsMovingArm = false;
+    boolean lbWasPressed = false;
 
     float rightX;
     long rightStickTimer = 0;
@@ -140,7 +141,8 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
     //Sensors
     DistanceSensor rangeSensorLeft;
     DistanceSensor rangeSensorBack;
-    TouchSensor touchSensor;
+    TouchSensor touchSensorFoundation;
+    TouchSensor touchSensorBlock;
 
     //Misc
     Orientation angles;
@@ -176,7 +178,8 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
         arm = (DcMotorEx) hardwareMap.get(DcMotor.class, "Arm");
         rangeSensorBack = hardwareMap.get(DistanceSensor.class, "Range Sensor Back");
         //rangeSensorLeft = hardwareMap.get(DistanceSensor.class, "Range Sensor Left");
-        touchSensor = hardwareMap.get(TouchSensor.class,"Touch Sensor");
+        touchSensorFoundation = hardwareMap.get(TouchSensor.class,"Touch Sensor");
+        touchSensorBlock = hardwareMap.get(TouchSensor.class,"Touch Sensor");
         webcamName = hardwareMap.get(WebcamName.class, "Webcam 1");
         calculator = new HDriveFCCalc();
         dpadCalculator = new HDriveFCCalc();
@@ -552,12 +555,13 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
 
     }
     public void controlIntake(){
-        if(gamepad1.left_trigger > .5) {
+        if(gamepad2.left_trigger > .5) {
             leftIntakeMotor.setPower(-1);
             rightIntakeMotor.setPower(-1);
             leftIntakeServoPosition = .6;
             rightIntakeServoPosition = .5;
-        } else if(gamepad1.left_trigger < .5 && intakeMode == 0) {
+            intakeMode = 0;
+        } else if(gamepad2.left_trigger < .5 && intakeMode == 0) {
             leftIntakeMotor.setPower(0);
             rightIntakeMotor.setPower(0);
         }
@@ -598,6 +602,9 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
                     leftIntakeServoPosition = 1;
                 }
             }
+            /*if(touchSensorBlock.isPressed()){
+                intakeMode = 2;
+            }*/
         }
         else if(intakeMode == 2) {
             leftIntakeMotor.setPower(0);
@@ -643,6 +650,25 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
                     rightIntakeServoPosition = .1;
                 }
             }
+            if(gamepad2.left_bumper && !lbWasPressed){
+                lbWasPressed = true;
+                arm.setTargetPosition(-2200);
+                arm.setPower(.7);
+                driverIsMovingArm = true;
+                if(extraClasses.closeEnough(arm.getCurrentPosition(),-2200,50)) {
+                    arm.setPower(0);
+                }
+            }
+            else if(gamepad2.left_bumper && lbWasPressed){
+                lbWasPressed = false;
+                arm.setTargetPosition(-400);
+                if(arm.getMode() != DcMotor.RunMode.RUN_TO_POSITION) {
+                    arm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                }
+                arm.setPower(.5);
+                driverIsMovingArm = true;
+                intakeMode = 0;
+            }
         }
         if(intakeMode == 3) {
             arm.setTargetPosition(-2200);
@@ -685,7 +711,7 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
         }
     }
     public void moveFoundationOutOfDepot() {
-        if(gamepad1.a && backWasPressed == false) {
+        if(gamepad1.y && backWasPressed == false) {
             backWasPressed = true;
             if(hookUp) {
                 hookUp = false;
@@ -694,10 +720,10 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
                 hookServo.setPosition(.75);
                 hookUp = true;
             }
-        } else if(!gamepad1.a) {
+        } else if(!gamepad1.y) {
             backWasPressed = false;
         }
-        if (gamepad1.y && yWasPressed == false) {
+        /*if (gamepad1.y && yWasPressed == false) {
             yWasPressed = true;
             if (autoMovingFoundation == false) {
                 autoMovingFoundation = true;
@@ -741,7 +767,7 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
                     rightMotor.setPower(sidePower);
                     rightMotor2.setPower(sidePower);
 
-                    if (touchSensor.isPressed()) {
+                    if (touchSensorFoundation.isPressed()) {
                         hookServo.setPosition(.3);
                         startingTime = System.currentTimeMillis();
                         foundationState = 1;
@@ -759,7 +785,7 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
                     rightMotor2.setPower(-.2);
                 }
             }
-        }
+        }*/
     }
     public void pathFindingButton() {
         if(gamepad1.x && xWasPressed == false) {
