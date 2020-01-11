@@ -230,7 +230,7 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
         telemetry.addLine("Ready to Begin");
         telemetry.update();
 
-        /*Start of loop*/
+        //Start of loop
         waitForStart();
         timeBefore = System.currentTimeMillis();
         while (opModeIsActive()) {
