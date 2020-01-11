@@ -22,8 +22,6 @@ import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 import org.firstinspires.ftc.robotcore.external.navigation.Position;
 import org.firstinspires.ftc.robotcore.external.navigation.Velocity;
 import org.firstinspires.ftc.teamcode.ArmCalculator;
-import org.firstinspires.ftc.teamcode.Autonomous.SkyStoneAutonomousUpdated;
-import org.firstinspires.ftc.teamcode.ExcessStuff;
 import org.firstinspires.ftc.teamcode.ExtraClasses;
 import org.firstinspires.ftc.teamcode.HDriveFCCalc;
 import org.firstinspires.ftc.teamcode.ManualImports.Point;
@@ -90,6 +88,9 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
     int blockPosX = 0;
     int intakeMode = 0;
     int intakeState = 0;
+    int intakeWaitCount = 0;
+    int scoringState = 0;
+    int currentArmPos = 0;
 
     boolean sideMoved = false;
     boolean dpadWasPressed = false;
@@ -115,6 +116,9 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
     boolean driverHasControlArm = true;
     boolean driverIsMovingArm = false;
     boolean lbWasPressed = false;
+    boolean isIntakingNormal = true;
+    boolean isIntakingBasic = false;
+
 
     float rightX;
     long rightStickTimer = 0;
@@ -179,7 +183,7 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
         rangeSensorBack = hardwareMap.get(DistanceSensor.class, "Range Sensor Back");
         //rangeSensorLeft = hardwareMap.get(DistanceSensor.class, "Range Sensor Left");
         touchSensorFoundation = hardwareMap.get(TouchSensor.class,"Touch Sensor");
-        touchSensorBlock = hardwareMap.get(TouchSensor.class,"Touch Sensor");
+        touchSensorBlock = hardwareMap.get(TouchSensor.class,"Touch Sensor Block");
         webcamName = hardwareMap.get(WebcamName.class, "Webcam 1");
         calculator = new HDriveFCCalc();
         dpadCalculator = new HDriveFCCalc();
@@ -195,7 +199,7 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
         angleDouble = Double.parseDouble(formatAngle(angles.angleUnit, angles.firstAngle));
         holdAngle = angleDouble;
 
-        hookServo.setPosition(.54);
+        //hookServo.setPosition(.75);
         arm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
         leftMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
@@ -203,7 +207,8 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
         rightMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         rightMotor2.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         middleMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        arm.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        arm.setTargetPosition(0);
+        arm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
 
         leftMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
@@ -238,8 +243,8 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
             angles = imu.getAngularOrientation().toAxesReference(AxesReference.INTRINSIC).toAxesOrder(AxesOrder.ZYX);
             angleDouble = Double.parseDouble(formatAngle(angles.angleUnit, angles.firstAngle));
             rotationServo.setPosition(.54);
-            //manualScore();
-            controlIntake();
+            manualScore();
+            controlIntake2();
             moveTheBase();
             moveFoundationOutOfDepot();
             //tankDriveOdometry();
@@ -554,6 +559,122 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
         }
 
     }
+    public void controlIntake2(){
+        driverIsMovingArm = true;
+        if(isIntakingBasic){
+            if(gamepad1.left_bumper && intakeState == 0){
+                arm.setPower(.4);
+                arm.setTargetPosition(-400);
+                currentArmPos = -400;
+                leftIntakeMotor.setPower(1);
+                rightIntakeMotor.setPower(1);
+                leftIntakeServoPosition = leftIntakeServoPosition - .01;
+                rightIntakeServoPosition = rightIntakeServoPosition + .01;
+                if (rightIntakeServoPosition > .55) {
+                    rightIntakeServoPosition = .1;
+                    leftIntakeServoPosition = 1;
+                }
+                if(touchSensorBlock.isPressed()){
+                    intakeState = 1;
+                }
+            }
+            if(intakeState == 1){
+                leftIntakeMotor.setPower(0);
+                rightIntakeMotor.setPower(0);
+                leftIntakeServoPosition = .6;
+                rightIntakeServoPosition = .5;
+            }
+        }
+        else if(isIntakingNormal){
+            if(gamepad1.left_bumper){
+                if(intakeState == 0){
+                    arm.setPower(.4);
+                    arm.setTargetPosition(-400);
+                    currentArmPos = arm.getCurrentPosition();
+                    clawServo.setPosition(servoOpenPos);
+                    if(arm.getCurrentPosition() > -410 && arm.getCurrentPosition() < -390){
+                        intakeState = 1;
+                    }
+                }
+                else if(intakeState == 1) {
+                    leftIntakeMotor.setPower(1);
+                    rightIntakeMotor.setPower(1);
+                    leftIntakeServoPosition = leftIntakeServoPosition - .01;
+                    rightIntakeServoPosition = rightIntakeServoPosition + .01;
+                    if (rightIntakeServoPosition > .55) {
+                        rightIntakeServoPosition = .1;
+                        leftIntakeServoPosition = 1;
+                    }
+                    if(touchSensorBlock.isPressed()){
+                        intakeState = 2;
+                    }
+                }
+                else if(intakeState == 2) {
+                    leftIntakeServoPosition = .6;
+                    rightIntakeServoPosition = .5;
+                    arm.setPower(.4);
+                    arm.setTargetPosition(-100);
+                    currentArmPos = arm.getCurrentPosition();
+                    if(arm.getCurrentPosition() > -110 && arm.getCurrentPosition() < -90){
+                        intakeState = 3;
+                    }
+                }
+                else if(intakeState == 3){
+                    clawServo.setPosition(servoClosedPos);
+                    intakeWaitCount++;
+                    if(intakeWaitCount>20){
+                        intakeState = 4;
+                        intakeWaitCount = 0;
+                    }
+                }
+                else if(intakeState == 4){
+                    arm.setTargetPosition(-400);
+                    currentArmPos = -400;
+                    isIntakingNormal = false;
+                    intakeState = 0;
+                }
+            }
+        }
+        if(!isIntakingNormal && (gamepad2.dpad_up || gamepad2.dpad_down)){
+            arm.setPower(.4);
+            if(gamepad2.dpad_up){
+                currentArmPos = currentArmPos - 5;
+            }
+            else if(gamepad2.dpad_down){
+                currentArmPos = currentArmPos + 5;
+            }
+            arm.setTargetPosition(currentArmPos);
+        }
+        else if(gamepad2.left_bumper && !isIntakingNormal){
+            if(scoringState == 0) {
+                arm.setPower(.4);
+                arm.setTargetPosition(-3500);
+                currentArmPos = arm.getCurrentPosition();
+                if (arm.getCurrentPosition() > -3510 && arm.getCurrentPosition() < -3490) {
+                    clawServo.setPosition(servoOpenPos);
+                    scoringState = 1;
+                }
+            }
+            if(scoringState == 1) {
+                arm.setTargetPosition(-400);
+                currentArmPos = arm.getCurrentPosition();
+                if(arm.getCurrentPosition() > -410 && arm.getCurrentPosition() < -390){
+                    isIntakingNormal = true;
+                    scoringState = 0;
+                }
+            }
+        }
+        if(gamepad2.b){
+            intakeState = 0;
+            isIntakingNormal = true;
+            scoringState = 0;
+            arm.setPower(.2);
+            clawServo.setPosition(servoOpenPos);
+            arm.setTargetPosition(-400);
+        }
+        leftIntakeServo.setPosition(leftIntakeServoPosition);
+        rightIntakeServo.setPosition(rightIntakeServoPosition);
+    }
     public void controlIntake(){
         if(gamepad2.left_trigger > .5) {
             leftIntakeMotor.setPower(-1);
@@ -585,7 +706,7 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
             leftBumperWasPressed = false;
         }
 
-        if(intakeMode == 1) {
+        /*if(intakeMode == 1) {
             arm.setTargetPosition(-400);
             if(arm.getMode() != DcMotor.RunMode.RUN_TO_POSITION) {
                 arm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
@@ -605,7 +726,7 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
             /*if(touchSensorBlock.isPressed()){
                 intakeMode = 2;
             }*/
-        }
+        /*}
         else if(intakeMode == 2) {
             leftIntakeMotor.setPower(0);
             rightIntakeMotor.setPower(0);
@@ -652,7 +773,7 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
             }
             if(gamepad2.left_bumper && !lbWasPressed){
                 lbWasPressed = true;
-                arm.setTargetPosition(-3500);
+                arm.setTargetPosition(-2200);
                 arm.setPower(.7);
                 driverIsMovingArm = true;
                 if(extraClasses.closeEnough(arm.getCurrentPosition(),-2200,50)) {
@@ -680,7 +801,7 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
             }
         }
         leftIntakeServo.setPosition(leftIntakeServoPosition);
-        rightIntakeServo.setPosition(rightIntakeServoPosition);
+        rightIntakeServo.setPosition(rightIntakeServoPosition);*/
     }
 
     public double filterValues(double currentValue, double previousValue, double tolerance) {
