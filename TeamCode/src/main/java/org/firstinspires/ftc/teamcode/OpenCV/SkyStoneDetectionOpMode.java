@@ -224,17 +224,17 @@ public class SkyStoneDetectionOpMode extends LinearOpMode
                     new Point(
                             input.cols()*(3f/8f),
                             input.rows()*(3f/4f)),
-                    new Scalar(0, 255, 0), 2);
+                    new Scalar(0, 0, 255), 2);
 
             Imgproc.rectangle(
                     input,
                     new Point(
-                            input.cols()*(5f/11f),
+                            input.cols()*(3f/8f),
                             input.rows()*(2/3f)),
                     new Point(
-                            input.cols()*(6f/11f),
+                            input.cols()*(5f/8f),
                             input.rows()*(3f/4f)),
-                    new Scalar(0, 255, 0), 2);
+                    new Scalar(0, 0, 255), 2);
 
             Imgproc.rectangle(
                     input,
@@ -244,7 +244,37 @@ public class SkyStoneDetectionOpMode extends LinearOpMode
                     new Point(
                             input.cols()*(7f/8f),
                             input.rows()*(3f/4f)),
-                    new Scalar(0, 255, 0), 2);
+                    new Scalar(0, 0, 255), 2);
+
+            Imgproc.rectangle(
+                    input,
+                    new Point(
+                            input.cols()*(3f/8f),
+                            input.rows()*(2f/3f)),
+                    new Point(
+                            input.cols()*(1f/2f),
+                            input.rows()*(3f/4f)),
+                    new Scalar(255, 0, 0), 2);
+
+            Imgproc.rectangle(
+                    input,
+                    new Point(
+                            input.cols()*(7f/11f),
+                            input.rows()*(2/3f)),
+                    new Point(
+                            input.cols()*(8f/11f),
+                            input.rows()*(3f/4f)),
+                    new Scalar(255, 0, 0), 2);
+
+            Imgproc.rectangle(
+                    input,
+                    new Point(
+                            input.cols()*(13f/15f),
+                            input.rows()*(2/3f)),
+                    new Point(
+                            input.cols()*(14f/15f),
+                            input.rows()*(3f/4f)),
+                    new Scalar(255, 0, 0), 2);
 
             /**
              * NOTE: to see how to get data from your pipeline to your OpMode as well as how

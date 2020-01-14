@@ -118,6 +118,8 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
     boolean lbWasPressed = false;
     boolean isIntakingNormal = true;
     boolean isIntakingBasic = false;
+    boolean intakingToggle = false;
+    boolean intakeButtonWasPressed = false;
 
 
     float rightX;
@@ -200,7 +202,7 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
         holdAngle = angleDouble;
 
         //hookServo.setPosition(.75);
-        arm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        //arm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
         leftMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         leftMotor2.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
@@ -251,6 +253,7 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
             //autoScoreMode();
             //pathFindingButton();
             holdArm();
+            holdServo.setPosition(holdServoPos);
 
             timeDifferencePosition = (System.currentTimeMillis() - timeBefore)/1000;
             velX = velX + (imu.getAcceleration().xAccel * timeDifferencePosition);
@@ -258,7 +261,13 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
             posX = posX + velX * timeDifferencePosition;
             posY = posY + velY * timeDifferencePosition;
             timeBefore = System.currentTimeMillis();
-            /*telemetry.addData("Arm Pos", arm.getCurrentPosition());
+
+            telemetry.addData("Scoring State", scoringState);
+            telemetry.addData("arm pos", currentArmPos);
+            telemetry.addData("Intake State", intakeState);
+            telemetry.addData("intake toggle", intakingToggle);
+            telemetry.addData("Intake State", intakeState);
+            telemetry.addData("Arm Pos", arm.getCurrentPosition());
             telemetry.addData("Arm Mode", intakeMode);
             telemetry.addData("Arm State", intakeState);
             telemetry.addData("Auto Scoring Mode", autoScoringMode);
@@ -275,7 +284,7 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
             telemetry.addData("Hook Pos", hookUp);
             telemetry.addData("Left Motor Back Pos", leftMotor2.getCurrentPosition());
             telemetry.addData("Left Motor Front pos", leftMotor.getCurrentPosition());
-            telemetry.update();*/
+            telemetry.update();
         }
     }
 
@@ -586,13 +595,13 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
             }
         }
         else if(isIntakingNormal){
-            if(gamepad1.left_bumper){
+            if(intakingToggle){
                 if(intakeState == 0){
                     arm.setPower(.4);
                     arm.setTargetPosition(-400);
                     currentArmPos = arm.getCurrentPosition();
                     clawServo.setPosition(servoOpenPos);
-                    if(arm.getCurrentPosition() > -410 && arm.getCurrentPosition() < -390){
+                    if(arm.getCurrentPosition() > -420 && arm.getCurrentPosition() < -380){
                         intakeState = 1;
                     }
                 }
@@ -610,12 +619,14 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
                     }
                 }
                 else if(intakeState == 2) {
+                    leftIntakeMotor.setPower(0);
+                    rightIntakeMotor.setPower(0);
                     leftIntakeServoPosition = .6;
                     rightIntakeServoPosition = .5;
                     arm.setPower(.4);
-                    arm.setTargetPosition(-100);
+                    arm.setTargetPosition(-120);
                     currentArmPos = arm.getCurrentPosition();
-                    if(arm.getCurrentPosition() > -110 && arm.getCurrentPosition() < -90){
+                    if(arm.getCurrentPosition() > -140 && arm.getCurrentPosition() < -100){
                         intakeState = 3;
                     }
                 }
@@ -628,9 +639,10 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
                     }
                 }
                 else if(intakeState == 4){
-                    arm.setTargetPosition(-400);
-                    currentArmPos = -400;
+                    arm.setTargetPosition(-250);
+                    currentArmPos = -250;
                     isIntakingNormal = false;
+                    intakingToggle = false;
                     intakeState = 0;
                 }
             }
@@ -650,30 +662,45 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
                 arm.setPower(.4);
                 arm.setTargetPosition(-3500);
                 currentArmPos = arm.getCurrentPosition();
-                if (arm.getCurrentPosition() > -3510 && arm.getCurrentPosition() < -3490) {
+                if (arm.getCurrentPosition() > -3520 && arm.getCurrentPosition() < -3480) {
                     clawServo.setPosition(servoOpenPos);
                     scoringState = 1;
                 }
             }
             if(scoringState == 1) {
-                arm.setTargetPosition(-400);
+                arm.setTargetPosition(-250);
                 currentArmPos = arm.getCurrentPosition();
-                if(arm.getCurrentPosition() > -410 && arm.getCurrentPosition() < -390){
+                if(arm.getCurrentPosition() > -270 && arm.getCurrentPosition() < -230){
                     isIntakingNormal = true;
                     scoringState = 0;
                 }
             }
         }
+        else if(!gamepad2.left_bumper && !isIntakingNormal){
+            arm.setTargetPosition((currentArmPos));
+        }
         if(gamepad2.b){
             intakeState = 0;
             isIntakingNormal = true;
             scoringState = 0;
-            arm.setPower(.2);
+            arm.setPower(.4);
             clawServo.setPosition(servoOpenPos);
-            arm.setTargetPosition(-400);
+            arm.setTargetPosition(-250);
+            currentArmPos = -250;
         }
         leftIntakeServo.setPosition(leftIntakeServoPosition);
         rightIntakeServo.setPosition(rightIntakeServoPosition);
+
+        if(gamepad1.left_bumper && !intakeButtonWasPressed) {
+            intakeButtonWasPressed = true;
+            if (intakingToggle) {
+                intakingToggle = false;
+            } else {
+                intakingToggle = true;
+            }
+        } else if(!gamepad1.left_bumper) {
+            intakeButtonWasPressed = false;
+        }
     }
     public void controlIntake(){
         if(gamepad2.left_trigger > .5) {

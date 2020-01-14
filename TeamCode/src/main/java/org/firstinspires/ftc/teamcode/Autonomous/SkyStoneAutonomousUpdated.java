@@ -85,7 +85,7 @@ public class SkyStoneAutonomousUpdated extends LinearOpMode {
     double initialAngle;
     double startPos;
     double angleDouble = 0;
-    double blockPosition = 2;
+    double blockPosition = 0;
     public static double holdServoPos = .58;
     public static double servoClosedPos = .15;
     public static double servoOpenPos = .56;
@@ -289,11 +289,11 @@ public class SkyStoneAutonomousUpdated extends LinearOpMode {
                         double greenAverage3 = greenAverage;
                         double blueAverage3 = blueAverage;
                         if((redAverage1 + greenAverage1) / 2 < (redAverage2 + greenAverage2)/2 && (redAverage1 + greenAverage1)/2 < (redAverage3 + greenAverage3)/2) {
-                            //blockPosition = 0;
+                            blockPosition = 0;
                         } else if((redAverage2 + greenAverage2) / 2 < (redAverage1 + greenAverage1)/2 && (redAverage2 + greenAverage2)/2 < (redAverage3 + greenAverage3)/2) {
-                            //blockPosition = 1;
+                            blockPosition = 1;
                         } else if((redAverage3 + greenAverage3) / 2 < (redAverage1 + greenAverage1)/2 && (redAverage3 + greenAverage3)/2 < (redAverage2 + greenAverage2)/2) {
-                            //blockPosition = 2;
+                            blockPosition = 2;
                         }
 
                         telemetry.addData("Block Position", blockPosition);
@@ -845,7 +845,7 @@ public class SkyStoneAutonomousUpdated extends LinearOpMode {
         rightMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         rightMotor2.setMode(STOP_AND_RESET_ENCODER);
 
-        int newSideTargets = /*robot.leftMotor.getCurrentPosition() + */(int) ((Math.abs(-10)) * COUNTS_PER_INCH);
+        int newSideTargets = /*robot.leftMotor.getCurrentPosition() + */(int) ((Math.abs(-16)) * COUNTS_PER_INCH);
         leftMotor.setTargetPosition(newSideTargets);
         leftMotor2.setTargetPosition(newSideTargets);
         rightMotor.setTargetPosition(newSideTargets);
@@ -1027,6 +1027,12 @@ public class SkyStoneAutonomousUpdated extends LinearOpMode {
             distanceDifferenceMid = rangeSensorValueUsed - setDistanceItShouldBeMid;
             double middlePowerError = distanceDifferenceMid / 35;
 
+            if(frontPowerError > .2) {
+                frontPowerError = .2;
+            } else if(frontPowerError < -.2) {
+                frontPowerError = -.2;
+            }
+
             leftMotor.setPower(-frontPowerError + angleAdjustPower);
             leftMotor2.setPower(-frontPowerError + angleAdjustPower);
             rightMotor.setPower(-frontPowerError + -angleAdjustPower);
@@ -1108,7 +1114,7 @@ public class SkyStoneAutonomousUpdated extends LinearOpMode {
         rightIntakeServo.setPosition(.4);
         holdServo.setPosition(holdServoPos);
         rotationServo.setPosition(.54);
-        arm.setTargetPosition(-50);
+        arm.setTargetPosition(-0);
         arm.setTargetPositionTolerance(1);
         arm.setMode(RUN_TO_POSITION);
         arm.setPower(.5);
@@ -1119,6 +1125,8 @@ public class SkyStoneAutonomousUpdated extends LinearOpMode {
             telemetry.addData("Get PIDF Coef", arm.getPIDFCoefficients(RUN_USING_ENCODER));
             telemetry.update();
         }
+        arm.setTargetPosition(-50);
+        arm.setMode(RUN_TO_POSITION);
         try {
             Thread.sleep(500);
         } catch (InterruptedException e) {

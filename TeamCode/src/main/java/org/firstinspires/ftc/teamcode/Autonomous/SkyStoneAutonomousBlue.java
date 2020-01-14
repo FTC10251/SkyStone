@@ -274,26 +274,26 @@ public class SkyStoneAutonomousBlue extends LinearOpMode {
                     if (bitmap != null) {
                         double bHeight = bitmap.getHeight();
                         double bWidth = bitmap.getWidth();
-                        averagePixels(bWidth * (.25), bHeight * (.6666), bWidth * (.25), bHeight * (.75), bWidth * (.75), bHeight * (.666), bWidth * (.75), bHeight * (.75), bitmap);
+                        averagePixels(bWidth * (.375), bHeight * (.6666), bWidth * (.375), bHeight * (.75), bWidth * (.5), bHeight * (.666), bWidth * (.5), bHeight * (.75), bitmap);
                         double redAverage1 = redAverage;
                         double greenAverage1 = greenAverage;
                         double blueAverage1 = blueAverage;
 
-                        averagePixels(bWidth * (.4555), bHeight * (.666), bWidth * (.4554), bHeight * (.75), bWidth * (.54), bHeight * (.66), bWidth * (.54), bHeight * (.75), bitmap);
+                        averagePixels(bWidth * (.63), bHeight * (.666), bWidth * (.63), bHeight * (.75), bWidth * (.72), bHeight * (.66), bWidth * (.72), bHeight * (.75), bitmap);
                         double redAverage2 = redAverage;
                         double greenAverage2 = greenAverage;
                         double blueAverage2 = blueAverage;
 
-                        averagePixels(bWidth * (.75), bHeight * (.6666), bWidth * (.75), bHeight * (.75), bWidth * (.875), bHeight * (.6666), bWidth * (.875), bHeight * (.75), bitmap);
+                        averagePixels(bWidth * (.867), bHeight * (.6666), bWidth * (.867), bHeight * (.75), bWidth * (.933), bHeight * (.6666), bWidth * (.93), bHeight * (.75), bitmap);
                         double redAverage3 = redAverage;
                         double greenAverage3 = greenAverage;
                         double blueAverage3 = blueAverage;
                         if((redAverage1 + greenAverage1) / 2 < (redAverage2 + greenAverage2)/2 && (redAverage1 + greenAverage1)/2 < (redAverage3 + greenAverage3)/2) {
-                            //blockPosition = 0;
+                            blockPosition = 2;
                         } else if((redAverage2 + greenAverage2) / 2 < (redAverage1 + greenAverage1)/2 && (redAverage2 + greenAverage2)/2 < (redAverage3 + greenAverage3)/2) {
-                            //blockPosition = 1;
+                            blockPosition = 1;
                         } else if((redAverage3 + greenAverage3) / 2 < (redAverage1 + greenAverage1)/2 && (redAverage3 + greenAverage3)/2 < (redAverage2 + greenAverage2)/2) {
-                            //blockPosition = 2;
+                            blockPosition = 0;
                         }
 
                         telemetry.addData("Block Position", blockPosition);
@@ -366,12 +366,12 @@ public class SkyStoneAutonomousBlue extends LinearOpMode {
             encoderDriveProfiled(.1, .1, .5, 81, 2, 15, 270, true);
             ThreadSleepUpdated(100);
         } else { //Right
-            encoderDriveProfiled(.2,.4,.5,8,1,6,0,false);
-            turnInCircleProfiled(30,2,-1,40, .5,.1,.4,0,4,0);
+            encoderDriveProfiled(.2,.4,.5,19,1,6,0,false);
+            turnInCircleProfiled(20,2,1,25, .4,.1,.4,0,10,0);
             leftIntakeServo.setPosition(.55);
             rightIntakeServo.setPosition(.55);
             ThreadSleepUpdated(300);
-            turnInCircleProfiled(30,2,-1,40, -.1,-.1,-.4,0,4,0);
+            turnInCircleProfiled(10,2,1,25, -.1,-.1,-.4,2,4,0);
 
             ThreadSleepUpdated(100);
             leftIntakeMotor.setPower(0);
@@ -379,10 +379,9 @@ public class SkyStoneAutonomousBlue extends LinearOpMode {
             pickUpSkystone();
 
             //Turn towards foundation
-            turnInPlace(.05, 90, 3);
+            turnInPlace(-.05, 270, 3);
             ThreadSleepUpdated(400);
             encoderDriveProfiled(.1, .1, .5, 81, 2, 15, 270, true);
-            ThreadSleepUpdated(100);
         }
 
 
@@ -807,7 +806,7 @@ public class SkyStoneAutonomousBlue extends LinearOpMode {
 
     public void lignUpWithFoundation() {
         double distance = rangeSensorBack.getDistance(DistanceUnit.CM);
-        double maxSpeed = -.5;
+        double maxSpeed = -.4;
         double minSpeed = -.1;
         double goalDistance = 4;
         while (!touchSensor.isPressed()) {
@@ -837,7 +836,7 @@ public class SkyStoneAutonomousBlue extends LinearOpMode {
         rightMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         rightMotor2.setMode(STOP_AND_RESET_ENCODER);
 
-        int newSideTargets = /*robot.leftMotor.getCurrentPosition() + */(int) ((Math.abs(-10)) * COUNTS_PER_INCH);
+        int newSideTargets = /*robot.leftMotor.getCurrentPosition() + */(int) ((Math.abs(-16)) * COUNTS_PER_INCH);
         leftMotor.setTargetPosition(newSideTargets);
         leftMotor2.setTargetPosition(newSideTargets);
         rightMotor.setTargetPosition(newSideTargets);
@@ -1014,6 +1013,11 @@ public class SkyStoneAutonomousBlue extends LinearOpMode {
             double rangeSensorValueUsed = rangeSensorDistanceMid;
             distanceDifferenceMid = rangeSensorValueUsed - setDistanceItShouldBeMid;
             double middlePowerError = distanceDifferenceMid / 35;
+            if(frontPowerError > .2) {
+                frontPowerError = .2;
+            } else if(frontPowerError < -.2) {
+                frontPowerError = -.2;
+            }
 
             leftMotor.setPower(-frontPowerError + angleAdjustPower);
             leftMotor2.setPower(-frontPowerError + angleAdjustPower);
@@ -1081,8 +1085,8 @@ public class SkyStoneAutonomousBlue extends LinearOpMode {
             leftIntakeServo.setPosition(0);
             rightIntakeServo.setPosition(.1);
         } else {
-            leftIntakeServo.setPosition(.5);
-            rightIntakeServo.setPosition(.4);
+            leftIntakeServo.setPosition(0);
+            rightIntakeServo.setPosition(.1);
         }
         leftIntakeMotor.setPower(1);
         rightIntakeMotor.setPower(1);
@@ -1092,7 +1096,7 @@ public class SkyStoneAutonomousBlue extends LinearOpMode {
         rightIntakeServo.setPosition(.4);
         holdServo.setPosition(holdServoPos);
         rotationServo.setPosition(.54);
-        arm.setTargetPosition(-50);
+        arm.setTargetPosition(-0);
         arm.setTargetPositionTolerance(1);
         arm.setMode(RUN_TO_POSITION);
         arm.setPower(.5);

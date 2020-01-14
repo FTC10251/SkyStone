@@ -12,18 +12,21 @@ public class SetUpClaw extends LinearOpMode {
     Servo holdServo;
     Servo rotationServo;
     Servo leftIntakeServo;
+    Servo hookServo;
     @Override
     public void runOpMode() throws InterruptedException {
         clawServo = hardwareMap.get(Servo .class, "Claw Servo");
         holdServo = hardwareMap.get(Servo.class, "Hold Servo");
         rotationServo = hardwareMap.get(Servo.class, "Rotation Servo");
         leftIntakeServo = hardwareMap.get(Servo.class, "Intake Servo Left");
+        hookServo = hardwareMap.get(Servo.class, "Hook Servo");
         waitForStart();
         while(opModeIsActive()) {
             clawServo.setPosition(SkyStoneAutonomousUpdated.servoOpenPos);
             holdServo.setPosition(SkyStoneAutonomousUpdated.holdServoPos);
             rotationServo.setPosition(.54);
             leftIntakeServo.setPosition(1);
+            hookServo.setPosition(.3);
         }
     }
 }
