@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode.Autonomous;
 
+import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Point;
 import android.util.Range;
@@ -21,6 +22,8 @@ import com.qualcomm.robotcore.hardware.Servo;
 import org.firstinspires.ftc.robotcontroller.external.samples.HardwarePushbot;
 import org.firstinspires.ftc.robotcore.external.ClassFactory;
 import org.firstinspires.ftc.robotcore.external.Telemetry;
+import org.firstinspires.ftc.robotcore.external.function.Consumer;
+import org.firstinspires.ftc.robotcore.external.function.Continuation;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.matrices.OpenGLMatrix;
 import org.firstinspires.ftc.robotcore.external.matrices.VectorF;
@@ -32,6 +35,8 @@ import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 
 import com.qualcomm.hardware.modernrobotics.ModernRoboticsI2cGyro;
 import com.qualcomm.robotcore.hardware.TouchSensor;
+import com.qualcomm.robotcore.util.ThreadPool;
+import com.vuforia.Frame;
 
 import org.firstinspires.ftc.robotcore.external.navigation.Position;
 import org.firstinspires.ftc.robotcore.external.navigation.RelicRecoveryVuMark;
@@ -47,6 +52,7 @@ import org.firstinspires.ftc.teamcode.ExtraClasses;
 import java.math.RoundingMode;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 
@@ -66,7 +72,7 @@ import static org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocaliz
  * Notes:
  * Positive Direction is intakeSide
  */
-@Autonomous(name = " Auto For Bugs", group = "HDrive")
+@Autonomous(name = "Prototype Auto (DONT RUN IN COMP)", group = "HDrive")
 public class AutonomousBugTest extends LinearOpMode {
     //Vuforia
     private static final String VUFORIA_KEY =
@@ -80,12 +86,17 @@ public class AutonomousBugTest extends LinearOpMode {
     double startPos;
     double angleDouble = 0;
     double blockPosition = 0;
+    double leftPreviousPos = 0;
+    double leftPreviousPos2 = 0;
+    double rightPreviousPos = 0;
+    double rightPreviousPos2 = 0;
     public static double holdServoPos = .58;
     public static double servoClosedPos = .15;
     public static double servoOpenPos = .56;
     boolean firstTime = true;
     boolean finished = true;
     boolean filteredValues = false;
+    boolean continueAutonomousMotion = false;
     DcMotorEx leftMotor;
     DcMotorEx leftMotor2;
     DcMotorEx rightMotor;
@@ -107,6 +118,14 @@ public class AutonomousBugTest extends LinearOpMode {
     DistanceSensor rangeSensorLeft;
     DistanceSensor rangeSensorBack;
     TouchSensor touchSensor;
+
+    double reading1;
+    double reading2;
+    double reading3;
+    double reading4;
+    double redAverage = 0;
+    double greenAverage = 0;
+    double blueAverage = 0;
 
     //Vuforia Variables
     private static final float mmPerInch = 25.4f;
@@ -207,6 +226,7 @@ public class AutonomousBugTest extends LinearOpMode {
         rightMotor2.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, pidStuff);
         //pidStuff.f = 23;
         middleMotor.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, pidStuff);
+        arm.setPIDFCoefficients(RUN_USING_ENCODER, pidStuff);
         angles = imu.getAngularOrientation().toAxesReference(AxesReference.INTRINSIC).toAxesOrder(AxesOrder.ZYX);
         angleDouble = Double.parseDouble(formatAngle(angles.angleUnit, angles.firstAngle));
         initialAngle = angleDouble;
@@ -218,6 +238,7 @@ public class AutonomousBugTest extends LinearOpMode {
         parameters.vuforiaLicenseKey = VUFORIA_KEY;
         parameters.cameraName = webcamName;
         vuforia = ClassFactory.getInstance().createVuforia(parameters);
+        vuforia.enableConvertFrameToBitmap();
         VuforiaTrackables targetsSkyStone = this.vuforia.loadTrackablesFromAsset("Skystone");
         VuforiaTrackable stoneTarget = targetsSkyStone.get(0);
         stoneTarget.setName("Stone Target");
@@ -248,93 +269,169 @@ public class AutonomousBugTest extends LinearOpMode {
         telemetry.addData("Starting Angle", initialAngle);
         telemetry.update();
         targetsSkyStone.activate();
-        hookServo.setPosition(.75);
+        //hookServo.setPosition(.75);
         while (!isStarted() && !isStopRequested()) {
             // check all the trackable targets to see which one (if any) is visible.
-            targetVisible = false;
-            for (VuforiaTrackable trackable : allTrackables) {
-                if (((VuforiaTrackableDefaultListener) trackable.getListener()).isVisible()) {
-                    telemetry.addData("Visible Target", trackable.getName());
-                    targetVisible = true;
-                    // getUpdatedRobotLocation() will return null if no new information is available since
-                    // the last time that call was made, or if the trackable is not currently visible.
-                    OpenGLMatrix robotLocationTransform = ((VuforiaTrackableDefaultListener) trackable.getListener()).getUpdatedRobotLocation();
-                    if (robotLocationTransform != null) {
-                        lastLocation = robotLocationTransform;
+            vuforia.getFrameOnce(Continuation.create(ThreadPool.getDefault(), new Consumer<Frame>() {
+                @Override
+                public void accept(Frame frame) {
+                    Bitmap bitmap = vuforia.convertFrameToBitmap(frame);
+                    if (bitmap != null) {
+                        double bHeight = bitmap.getHeight();
+                        double bWidth = bitmap.getWidth();
+                        averagePixels(bWidth * (.25), bHeight * (.6666), bWidth * (.25), bHeight * (.75), bWidth * (.75), bHeight * (.666), bWidth * (.75), bHeight * (.75), bitmap);
+                        double redAverage1 = redAverage;
+                        double greenAverage1 = greenAverage;
+                        double blueAverage1 = blueAverage;
+
+                        averagePixels(bWidth * (.4555), bHeight * (.666), bWidth * (.4554), bHeight * (.75), bWidth * (.54), bHeight * (.66), bWidth * (.54), bHeight * (.75), bitmap);
+                        double redAverage2 = redAverage;
+                        double greenAverage2 = greenAverage;
+                        double blueAverage2 = blueAverage;
+
+                        averagePixels(bWidth * (.75), bHeight * (.6666), bWidth * (.75), bHeight * (.75), bWidth * (.875), bHeight * (.6666), bWidth * (.875), bHeight * (.75), bitmap);
+                        double redAverage3 = redAverage;
+                        double greenAverage3 = greenAverage;
+                        double blueAverage3 = blueAverage;
+                        if((redAverage1 + greenAverage1) / 2 < (redAverage2 + greenAverage2)/2 && (redAverage1 + greenAverage1)/2 < (redAverage3 + greenAverage3)/2) {
+                            blockPosition = 0;
+                        } else if((redAverage2 + greenAverage2) / 2 < (redAverage1 + greenAverage1)/2 && (redAverage2 + greenAverage2)/2 < (redAverage3 + greenAverage3)/2) {
+                            blockPosition = 1;
+                        } else if((redAverage3 + greenAverage3) / 2 < (redAverage1 + greenAverage1)/2 && (redAverage3 + greenAverage3)/2 < (redAverage2 + greenAverage2)/2) {
+                            blockPosition = 2;
+                        }
+
+                        telemetry.addData("Block Position", blockPosition);
+                        telemetry.addData("Red Average 1", redAverage1);
+                        telemetry.addData("Green Average 1", greenAverage1);
+                        telemetry.addData("Blue Average 1", blueAverage1);
+                        telemetry.addData("Red Average 2", redAverage2);
+                        telemetry.addData("Green Average 2", greenAverage2);
+                        telemetry.addData("Blue Average 2", blueAverage2);
+                        telemetry.addData("Red Average 3", redAverage3);
+                        telemetry.addData("Green Average 3", greenAverage3);
+                        telemetry.addData("Blue Average 3", blueAverage3);
+                        telemetry.addData("Width", bitmap.getWidth());
+                        telemetry.addData("Height", bitmap.getHeight());
+                        telemetry.update();
+                        int color = bitmap.getPixel(1, 1);
+                        int red = Color.red(color);
+                        int blue = Color.blue(color);
+                        int green = Color.green(color);
                     }
-                    break;
                 }
-            }
+            }));
 
-            // Provide feedback as to where the robot is located (if we know).
-            if (targetVisible) {
-                // express position (translation) of robot in inches.
-                VectorF translation = lastLocation.getTranslation();
-                telemetry.addData("Pos (in)", "{X, Y, Z} = %.1f, %.1f, %.1f",
-                        translation.get(0) / mmPerInch, translation.get(1) / mmPerInch, translation.get(2) / mmPerInch);
-
-                // express the rotation of the robot in degrees.
-                Orientation rotation = Orientation.getOrientation(lastLocation, EXTRINSIC, XYZ, DEGREES);
-                telemetry.addData("Rot (deg)", "{Roll, Pitch, Heading} = %.0f, %.0f, %.0f", rotation.firstAngle, rotation.secondAngle, rotation.thirdAngle);
-                double xTranslation = lastLocation.getTranslation().get(0);
-                //blockPosition = getPosition(xTranslation);
-                telemetry.addData("blockPosition", blockPosition);
-            } else {
-                telemetry.addData("Visible Target", "none");
-            }
-            telemetry.update();
         }
 
+        encoderDriveProfiled(.2,.4,.4,18,1,6,0,true);
+        turnInCircleProfiled(30,2,1,20, .4,.1,.4,0,5,0);
+        telemetry.addLine("Exited");
+        telemetry.update();
+        Thread.sleep(2000);
+        leftMotor.setPower(0);
+        rightMotor.setPower(0);
+        leftMotor2.setPower(0);
+        rightMotor2.setPower(0);
+        Thread.sleep(30000);
+        leftMotor.setPower(.1);
+        rightMotor.setPower(.1);
+        leftMotor2.setPower(.1);
+        rightMotor2.setPower(.1);
+        Thread.sleep(4000);
+        telemetry.addLine("Exited");
+        telemetry.update();
+        leftMotor.setMode(STOP_AND_RESET_ENCODER);
+        leftMotor2.setMode(STOP_AND_RESET_ENCODER);
+        rightMotor.setMode(STOP_AND_RESET_ENCODER);
+        rightMotor2.setMode(STOP_AND_RESET_ENCODER);
+        leftMotor.setMode(RUN_USING_ENCODER);
+        leftMotor2.setMode(RUN_USING_ENCODER);
+        rightMotor.setMode(RUN_USING_ENCODER);
+        rightMotor2.setMode(RUN_USING_ENCODER);
+        leftMotor.setPower(.3);
+        leftMotor2.setPower(.3);
+        rightMotor.setPower(.3);
+        rightMotor2.setPower(.3);
+        Thread.sleep(4000);
+        telemetry.addLine("Done");
+        telemetry.update();
+        leftMotor.setPower(0);
+        leftMotor2.setPower(0);
+        rightMotor.setPower(0);
+        rightMotor2.setPower(0);
+        Thread.sleep(30000);
+
+
+
         //Set Intake Position
-        //moveIntakeAndArm();
-        Thread.sleep(1500);
+        moveIntakeAndArm();
         leftIntakeServo.setPosition(.96);
         rightIntakeServo.setPosition(.33);
-        //Thread.sleep(1);
 
-        encoderDriveProfiled(.2,.4,.5,18,1,6,0,false);
-        turnInCircleProfiled(20,2,1,30, .4,.1,.4,0,10,0);
-        leftIntakeServo.setPosition(.55);
-        rightIntakeServo.setPosition(.55);
-        Thread.sleep(300);
+
         //Move forward to pick up block
-        /*if(blockPosition == 0) { //Left
+        if(blockPosition == 0) { //Left
             encoderDriveProfiled(.2,.4,.5,18,1,6,0,false);
-            turnInCircleProfiled(20,2,1,30, .4,.1,.4,0,10,0);
+            turnInCircleProfiled(30,2,1,20, .4,.1,.4,0,10,0);
             leftIntakeServo.setPosition(.55);
             rightIntakeServo.setPosition(.55);
             Thread.sleep(300);
-            turnInCircleProfiled(20,2,1,30, -.1,-.1,-.4,2,4,0);
+            turnInCircleProfiled(7,2,1,20, -.1,-.1,-.4,2,4,0);
+
+            Thread.sleep(100);
+            leftIntakeMotor.setPower(0);
+            rightIntakeMotor.setPower(0);
+            pickUpSkystone();
+
+            //Turn towards foundation
+            turnInPlace(.05, 90, 3);
+            Thread.sleep(400);
+            encoderDriveProfiled(.1, .1, .5, 81, 2, 15, 90, true);
+            Thread.sleep(100);
         } else if(blockPosition == 1) { //Mid
-            encoderDriveProfiled(.2, .1, .5, 29, 1, 6, 0, true);
+            encoderDriveProfiled(.2, .1, .5, 35, 1, 6, 0, true);
             leftIntakeServo.setPosition(.55);
             rightIntakeServo.setPosition(.55);
-            Thread.sleep(300);
+            Thread.sleep(500);
 
             //Move Back after picking up block
-            encoderDriveProfiled(-.2, -.2, -.7, 10, 1, 6, 0, true);
+            encoderDriveProfiled(.2, .2, .5, -8, 1, 6, 0, true);
+
+            Thread.sleep(100);
+            leftIntakeMotor.setPower(0);
+            rightIntakeMotor.setPower(0);
+            pickUpSkystone();
+
+            //Turn towards foundation
+            turnInPlace(.05, 90, 3);
+            Thread.sleep(400);
+            encoderDriveProfiled(.1, .1, .5, 75, 2, 15, 90, true);
+            Thread.sleep(100);
         } else { //Right
-            encoderDriveProfiled(.2,.4,.5,8,1,6,0,false);
-            turnInCircleProfiled(30,2,-1,40, .5,.1,.4,0,4,0);
+            encoderDriveProfiled(.2,.4,.5,13,1,6,0,false);
+            turnInCircleProfiled(30,2,-1,20, .5,.1,.4,0,4,0);
             leftIntakeServo.setPosition(.55);
             rightIntakeServo.setPosition(.55);
             Thread.sleep(300);
-            turnInCircleProfiled(30,2,-1,40, -.1,-.1,-.4,0,4,0);
+            turnInCircleProfiled(7,2,-1,20, -.1,-.1,-.4,0,4,0);
 
-        }*/
+            Thread.sleep(100);
+            leftIntakeMotor.setPower(0);
+            rightIntakeMotor.setPower(0);
+            pickUpSkystone();
 
-        Thread.sleep(100);
-        leftIntakeMotor.setPower(0);
-        rightIntakeMotor.setPower(0);
-        //pickUpSkystone();
-/*
-        //Turn towards foundation
-        turnInPlace(.05, 90, 3);
-        Thread.sleep(1000);
+            //Turn towards foundation
+            turnInPlace(.05, 90, 3);
+            Thread.sleep(1000);
+            encoderDriveProfiled(.1, .1, .5, 81, 2, 15, 90, true);
+            Thread.sleep(100);
+        }
+
+
 
         //move towards foundation
-        encoderDriveProfiled(.1, .1, .5, 73, 2, 15, 90, true);
-        Thread.sleep(100);
+
 
         //turn towards foundation to hook it
         telemetry.addLine("Got here");
@@ -343,6 +440,7 @@ public class AutonomousBugTest extends LinearOpMode {
         Thread.sleep(100);
 
         autoScore();
+        Thread.sleep(500);
 
         //move forward to pick up the founcation
         lignUpWithFoundation();
@@ -352,54 +450,13 @@ public class AutonomousBugTest extends LinearOpMode {
         scoreFoundation();
 
         //score thing
-        Thread.sleep(10000);
-
-        //move the middleMotor away from the wall
-        moveAwayFromWall();
-        Thread.sleep(100);
-
-        //drive forwards after moving away from the founcation
-        encoderDriveProfiled(-.3, -.3, -.9, 15, 2, 5, 180, true);
-        Thread.sleep(100);
-
-        //turn towards next block
-        turnInPlace(.1, 270, 3);
-        Thread.sleep(100);
-
-        //move towards the blocks
-        encoderDriveProfiled(.3, .9, .9, 40, 2, 15, 270, false);
-
-        //turn towards the blocks
-        turnInCircleProfiled(30, .2, 1, 45, .9, .2, .8, 0, 10, 0);
-
-        //after picking up the blocks
-        turnInCircleProfiled(30, .2, 1, 45, -.2, -.9, -.8, 2, 10, -.9);
-
-        //move towards the foundation
-        encoderDriveProfiled(-.9, -.2, -.9, 50, .2, 15, 270, false);
 
         //finish under the foundation
-        encoderDriveProfiled(.3, .2, .9, 16, 2, 5, 270, true);
-        //Block is in Left Starting position
-        //turnInCircleProfiled(10,.2,-1,45,.6,.1,.4,.1,15,0);
+        encoderDriveProfiled(.3, .2, .5, 41, 2, 5, 270, true);
 
-        /*encoderDriveProfiled(-.1,-.1,-.4,18,2,5,270,true);
-        encoderDriveProfiled(.1,.1,.7,50,2,5,270,true);
-        turnInCircleProfiled(40,.2,1,40,.1,.1,.4,2,10,0);
-        turnInCircleProfiled(40,.2,1,40,-.1,-.1,-.4,2,10,0);
-        encoderDriveProfiled(-.1,-.1,-.7,50,2,5,270,true);*/
-        //Bock is in Mid Starting Position
-
-        //encoderDriveProfiled(.1,.1,.7,27,1,7,true); //Move towards the block
-        //turnInCircleProfiled(10,.2,-1,90,-.1,-.1,-.7,.1,20); //back up to prepare going forward
-        //encoderDriveProfiled(.1,.3,.8,80,1,7,true); //start going towards the platform
-        //turnInCircleProfiled(10,.2,1,45,.3,.3,.5,1,10);//curve motion
-        //turnInCircleProfiled(10,.2,-1,45,.3,.3,.5,1,10);//curve motion
 
 
         //Block is in Right Starting Position
-        //Thread.sleep(30000);
-        //targetsSkyStone.activate();
 
 
         // Disable Tracking when we are done;
@@ -474,17 +531,17 @@ public class AutonomousBugTest extends LinearOpMode {
     }
 
     public void turnInCircle(double radius, double velocity, double turnDirection, double rotations, double timeout) {
-        leftMotor.setMode(STOP_AND_RESET_ENCODER);
-        leftMotor2.setMode(STOP_AND_RESET_ENCODER);
-        rightMotor.setMode(STOP_AND_RESET_ENCODER);
-        rightMotor2.setMode(STOP_AND_RESET_ENCODER);
-        middleMotor.setMode(STOP_AND_RESET_ENCODER);
+            leftMotor.setMode(STOP_AND_RESET_ENCODER);
+            leftMotor2.setMode(STOP_AND_RESET_ENCODER);
+            rightMotor.setMode(STOP_AND_RESET_ENCODER);
+            rightMotor2.setMode(STOP_AND_RESET_ENCODER);
+            middleMotor.setMode(STOP_AND_RESET_ENCODER);
 
-        leftMotor.setMode(RUN_USING_ENCODER);
-        leftMotor2.setMode(RUN_USING_ENCODER);
-        rightMotor.setMode(RUN_USING_ENCODER);
-        rightMotor2.setMode(RUN_USING_ENCODER);
-        middleMotor.setMode(RUN_USING_ENCODER);
+            leftMotor.setMode(RUN_USING_ENCODER);
+            leftMotor2.setMode(RUN_USING_ENCODER);
+            rightMotor.setMode(RUN_USING_ENCODER);
+            rightMotor2.setMode(RUN_USING_ENCODER);
+            middleMotor.setMode(RUN_USING_ENCODER);
 
         boolean finishedMotion = false;
         angles = imu.getAngularOrientation().toAxesReference(AxesReference.INTRINSIC).toAxesOrder(AxesOrder.ZYX);
@@ -601,8 +658,8 @@ public class AutonomousBugTest extends LinearOpMode {
                 rightPower = (minSpeedInitial * rightRatio) + (rightRatio * (angleDifference / speedUpAt) * speedDifferenceInitial);
             } else if (angleDifference > speedUpAt && angleDifference < (rotations - slowDownAt)) {
                 currentState = 2;
-                leftPower =   (leftRatio * speedDifferenceInitial);
-                rightPower =  (rightRatio * speedDifferenceInitial);
+                leftPower = (leftRatio * minSpeedInitial) + (leftRatio * speedDifferenceInitial);
+                rightPower = (rightRatio * minSpeedInitial) + (rightRatio * speedDifferenceInitial);
             } else if (angleDifference > (rotations - slowDownAt)) {
                 currentState = 3;
                 leftPower = (minSpeedFinal * leftRatio) + (leftRatio * ((rotations - angleDifference) / slowDownAt) * speedDifferenceFinal);
@@ -633,6 +690,15 @@ public class AutonomousBugTest extends LinearOpMode {
         telemetry.addData("Angle Current", currentAngle);
         telemetry.addData("Starting Angle", startingAngle);
         telemetry.update();
+        if(nextSpeed == 0) {
+            continueAutonomousMotion = false;
+        } else {
+            continueAutonomousMotion = true;
+            leftPreviousPos = leftMotor.getCurrentPosition();
+            leftPreviousPos2 = leftMotor2.getCurrentPosition();
+            rightPreviousPos = rightMotor.getCurrentPosition();
+            rightPreviousPos2 = rightMotor2.getCurrentPosition();
+        }
     }
 
     public void encoderDriveProfiled(double minSpeedInitial, double minSpeedFinal, double maxSpeed, double inches, double speedUpAt, double slowDownAt, double holdAngle, boolean end) {
@@ -642,25 +708,25 @@ public class AutonomousBugTest extends LinearOpMode {
         double speedDifferenceInitial = maxSpeed - minSpeedInitial;
         double speedDifferenceFinal = maxSpeed - minSpeedFinal;
         if (opModeIsActive()) {
-            leftMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-            leftMotor2.setMode(STOP_AND_RESET_ENCODER);
-            rightMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-            rightMotor2.setMode(STOP_AND_RESET_ENCODER);
+                leftMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+                leftMotor2.setMode(STOP_AND_RESET_ENCODER);
+                rightMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+                rightMotor2.setMode(STOP_AND_RESET_ENCODER);
 
-            newSideTargets = /*robot.leftMotor.getCurrentPosition() + */(int) ((Math.abs(inches)) * COUNTS_PER_INCH);
-            leftMotor.setTargetPosition(newSideTargets);
-            leftMotor2.setTargetPosition(newSideTargets);
-            rightMotor.setTargetPosition(newSideTargets);
-            rightMotor2.setTargetPosition(newSideTargets);
+                newSideTargets = /*robot.leftMotor.getCurrentPosition() + */(int) ((inches) * COUNTS_PER_INCH);
+                leftMotor.setTargetPosition(newSideTargets);
+                leftMotor2.setTargetPosition(newSideTargets);
+                rightMotor.setTargetPosition(newSideTargets);
+                rightMotor2.setTargetPosition(newSideTargets);
 
-            leftMotor.setMode(RUN_TO_POSITION);
-            leftMotor2.setMode(RUN_TO_POSITION);
-            rightMotor.setMode(RUN_TO_POSITION);
-            rightMotor2.setMode(RUN_TO_POSITION);
+                leftMotor.setMode(RUN_USING_ENCODER);
+                leftMotor2.setMode(RUN_USING_ENCODER);
+                rightMotor.setMode(RUN_USING_ENCODER);
+                rightMotor2.setMode(RUN_USING_ENCODER);
 
             double currentPowerLeft = 0;
             double currentPowerRight = 0;
-            while (Math.abs(leftMotor.getCurrentPosition()) < newSideTargets || Math.abs(rightMotor.getCurrentPosition()) < newSideTargets && opModeIsActive()) {
+            while (Math.abs(leftMotor.getCurrentPosition()) < Math.abs(newSideTargets)-5 || Math.abs(rightMotor.getCurrentPosition()) < Math.abs(newSideTargets) - 5 && opModeIsActive()) {
                 int stateAt = 0;
                 double currentEncoderPos = leftMotor.getCurrentPosition();
                 if (Math.abs(currentEncoderPos) < Math.abs(speedUpAt)) {
@@ -711,6 +777,17 @@ public class AutonomousBugTest extends LinearOpMode {
             leftMotor2.setPower(0);
             rightMotor.setPower(0);
             rightMotor2.setPower(0);
+            continueAutonomousMotion = true;
+            leftPreviousPos = leftMotor.getCurrentPosition();
+            leftPreviousPos2 = leftMotor2.getCurrentPosition();
+            rightPreviousPos = rightMotor.getCurrentPosition();
+            rightPreviousPos2 = rightMotor2.getCurrentPosition();
+        } else {
+            leftMotor.setPower(minSpeedFinal);
+            leftMotor2.setPower(minSpeedFinal);
+            rightMotor.setPower(minSpeedFinal);
+            rightMotor2.setPower(minSpeedFinal);
+            continueAutonomousMotion = false;
         }
     }
 
@@ -782,6 +859,9 @@ public class AutonomousBugTest extends LinearOpMode {
         double goalDistance = 4;
         while (!touchSensor.isPressed()) {
             distance = rangeSensorBack.getDistance(DistanceUnit.CM);
+            if(distance > 30) {
+                distance = 30;
+            }
             double sidePower = minSpeed + ((maxSpeed - minSpeed) * ((distance - goalDistance)) / 50);
             telemetry.addData("Distance", distance);
             telemetry.update();
@@ -801,7 +881,7 @@ public class AutonomousBugTest extends LinearOpMode {
         }
         hookServo.setPosition(.3);
         try {
-            Thread.sleep(500);
+            Thread.sleep(1500);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
@@ -812,7 +892,7 @@ public class AutonomousBugTest extends LinearOpMode {
         rightMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         rightMotor2.setMode(STOP_AND_RESET_ENCODER);
 
-        int newSideTargets = /*robot.leftMotor.getCurrentPosition() + */(int) ((Math.abs(-10)) * COUNTS_PER_INCH);
+        int newSideTargets = /*robot.leftMotor.getCurrentPosition() + */(int) ((Math.abs(-16)) * COUNTS_PER_INCH);
         leftMotor.setTargetPosition(newSideTargets);
         leftMotor2.setTargetPosition(newSideTargets);
         rightMotor.setTargetPosition(newSideTargets);
@@ -918,7 +998,7 @@ public class AutonomousBugTest extends LinearOpMode {
         rightMotor.setPower(movePower);
         rightMotor.setPower(movePower);
         long startingTime = System.currentTimeMillis();
-        while ((System.currentTimeMillis() - startingTime) < 2000) {
+        while ((System.currentTimeMillis() - startingTime) < 1300) {
             angles = imu.getAngularOrientation().toAxesReference(AxesReference.INTRINSIC).toAxesOrder(AxesOrder.ZYX);
             angleDouble = extraClasses.convertAngle(Double.parseDouble(formatAngle(angles.angleUnit, angles.firstAngle)));
             scoreAngle = 270;
@@ -961,6 +1041,7 @@ public class AutonomousBugTest extends LinearOpMode {
         boolean finishedMovementOverRobot = false;
         int armState = 0;
         double previousValue = rangeSensorBack.getDistance(DistanceUnit.CM);
+        int readingNum = 1;
         while(!scored) {
             angles = imu.getAngularOrientation().toAxesReference(AxesReference.INTRINSIC).toAxesOrder(AxesOrder.ZYX);
             angleDouble = extraClasses.convertAngle(Double.parseDouble(formatAngle(angles.angleUnit, angles.firstAngle)));
@@ -982,7 +1063,7 @@ public class AutonomousBugTest extends LinearOpMode {
 
             //Find how far from the side wall it is
             double rangeSensorDistanceBack = rangeSensorBack.getDistance(DistanceUnit.CM);
-            double filteredRangeSensorDistanceBack = filterValues(rangeSensorDistanceBack, previousValue, 5);
+            double filteredRangeSensorDistanceBack = filterValues(rangeSensorDistanceBack, readingNum);
             previousValue = filteredRangeSensorDistanceBack;
             distanceDifferenceBack = filteredRangeSensorDistanceBack - setDistanceItShouldBeBack;
             double frontPowerError = distanceDifferenceBack / 75;
@@ -993,11 +1074,19 @@ public class AutonomousBugTest extends LinearOpMode {
             distanceDifferenceMid = rangeSensorValueUsed - setDistanceItShouldBeMid;
             double middlePowerError = distanceDifferenceMid / 35;
 
+            if(frontPowerError > .2) {
+                frontPowerError = .2;
+            } else if(frontPowerError < -.2) {
+                frontPowerError = -.2;
+            }
+
             leftMotor.setPower(-frontPowerError + angleAdjustPower);
             leftMotor2.setPower(-frontPowerError + angleAdjustPower);
             rightMotor.setPower(-frontPowerError + -angleAdjustPower);
             rightMotor2.setPower(-frontPowerError + -angleAdjustPower);
             middleMotor.setPower(middlePowerError);
+            telemetry.addData("Distance", rangeSensorBack.getDistance(DistanceUnit.CM));
+            telemetry.addData("Distance Filtered", rangeSensorValueUsed);
             telemetry.addData("Angle", angleDouble);
             telemetry.addData("Angle Difference", angleError);
             telemetry.addData("Mid Reading", rangeSensorDistanceMid);
@@ -1006,6 +1095,8 @@ public class AutonomousBugTest extends LinearOpMode {
             telemetry.addData("Back Difference", distanceDifferenceBack);
             telemetry.addData("Front Power Error", frontPowerError);
             telemetry.addData("angle Adjust Power", angleAdjustPower);
+            telemetry.addData("Arm", arm.getCurrentPosition());
+            telemetry.update();
 
             if(!extraClasses.closeEnough(arm.getCurrentPosition(), goalArmPos, 30) && opModeIsActive() && !finishedMovementOverRobot) {
                 double speed = .1 + (.5 * (1 - ((arm.getCurrentPosition()) - startingPos) / goalArmPos));
@@ -1016,24 +1107,25 @@ public class AutonomousBugTest extends LinearOpMode {
             }
             else if(Math.abs(distanceDifferenceBack) < 2 && Math.abs(distanceDifferenceMid) < 2 && arm.getCurrentPosition() < goalArmPos + 100) {
                 if(armState == 0) {
-                    arm.setTargetPosition(-3800);
+                    arm.setTargetPosition(-3600);
                     arm.setPower(.3);
-                    if(extraClasses.closeEnough(arm.getCurrentPosition(),-3800,25)) {
+                    if(extraClasses.closeEnough(arm.getCurrentPosition(),-3600,25)) {
                         arm.setPower(0);
+                        clawServo.setPosition(servoOpenPos);
                         try {
-                            Thread.sleep(1500);
+                            Thread.sleep(1000);
                         } catch (InterruptedException e) {
                             e.printStackTrace();
                         }
-                        clawServo.setPosition(servoOpenPos);
                         armState = 1;
                     }
                 } else if(armState == 1) {
                     arm.setTargetPosition(0);
                     arm.setPower(.5);
+                    scored = true;
                 }
             }
-
+            readingNum++;
         }
         leftMotor.setPower(0);
         leftMotor2.setPower(0);
@@ -1041,31 +1133,7 @@ public class AutonomousBugTest extends LinearOpMode {
         rightMotor2.setPower(0);
         middleMotor.setPower(0);
         telemetry.addLine("Done");
-        telemetry.addData("Angle", angleDouble);
-        telemetry.addData("Mid Reading", rangeSensorLeft.getDistance(DistanceUnit.CM));
-        telemetry.addData("Back Reading", rangeSensorBack.getDistance(DistanceUnit.CM));
         telemetry.update();
-        try {
-            Thread.sleep(20000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        arm.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        while(!extraClasses.closeEnough(arm.getCurrentPosition(),-3300,50)) {
-
-        }
-        arm.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        clawServo.setPosition(servoOpenPos);
-        try {
-            Thread.sleep(1000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        arm.setTargetPosition(-100);
-        arm.setPower(.5);
-        arm.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-
-
     }
 
     public void moveIntakeAndArm() {
@@ -1075,8 +1143,16 @@ public class AutonomousBugTest extends LinearOpMode {
         arm.setMode(RUN_TO_POSITION);
         arm.setPower(.5);
         clawServo.setPosition(servoOpenPos);
-        leftIntakeServo.setPosition(.96);
-        rightIntakeServo.setPosition(.33);
+        if(blockPosition == 0) {
+            leftIntakeServo.setPosition(.96);
+            rightIntakeServo.setPosition(.33);
+        } else if(blockPosition == 1) {
+            leftIntakeServo.setPosition(1);
+            rightIntakeServo.setPosition(.1);
+        } else {
+            leftIntakeServo.setPosition(.5);
+            rightIntakeServo.setPosition(.4);
+        }
         leftIntakeMotor.setPower(1);
         rightIntakeMotor.setPower(1);
     }
@@ -1085,14 +1161,19 @@ public class AutonomousBugTest extends LinearOpMode {
         rightIntakeServo.setPosition(.4);
         holdServo.setPosition(holdServoPos);
         rotationServo.setPosition(.54);
-        arm.setTargetPosition(-10);
+        arm.setTargetPosition(-0);
+        arm.setTargetPositionTolerance(1);
         arm.setMode(RUN_TO_POSITION);
         arm.setPower(.5);
 
-        while(!extraClasses.closeEnough(arm.getCurrentPosition(),-10,20)) {
+        while(!extraClasses.closeEnough(arm.getCurrentPosition(), -50,5)) {
+            arm.setPower(.5);
             telemetry.addData("Arm Pos",arm.getCurrentPosition());
+            telemetry.addData("Get PIDF Coef", arm.getPIDFCoefficients(RUN_USING_ENCODER));
             telemetry.update();
         }
+        arm.setTargetPosition(-50);
+        arm.setMode(RUN_TO_POSITION);
         try {
             Thread.sleep(500);
         } catch (InterruptedException e) {
@@ -1136,7 +1217,7 @@ public class AutonomousBugTest extends LinearOpMode {
         telemetry.addLine("Finished Sleep");
         telemetry.update();
     }
-    public double filterValues(double currentValue, double previousValue, double tolerance) {
+    /*public double filterValues(double currentValue, double previousValue, double tolerance) {
         if(Math.abs(currentValue - previousValue) < tolerance) {
             filteredValues = false;
             return currentValue;
@@ -1144,7 +1225,68 @@ public class AutonomousBugTest extends LinearOpMode {
             filteredValues = true;
             return previousValue;
         }
+    }*/
+
+    public double filterValues(double sensorReading, int readingNum){
+        sensorReading = rangeSensorBack.getDistance(DistanceUnit.CM);
+        if (readingNum % 4 == 1){
+            reading1 = sensorReading;
+            if(readingNum == 1){
+                if(reading1 > 60) {
+                    return 60;
+                } else {
+                    return reading1;
+                }
+            }
+        }
+        else if (readingNum % 4 == 2){
+            reading2 = sensorReading;
+            if(readingNum == 2){
+                if(((reading1 + reading2) / 2) > 60) {
+                    return 60;
+                } else {
+                    return (reading1 + reading2) / 2;
+                }
+            }
+        }
+        else if (readingNum % 4 == 3){
+            reading3 = sensorReading;
+            if(readingNum == 3){
+                if((reading1 + reading2 + reading3)/3 > 60) {
+                    return 60;
+                } else {
+                    return (reading1 + reading2 + reading3) / 3;
+                }
+            }
+        }
+        else if (readingNum % 4 == 0){
+            reading4 = sensorReading;
+        }
+        //if (readingNum >= 4){
+        if(byeByeValue(reading1,reading2,reading3,reading4) > 60) {
+            return 60;
+        }
+        return byeByeValue(reading1, reading2, reading3, reading4);
+        //}
+        //return 0;
     }
+    public double byeByeValue (double val1, double val2, double val3, double val4){
+        double[] values = {val1,val2,val3,val4};
+        Arrays.sort(values);
+        return (values[1]+values[2])/2;
+    }
+    public void averagePixels(double x1, double y1, double x2, double y2, double x3, double y3, double x4, double y4, Bitmap bitmap) {
+        int color1 = bitmap.getPixel((int)x1,(int)y1);
+        int color2 = bitmap.getPixel((int)x2,(int)y2);
+        int color3 = bitmap.getPixel((int)x3,(int)y3);
+        int color4 = bitmap.getPixel((int)x4,(int)y4);
+
+        redAverage = ((Color.red(color1) + Color.red(color2) + Color.red(color3) + Color.red(color4)))/4;
+        blueAverage = ((Color.blue(color1) + Color.blue(color2) + Color.blue(color3) + Color.blue(color4)))/4;
+        greenAverage = ((Color.green(color1) + Color.green(color2) + Color.green(color3) + Color.green(color4)))/4;
+    }
+
+
 }
 
 

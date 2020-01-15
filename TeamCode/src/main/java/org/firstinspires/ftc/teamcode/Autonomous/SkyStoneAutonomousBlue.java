@@ -409,26 +409,10 @@ public class SkyStoneAutonomousBlue extends LinearOpMode {
 
         //finish under the foundation
         encoderDriveProfiled(.3, .2, .5, 41, 2, 5, 90, true);
-        //Block is in Left Starting position
-        //turnInCircleProfiled(10,.2,-1,45,.6,.1,.4,.1,15,0);
 
-        /*encoderDriveProfiled(-.1,-.1,-.4,18,2,5,270,true);
-        encoderDriveProfiled(.1,.1,.7,50,2,5,270,true);
-        turnInCircleProfiled(40,.2,1,40,.1,.1,.4,2,10,0);
-        turnInCircleProfiled(40,.2,1,40,-.1,-.1,-.4,2,10,0);
-        encoderDriveProfiled(-.1,-.1,-.7,50,2,5,270,true);*/
-        //Bock is in Mid Starting Position
-
-        //encoderDriveProfiled(.1,.1,.7,27,1,7,true); //Move towards the block
-        //turnInCircleProfiled(10,.2,-1,90,-.1,-.1,-.7,.1,20); //back up to prepare going forward
-        //encoderDriveProfiled(.1,.3,.8,80,1,7,true); //start going towards the platform
-        //turnInCircleProfiled(10,.2,1,45,.3,.3,.5,1,10);//curve motion
-        //turnInCircleProfiled(10,.2,-1,45,.3,.3,.5,1,10);//curve motion
 
 
         //Block is in Right Starting Position
-        ThreadSleepUpdated(30000);
-        targetsSkyStone.activate();
 
 
         // Disable Tracking when we are done;
@@ -682,10 +666,10 @@ public class SkyStoneAutonomousBlue extends LinearOpMode {
             rightMotor.setTargetPosition(newSideTargets);
             rightMotor2.setTargetPosition(newSideTargets);
 
-            leftMotor.setMode(RUN_TO_POSITION);
-            leftMotor2.setMode(RUN_TO_POSITION);
-            rightMotor.setMode(RUN_TO_POSITION);
-            rightMotor2.setMode(RUN_TO_POSITION);
+            leftMotor.setMode(RUN_USING_ENCODER);
+            leftMotor2.setMode(RUN_USING_ENCODER);
+            rightMotor.setMode(RUN_USING_ENCODER);
+            rightMotor2.setMode(RUN_USING_ENCODER);
 
             double currentPowerLeft = 0;
             double currentPowerRight = 0;
@@ -740,6 +724,11 @@ public class SkyStoneAutonomousBlue extends LinearOpMode {
             leftMotor2.setPower(0);
             rightMotor.setPower(0);
             rightMotor2.setPower(0);
+        } else {
+            leftMotor.setPower(minSpeedFinal);
+            leftMotor2.setPower(minSpeedFinal);
+            rightMotor.setPower(minSpeedFinal);
+            rightMotor2.setPower(minSpeedFinal);
         }
     }
 

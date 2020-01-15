@@ -8,6 +8,7 @@ import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.hardware.modernrobotics.ModernRoboticsI2cRangeSensor;
 import com.qualcomm.hardware.modernrobotics.ModernRoboticsTouchSensor;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
@@ -62,6 +63,7 @@ import static org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocaliz
  * Created by Luke on 9/25/2016. Final Far Auto
  */
 @Autonomous(name = "Competition Auto Red ", group = "HDrive")
+@Disabled
 public class CompAuto extends LinearOpMode {
     //Vuforia
     private static final String VUFORIA_KEY =

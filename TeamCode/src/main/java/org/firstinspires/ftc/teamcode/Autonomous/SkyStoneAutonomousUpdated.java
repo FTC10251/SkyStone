@@ -329,12 +329,12 @@ public class SkyStoneAutonomousUpdated extends LinearOpMode {
 
         //Move forward to pick up block
         if(blockPosition == 0) { //Left
-            encoderDriveProfiled(.2,.4,.5,18,1,6,0,false);
+            encoderDriveProfiled(.2,.4,.5,10,1,6,0,false);
             turnInCircleProfiled(30,2,1,20, .4,.1,.4,0,10,0);
             leftIntakeServo.setPosition(.55);
             rightIntakeServo.setPosition(.55);
             Thread.sleep(300);
-            turnInCircleProfiled(15,2,1,20, -.1,-.1,-.4,2,4,0);
+            turnInCircleProfiled(7,2,1,20, -.1,-.1,-.4,2,4,0);
 
             Thread.sleep(100);
             leftIntakeMotor.setPower(0);
@@ -353,7 +353,7 @@ public class SkyStoneAutonomousUpdated extends LinearOpMode {
             Thread.sleep(500);
 
             //Move Back after picking up block
-            encoderDriveProfiled(.2, .2, .5, -10, 1, 6, 0, true);
+            encoderDriveProfiled(.2, .2, .5, -8, 1, 6, 0, true);
 
             Thread.sleep(100);
             leftIntakeMotor.setPower(0);
@@ -371,7 +371,7 @@ public class SkyStoneAutonomousUpdated extends LinearOpMode {
             leftIntakeServo.setPosition(.55);
             rightIntakeServo.setPosition(.55);
             Thread.sleep(300);
-            turnInCircleProfiled(40,2,-1,15, -.1,-.1,-.4,0,4,0);
+            turnInCircleProfiled(7,2,-1,20, -.1,-.1,-.4,0,4,0);
 
             Thread.sleep(100);
             leftIntakeMotor.setPower(0);
@@ -683,10 +683,10 @@ public class SkyStoneAutonomousUpdated extends LinearOpMode {
             rightMotor.setTargetPosition(newSideTargets);
             rightMotor2.setTargetPosition(newSideTargets);
 
-            leftMotor.setMode(RUN_TO_POSITION);
-            leftMotor2.setMode(RUN_TO_POSITION);
-            rightMotor.setMode(RUN_TO_POSITION);
-            rightMotor2.setMode(RUN_TO_POSITION);
+            leftMotor.setMode(RUN_USING_ENCODER);
+            leftMotor2.setMode(RUN_USING_ENCODER);
+            rightMotor.setMode(RUN_USING_ENCODER);
+            rightMotor2.setMode(RUN_USING_ENCODER);
 
             double currentPowerLeft = 0;
             double currentPowerRight = 0;
@@ -741,6 +741,11 @@ public class SkyStoneAutonomousUpdated extends LinearOpMode {
             leftMotor2.setPower(0);
             rightMotor.setPower(0);
             rightMotor2.setPower(0);
+        } else {
+            leftMotor.setPower(minSpeedFinal);
+            leftMotor2.setPower(minSpeedFinal);
+            rightMotor.setPower(minSpeedFinal);
+            rightMotor2.setPower(minSpeedFinal);
         }
     }
 
