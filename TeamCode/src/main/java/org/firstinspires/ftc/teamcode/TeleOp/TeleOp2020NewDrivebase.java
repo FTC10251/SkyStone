@@ -27,6 +27,7 @@ import org.firstinspires.ftc.teamcode.HDriveFCCalc;
 import org.firstinspires.ftc.teamcode.ManualImports.Point;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Locale;
 
 /**
@@ -49,6 +50,7 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
 
     //Ints, Doubles, Booleans, and Floats
     int here = 0;
+    int readingNum = 0;
     double offset = 0;
     double bicep = 18;
     double forearm = 17.25;
@@ -83,6 +85,11 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
     double servoOpenPos = .56;
     double setDistanceItShouldBeBack = 0;
     double holdArmPos = 0;
+    double reading1;
+    double reading2;
+    double reading3;
+    double reading4;
+    double distanceDifferenceBack = 0;
 
     int blockPosY = 0;
     int blockPosX = 0;
@@ -99,9 +106,6 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
     boolean aWasPressed = false;
     boolean driverHasControl = true;
     boolean autoScoringModeFirstTime = true;
-    boolean filteredValues = false;
-    boolean yWasPressed = false;
-    boolean autoMovingFoundation = false;
     boolean pathFindingMode = false;
     boolean pathFindingModeFirstTime = true;
     boolean xWasPressed = false;
@@ -113,13 +117,13 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
     boolean firstTimeHoldArm = true;
     boolean hookUp = true;
     boolean backWasPressed = false;
-    boolean driverHasControlArm = true;
     boolean driverIsMovingArm = false;
-    boolean lbWasPressed = false;
     boolean isIntakingNormal = true;
     boolean isIntakingBasic = false;
     boolean intakingToggle = false;
     boolean intakeButtonWasPressed = false;
+    boolean wasManuallyMovingArm = false;
+    boolean yWasPressed = false;
 
 
     float rightX;
@@ -245,12 +249,12 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
             angles = imu.getAngularOrientation().toAxesReference(AxesReference.INTRINSIC).toAxesOrder(AxesOrder.ZYX);
             angleDouble = Double.parseDouble(formatAngle(angles.angleUnit, angles.firstAngle));
             rotationServo.setPosition(.54);
-            manualScore();
+            //manualScore();
             controlIntake2();
             moveTheBase();
             moveFoundationOutOfDepot();
             //tankDriveOdometry();
-            //autoScoreMode();
+            autoScoreMode();
             //pathFindingButton();
             holdArm();
             holdServo.setPosition(holdServoPos);
@@ -262,6 +266,7 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
             posY = posY + velY * timeDifferencePosition;
             timeBefore = System.currentTimeMillis();
 
+            telemetry.addData("Arm Angle", armAngle(arm.getCurrentPosition()));
             telemetry.addData("Scoring State", scoringState);
             telemetry.addData("arm pos", currentArmPos);
             telemetry.addData("Intake State", intakeState);
@@ -465,6 +470,7 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
         if ( autoScoringMode == 2 && !dontScore) {
             if (autoScoringModeFirstTime) {
                 autoScoringModeFirstTime = false;
+                readingNum = 0;
             }
 
             if(autoScoreState == 0) {
@@ -485,31 +491,43 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
                 angleAdjustPower = angleError / 60;
 
                 //Find how far from the side wall it is
-                setDistanceItShouldBeBack = 20;
-                double rangeSensorDistanceBack = rangeSensorBack.getDistance(DistanceUnit.CM);
-                double adjustedRangeSensorReading = rangeSensorDistanceBack - 2;
-                double xDistance = Math.abs(Math.sin(Math.toRadians(armAngle(arm.getCurrentPosition()))) * 46.5);
-                setDistanceItShouldBeBack = xDistance;
-                double distanceDifferenceBack = rangeSensorDistanceBack - setDistanceItShouldBeBack;
-                double frontPowerError = distanceDifferenceBack / 75;
+                setDistanceItShouldBeBack = 16;
 
                 //Find how far from the foundation it is
 
-                leftMotor.setPower(frontPowerError + angleAdjustPower);
+                /*leftMotor.setPower(frontPowerError + angleAdjustPower);
                 leftMotor2.setPower(frontPowerError + angleAdjustPower);
                 rightMotor.setPower(frontPowerError + -angleAdjustPower);
-                rightMotor2.setPower(frontPowerError + -angleAdjustPower);
+                rightMotor2.setPower(frontPowerError + -angleAdjustPower);*/
                 //middleMotor.setPower(middlePowerError);
 
                 //COMMENT THIS OUT BRUH
-                if(extraClasses.closeEnough(angleDouble, goalAngle, 3) && Math.abs(distanceDifferenceBack) < 2) {
+                if(extraClasses.closeEnough(angleDouble, goalAngle, 5)) {
+                    double rangeSensorDistanceBack = rangeSensorBack.getDistance(DistanceUnit.CM);
+                    double filteredRangeSensorDistanceBack = filterValues(rangeSensorDistanceBack, readingNum);
+                    if(filteredRangeSensorDistanceBack > 40) {
+                        filteredRangeSensorDistanceBack = 40;
+                    }
+                    distanceDifferenceBack = filteredRangeSensorDistanceBack - setDistanceItShouldBeBack;
+                    double frontPowerError = distanceDifferenceBack / 75;
+
+                    leftMotor.setPower(frontPowerError + angleAdjustPower);
+                    leftMotor2.setPower(frontPowerError + angleAdjustPower);
+                    rightMotor.setPower(frontPowerError + -angleAdjustPower);
+                    rightMotor2.setPower(frontPowerError + -angleAdjustPower);
                     /*armFlipper.setMode(RUN_TO_POSITION);
                     armFlipper.setTargetPosition((int)goalArmPos);
                     armFlipper.setPower(.5);
                     if(!armFlipper.isBusy()) {
                         autoScoreState = 1;
                     }*/
+                } else {
+                    leftMotor.setPower(angleAdjustPower);
+                    leftMotor2.setPower(angleAdjustPower);
+                    rightMotor.setPower(-angleAdjustPower);
+                    rightMotor2.setPower(-angleAdjustPower);
                 }
+                readingNum++;
             } else if(autoScoreState == 1) {
                 //armFlipper.setPower(0);
                 //clawServo.setPosition(0);
@@ -647,39 +665,24 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
                 }
             }
         }
-        if(!isIntakingNormal && (gamepad2.dpad_up || gamepad2.dpad_down)){
-            arm.setPower(.4);
-            if(gamepad2.dpad_up){
-                currentArmPos = currentArmPos - 5;
+        if(gamepad2.dpad_down || gamepad2.dpad_up) {
+            if(arm.getMode() != DcMotor.RunMode.RUN_USING_ENCODER) {
+                arm.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
             }
-            else if(gamepad2.dpad_down){
-                currentArmPos = currentArmPos + 5;
+            wasManuallyMovingArm = true;
+            if(gamepad2.dpad_down) {
+                arm.setPower(.3);
+            } else if(gamepad2.dpad_up) {
+                arm.setPower(-.3);
             }
-            arm.setTargetPosition(currentArmPos);
+        } else if(wasManuallyMovingArm){
+            wasManuallyMovingArm = false;
+            arm.setPower(0);
         }
-        else if(gamepad2.left_bumper && !isIntakingNormal){
-            if(scoringState == 0) {
-                arm.setPower(.4);
-                arm.setTargetPosition(-3500);
-                currentArmPos = arm.getCurrentPosition();
-                if (arm.getCurrentPosition() > -3520 && arm.getCurrentPosition() < -3480) {
-                    clawServo.setPosition(servoOpenPos);
-                    scoringState = 1;
-                }
-            }
-            if(scoringState == 1) {
-                arm.setTargetPosition(-250);
-                currentArmPos = arm.getCurrentPosition();
-                if(arm.getCurrentPosition() > -270 && arm.getCurrentPosition() < -230){
-                    isIntakingNormal = true;
-                    scoringState = 0;
-                }
-            }
-        }
-        else if(!gamepad2.left_bumper && !isIntakingNormal){
-            arm.setTargetPosition((currentArmPos));
-        }
-        if(gamepad2.b){
+
+
+
+        if(gamepad2.x){
             intakeState = 0;
             isIntakingNormal = true;
             scoringState = 0;
@@ -690,6 +693,16 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
         }
         leftIntakeServo.setPosition(leftIntakeServoPosition);
         rightIntakeServo.setPosition(rightIntakeServoPosition);
+        if(gamepad2.y && yWasPressed == false) {
+            yWasPressed = true;
+            if(clawServo.getPosition() == servoOpenPos) {
+                clawServo.setPosition(servoClosedPos);
+            } else {
+                clawServo.setPosition(servoOpenPos);
+            }
+        } else if(!gamepad2.y) {
+            yWasPressed = false;
+        }
 
         if(gamepad1.left_bumper && !intakeButtonWasPressed) {
             intakeButtonWasPressed = true;
@@ -831,14 +844,53 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
         rightIntakeServo.setPosition(rightIntakeServoPosition);*/
     }
 
-    public double filterValues(double currentValue, double previousValue, double tolerance) {
-        if(Math.abs(currentValue - previousValue) < tolerance) {
-            filteredValues = false;
-            return currentValue;
-        } else {
-            filteredValues = true;
-            return previousValue;
+    public double filterValues(double sensorReading, int readingNum){
+        sensorReading = rangeSensorBack.getDistance(DistanceUnit.CM);
+        if (readingNum % 4 == 1){
+            reading1 = sensorReading;
+            if(readingNum == 1){
+                if(reading1 > 60) {
+                    return 60;
+                } else {
+                    return reading1;
+                }
+            }
         }
+        else if (readingNum % 4 == 2){
+            reading2 = sensorReading;
+            if(readingNum == 2){
+                if(((reading1 + reading2) / 2) > 60) {
+                    return 60;
+                } else {
+                    return (reading1 + reading2) / 2;
+                }
+            }
+        }
+        else if (readingNum % 4 == 3){
+            reading3 = sensorReading;
+            if(readingNum == 3){
+                if((reading1 + reading2 + reading3)/3 > 60) {
+                    return 60;
+                } else {
+                    return (reading1 + reading2 + reading3) / 3;
+                }
+            }
+        }
+        else if (readingNum % 4 == 0){
+            reading4 = sensorReading;
+        }
+        //if (readingNum >= 4){
+        if(byeByeValue(reading1,reading2,reading3,reading4) > 60) {
+            return 60;
+        }
+        return byeByeValue(reading1, reading2, reading3, reading4);
+        //}
+        //return 0;
+    }
+    public double byeByeValue (double val1, double val2, double val3, double val4){
+        double[] values = {val1,val2,val3,val4};
+        Arrays.sort(values);
+        return (values[1]+values[2])/2;
     }
     public void holdArm() {
         if(driverIsMovingArm == false) {

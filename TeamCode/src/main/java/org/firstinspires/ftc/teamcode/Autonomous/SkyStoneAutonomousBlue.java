@@ -993,7 +993,6 @@ public class SkyStoneAutonomousBlue extends LinearOpMode {
             //Find how far from the side wall it is
             double rangeSensorDistanceBack = rangeSensorBack.getDistance(DistanceUnit.CM);
             double filteredRangeSensorDistanceBack = filterValues(rangeSensorDistanceBack, readingNum);
-            previousValue = filteredRangeSensorDistanceBack;
             distanceDifferenceBack = filteredRangeSensorDistanceBack - setDistanceItShouldBeBack;
             double frontPowerError = distanceDifferenceBack / 75;
 
