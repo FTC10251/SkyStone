@@ -18,6 +18,7 @@ import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.MotorControlAlgorithm;
 import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.util.RobotLog;
 
 import org.firstinspires.ftc.robotcontroller.external.samples.HardwarePushbot;
 import org.firstinspires.ftc.robotcore.external.ClassFactory;
@@ -118,6 +119,7 @@ public class SkyStoneAutonomousUpdated extends LinearOpMode {
     double reading2;
     double reading3;
     double reading4;
+    double lastReadRange = 20;
     double redAverage = 0;
     double greenAverage = 0;
     double blueAverage = 0;
@@ -1154,47 +1156,15 @@ public class SkyStoneAutonomousUpdated extends LinearOpMode {
     }*/
 
     public double filterValues(double sensorReading, int readingNum){
-        sensorReading = rangeSensorBack.getDistance(DistanceUnit.CM);
-        if (readingNum % 4 == 1){
-            reading1 = sensorReading;
-            if(readingNum == 1){
-                if(reading1 > 60) {
-                    return 60;
-                } else {
-                    return reading1;
-                }
+        for(int i = 0; i < 4; i++) {
+            sensorReading = rangeSensorBack.getDistance(DistanceUnit.CM);
+            if(sensorReading >= 0 && sensorReading < 256){
+                i = 4;
+                lastReadRange = sensorReading;
             }
         }
-        else if (readingNum % 4 == 2){
-            reading2 = sensorReading;
-            if(readingNum == 2){
-                if(((reading1 + reading2) / 2) > 60) {
-                    return 60;
-                } else {
-                    return (reading1 + reading2) / 2;
-                }
-            }
-        }
-        else if (readingNum % 4 == 3){
-            reading3 = sensorReading;
-            if(readingNum == 3){
-                if((reading1 + reading2 + reading3)/3 > 60) {
-                    return 60;
-                } else {
-                    return (reading1 + reading2 + reading3) / 3;
-                }
-            }
-        }
-        else if (readingNum % 4 == 0){
-            reading4 = sensorReading;
-        }
-        //if (readingNum >= 4){
-        if(byeByeValue(reading1,reading2,reading3,reading4) > 60) {
-            return 60;
-        }
-        return byeByeValue(reading1, reading2, reading3, reading4);
-        //}
-        //return 0;
+        RobotLog.d("rangeSensor reading: %f lastReadRange: %f", sensorReading, lastReadRange);
+        return lastReadRange;
     }
     public double byeByeValue (double val1, double val2, double val3, double val4){
         double[] values = {val1,val2,val3,val4};
