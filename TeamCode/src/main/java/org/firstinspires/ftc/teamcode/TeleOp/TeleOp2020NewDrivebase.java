@@ -267,6 +267,7 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
             timeBefore = System.currentTimeMillis();
 
             telemetry.addData("Arm Angle", armAngle(arm.getCurrentPosition()));
+            telemetry.addData("Back Distance", setDistanceItShouldBeBack);
             telemetry.addData("Scoring State", scoringState);
             telemetry.addData("arm pos", currentArmPos);
             telemetry.addData("Intake State", intakeState);
@@ -284,7 +285,6 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
             telemetry.addData("Block Pos Y", blockPosY);
             telemetry.addData("angles", angleDouble);
             telemetry.addData("Foundation State", foundationState);
-            telemetry.addData("Back Distance", setDistanceItShouldBeBack);
             telemetry.addData("Hold Arm Pos", gamepad1.back);
             telemetry.addData("Hook Pos", hookUp);
             telemetry.addData("Left Motor Back Pos", leftMotor2.getCurrentPosition());
@@ -492,6 +492,11 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
 
                 //Find how far from the side wall it is
                 setDistanceItShouldBeBack = 16;
+                if(armAngle(arm.getCurrentPosition()) > 230) {
+                    double phi = 360 - armAngle(arm.getCurrentPosition());
+                    setDistanceItShouldBeBack = (50 * Math.cos(armAngle(arm.getCurrentPosition())) - 24);
+                }
+
 
                 //Find how far from the foundation it is
 

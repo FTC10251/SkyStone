@@ -343,7 +343,7 @@ public class SkyStoneAutonomousUpdated extends LinearOpMode {
 
             //Turn towards foundation
             turnInPlace(.05, 90, 3);
-            encoderDriveProfiled(.1, .1, .5, 81, 3, 15, 90, true);
+            encoderDriveProfiled(.1, .1, .8, 81, 3, 15, 90, true);
             Thread.sleep(100);
             pickUpSkystone2();
         } else if(blockPosition == 1) { //Mid
@@ -363,7 +363,7 @@ public class SkyStoneAutonomousUpdated extends LinearOpMode {
             //Turn towards foundation
             turnInPlace(.05, 90, 3);
             Thread.sleep(400);
-            encoderDriveProfiled(.1, .1, .8, 75, 2, 15, 90, true);
+            encoderDriveProfiled(.1, .1, 1, 75, 2, 15, 90, true);
             Thread.sleep(100);
         } else { //Right
             encoderDriveProfiled(.2,.4,.5,13,1,6,0,false);
@@ -381,7 +381,7 @@ public class SkyStoneAutonomousUpdated extends LinearOpMode {
             //Turn towards foundation
             turnInPlace(.05, 90, 3);
             Thread.sleep(1000);
-            encoderDriveProfiled(.1, .1, .8, 81, 2, 15, 90, true);
+            encoderDriveProfiled(.1, .1, 1, 81, 2, 15, 90, true);
             Thread.sleep(100);
         }
 
@@ -846,7 +846,7 @@ public class SkyStoneAutonomousUpdated extends LinearOpMode {
         leftMotor2.setMode(RUN_TO_POSITION);
         rightMotor.setMode(RUN_TO_POSITION);
         rightMotor2.setMode(RUN_TO_POSITION);
-        while(leftMotor.isBusy() || leftMotor2.isBusy() && rightMotor.isBusy() && rightMotor2.isBusy()) {
+        while(leftMotor.isBusy() && leftMotor2.isBusy() && rightMotor.isBusy() && rightMotor2.isBusy()) {
             double currentPowerLeft = .5;
             double currentPowerRight = .5;
 
@@ -912,8 +912,8 @@ public class SkyStoneAutonomousUpdated extends LinearOpMode {
             } else {
                 angleError = angleError * -1;
             }
-            motorPower = angleError / 250;
-            double minSpeed = .05;
+            motorPower = angleError / 200;
+            double minSpeed = .1;
             leftMotor.setPower(-minSpeed - motorPower);
             leftMotor2.setPower(-minSpeed - motorPower);
             rightMotor.setPower(minSpeed + motorPower);
@@ -942,7 +942,7 @@ public class SkyStoneAutonomousUpdated extends LinearOpMode {
         rightMotor.setPower(movePower);
         rightMotor.setPower(movePower);
         long startingTime = System.currentTimeMillis();
-        while ((System.currentTimeMillis() - startingTime) < 1300) {
+        while ((System.currentTimeMillis() - startingTime) < 900) {
             angles = imu.getAngularOrientation().toAxesReference(AxesReference.INTRINSIC).toAxesOrder(AxesOrder.ZYX);
             angleDouble = extraClasses.convertAngle(Double.parseDouble(formatAngle(angles.angleUnit, angles.firstAngle)));
             scoreAngle = 270;
