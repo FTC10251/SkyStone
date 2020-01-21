@@ -405,7 +405,7 @@ public class SkyStoneAutonomousUpdated extends LinearOpMode {
         lignUpWithFoundation();
 
         //Scores Foundation
-        scoreFoundation();
+        scoreFoundation();//
 
 
         //Move to next Block
