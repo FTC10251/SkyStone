@@ -101,7 +101,6 @@ public class HDriveTeleop2020 extends LinearOpMode {
     boolean newToggle = true;
 
 
-
     //Robot Hardware
     DcMotorEx leftMotor;
     //DcMotorEx leftMotor2;
