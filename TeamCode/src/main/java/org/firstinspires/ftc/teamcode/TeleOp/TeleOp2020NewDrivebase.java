@@ -285,6 +285,7 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
             telemetry.addData("Arm Mode", intakeMode);
             telemetry.addData("Arm State", intakeState);
             telemetry.addData("Auto Scoring Mode", autoScoringMode);
+            telemetry.addData("Auto Scoring State", autoScoreState);
             telemetry.addData("Back Distance", rangeSensorBack.getDistance(DistanceUnit.CM));
             //telemetry.addData("Left Distance", rangeSensorLeft.getDistance(DistanceUnit.CM));
             telemetry.addData("Angle actual", extraClasses.convertAngle(angleDouble + offset));
@@ -297,6 +298,9 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
             telemetry.addData("Hook Pos", hookUp);
             telemetry.addData("Left Motor Back Pos", leftMotor2.getCurrentPosition());
             telemetry.addData("Left Motor Front pos", leftMotor.getCurrentPosition());
+            telemetry.addData("Distance should be back", setDistanceItShouldBeBack);
+            telemetry.addData("Distance Difference back", distanceDifferenceBack);
+            telemetry.addData("arm angle needed", armAngleNeeded);
             telemetry.update();
         }
     }
@@ -499,11 +503,11 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
                 angleAdjustPower = angleError / 60;
 
                 //Find how far from the side wall it is
-                setDistanceItShouldBeBack = 16;
-                if(armAngle(arm.getCurrentPosition()) > 230) {
-                    armAngleNeeded = Math.asin((blockPosY * 10.16 - 24)/50);
+                //setDistanceItShouldBeBack = 16;
+                //if(armAngle(arm.getCurrentPosition()) < -200) {
+                    armAngleNeeded = -2460 + (Math.toDegrees(Math.asin((blockPosY * 10.16 - 24)/50)) - 50) * 13.333;
                     setDistanceItShouldBeBack = (50 * Math.cos(Math.asin((blockPosY * 10.16 - 24)/50)) - 24);
-                }
+                //}
 
 
                 //Find how far from the foundation it is
@@ -536,7 +540,12 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
                    }*/
                     armAngleDifference = arm.getCurrentPosition() - armAngleNeeded;
                     double armPowerError = armAngleDifference / 50;
+                    arm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                    arm.setTargetPosition((int)armAngleNeeded);
                     arm.setPower(armPowerError);
+                    if(!arm.isBusy()){
+                        autoScoreState = 1;
+                    }
                     telemetry.addData("arm power error: ", armPowerError);
                 } else {
                     leftMotor.setPower(angleAdjustPower);
@@ -549,14 +558,14 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
             } else if(autoScoreState == 1) {
                 //armFlipper.setPower(0);
                 //clawServo.setPosition(0);
-                blockPos[blockPosX][blockPosY] = 1;
+                //blockPos[blockPosX][blockPosY] = 1;
                 autoScoreState = 2;
             }
         } else {
             autoScoringModeFirstTime = true;
         }
         if(autoScoringMode == 1) {
-            if (gamepad1.dpad_left) {
+            /*if (gamepad1.dpad_left) {
                 if(blockPos[0][blockPosY] == 0) { //checks whether that position has scored yet
                     blockPosX = 0;
                     dontScore = false;
@@ -576,7 +585,7 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
                 } else {
                     dontScore = true;
                 }
-            }
+            }*/
             if (gamepad1.dpad_up && dpadWasPressed == false) {
                 dpadWasPressed = true;
                 blockPosY++;
