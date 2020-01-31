@@ -411,7 +411,7 @@ public class SkyStoneAutonomousUpdated extends LinearOpMode {
         rightIntakeServo.setPosition(.55);
         turnInCircleProfiled(25,2,-1,30, -.5,-.3,-.4,0,4,-.3);
         Thread.sleep(500);
-        pickUpSkystone1();
+        pickUpSkystone1();//
         if(blockPosition == 0) {
             encoderDriveProfiled(-.3, -.1, -.8, 62, 2, 15, 270, true);
         } else if(blockPosition == 1) {
