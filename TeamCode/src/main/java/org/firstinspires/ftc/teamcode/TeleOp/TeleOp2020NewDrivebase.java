@@ -137,6 +137,7 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
     boolean newDpad2UpPressed = true;
     boolean newDpad2DownPressed = true;
     double armAngleNeeded;
+    double armPosNeeded;
 
     //Robot Hardware
     DcMotorEx leftMotor;
@@ -300,6 +301,7 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
             telemetry.addData("Left Motor Front pos", leftMotor.getCurrentPosition());
             telemetry.addData("Distance should be back", setDistanceItShouldBeBack);
             telemetry.addData("Distance Difference back", distanceDifferenceBack);
+            telemetry.addData("Arm Pos Needed", armPosNeeded);
             telemetry.addData("arm angle needed", armAngleNeeded);
             telemetry.update();
         }
@@ -488,14 +490,15 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
             if(autoScoreState == 0) {
                 //Find Angle Error
                 double goalAngle = 90; //Just the starting angle I think
-                double distance1 = Math.abs(angleDouble - goalAngle);
-                double distance2 = Math.abs(Math.abs((360 - angleDouble)) - goalAngle);
+                double currentAngleAdjusted = angleDouble + offset;
+                double distance1 = Math.abs(currentAngleAdjusted - goalAngle);
+                double distance2 = Math.abs(Math.abs((360 - currentAngleAdjusted)) - goalAngle);
                 double angleError = distance1;
                 double angleAdjustPower = 0;
                 if (distance1 > distance2) {
                     angleError = distance2;
                 }
-                if ((goalAngle - angleDouble + 360) % 360 < 180) {
+                if ((goalAngle - currentAngleAdjusted + 360) % 360 < 180) {
                     angleError = angleError * -1;
                 } else {
                     angleError = angleError;
@@ -505,8 +508,9 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
                 //Find how far from the side wall it is
                 //setDistanceItShouldBeBack = 16;
                 //if(armAngle(arm.getCurrentPosition()) < -200) {
-                    armAngleNeeded = -2460 + (Math.toDegrees(Math.asin((blockPosY * 10.16 - 24)/50)) - 50) * 13.333;
-                    setDistanceItShouldBeBack = (50 * Math.cos(Math.asin((blockPosY * 10.16 - 24)/50)) - 24);
+                armAngleNeeded = (Math.toDegrees(Math.asin((blockPosY * 10.5 - 30)/47)));
+                armPosNeeded = ((216 - armAngleNeeded) * 15.278 * -1);
+                setDistanceItShouldBeBack = (47 * Math.cos(Math.toRadians(armAngleNeeded)) - 23.5);
                 //}
 
 
@@ -519,7 +523,7 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
                 //middleMotor.setPower(middlePowerError);
 
                 //COMMENT THIS OUT BRUH
-                if(extraClasses.closeEnough(angleDouble, goalAngle, 5)) {
+                if(extraClasses.closeEnough(currentAngleAdjusted, goalAngle, 5)) {
                     double rangeSensorDistanceBack = rangeSensorBack.getDistance(DistanceUnit.CM);
                     double filteredRangeSensorDistanceBack = filterValues(rangeSensorDistanceBack, readingNum);
                     if(filteredRangeSensorDistanceBack > 40) {
@@ -538,10 +542,10 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
                    if(!armFlipper.isBusy()) {
                        autoScoreState = 1;
                    }*/
-                    armAngleDifference = arm.getCurrentPosition() - armAngleNeeded;
+                    armAngleDifference = arm.getCurrentPosition() - armPosNeeded;
                     double armPowerError = armAngleDifference / 50;
                     arm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-                    arm.setTargetPosition((int)armAngleNeeded);
+                    arm.setTargetPosition((int)armPosNeeded);
                     arm.setPower(armPowerError);
                     if(!arm.isBusy()){
                         autoScoreState = 1;
@@ -586,13 +590,13 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
                     dontScore = true;
                 }
             }*/
-            if (gamepad1.dpad_up && dpadWasPressed == false) {
+            if (gamepad2.dpad_up && dpadWasPressed == false) {
                 dpadWasPressed = true;
                 blockPosY++;
-            } else if (gamepad1.dpad_down && dpadWasPressed == false) {
+            } else if (gamepad2.dpad_down && dpadWasPressed == false) {
                 dpadWasPressed = true;
                 blockPosY = blockPosY - 1;
-            } else if(!gamepad1.dpad_down && !gamepad1.dpad_up) {
+            } else if(!gamepad2.dpad_down && !gamepad2.dpad_up) {
                 dpadWasPressed = false;
             }
             if(gamepad1.left_trigger > .5 && leftTriggerPressed == false) {
@@ -692,14 +696,14 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
                 }
             }
         }
-        if(gamepad2.dpad_down || gamepad2.dpad_up) {
+        if(gamepad2.left_bumper || gamepad2.right_bumper) {
             if(arm.getMode() != DcMotor.RunMode.RUN_USING_ENCODER) {
                 arm.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
             }
             wasManuallyMovingArm = true;
-            if(gamepad2.dpad_down) {
+            if(gamepad2.left_bumper) {
                 arm.setPower(.3);
-            } else if(gamepad2.dpad_up) {
+            } else if(gamepad2.right_bumper) {
                 arm.setPower(-.3);
             }
         } else if(wasManuallyMovingArm){
