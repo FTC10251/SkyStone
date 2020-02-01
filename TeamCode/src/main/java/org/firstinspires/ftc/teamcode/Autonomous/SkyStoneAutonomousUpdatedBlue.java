@@ -72,8 +72,8 @@ import static org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocaliz
  * Notes:
  * Positive Direction is intakeSide
  */
-@Autonomous(name = "SkyStone Auto Old(BLUE)", group = "HDrive")
-public class SkyStoneAutonomousBlue extends LinearOpMode {
+@Autonomous(name = "SkyStone Auto Updated (BLUE)", group = "HDrive")
+public class SkyStoneAutonomousUpdatedBlue extends LinearOpMode {
     //Vuforia
     private static final String VUFORIA_KEY =
             "AQD7qV//////AAABmetA12LIIEPGqARlxRlpSeB78FHaKW23WxZ6eL692V0Xej0Jguf/s4qT3sxWQLGsv/gB/ewgs4P2Iqg08++3Uav5Tt/Pr27Jvr2sz6tvmPq3jENTD3l/kNUeno0Ko48xuc5xV8QT+7FkGuZ71BUQH4+iRXFWnQ7DBdQCL+flYnOOGxuNkfv0yVK9KhMlYifB/OAv+Ipkdex5orcWPnd2sXhKiHdLssleApDTBl+037zRwmiBZdJCvIJtf6bkk8qDB8+o2k0tlZ3IK2s8Kg9eNKCokA92wtTtsuqXGlNnrJOfT2kP85715fcmAwu6xzaq78q/7ay9zEiluf4bllNXNsg4CXNVIaIaWenkEFTUpyGB";
@@ -329,14 +329,12 @@ public class SkyStoneAutonomousBlue extends LinearOpMode {
 
         //Move forward to pick up block
         if(blockPosition == 0) { //Right
-            encoderDriveProfiled(.2,.4,.5,15,1,6,0,false);
-            turnInCircleProfiled(20,2,-1,30, .4,.1,.4,0,10,0);
+            encoderDriveProfiled(.2,.4,.5,11,1,6,0,false);
+            turnInCircleProfiled(18,2,-1,35, .4,.1,.4,0,10,0);
             leftIntakeServo.setPosition(.55);
             rightIntakeServo.setPosition(.55);
-            ThreadSleepUpdated(300);
-            turnInCircleProfiled(15,2,-1,30, -.1,-.1,-.4,2,4,0);
-
-            ThreadSleepUpdated(100);
+            Thread.sleep(600);
+            turnInCircleProfiled(15,2,-1,35, -.1,-.1,-.4,2,4,0);
             leftIntakeMotor.setPower(0);
             rightIntakeMotor.setPower(0);
             pickUpSkystone();
@@ -366,7 +364,7 @@ public class SkyStoneAutonomousBlue extends LinearOpMode {
             encoderDriveProfiled(.1, .1, .5, 81, 2, 15, 270, true);
             ThreadSleepUpdated(100);
         } else { //Right
-            encoderDriveProfiled(.2,.4,.5,19,1,6,0,false);
+                encoderDriveProfiled(.2,.4,.5,10,1,6,0,false);
             turnInCircleProfiled(20,2,1,25, .4,.1,.4,0,10,0);
             leftIntakeServo.setPosition(.55);
             rightIntakeServo.setPosition(.55);
