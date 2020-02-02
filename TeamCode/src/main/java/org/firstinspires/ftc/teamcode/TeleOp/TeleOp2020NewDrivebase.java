@@ -96,6 +96,7 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
     int blockPosX = 0;
     int intakeMode = 0;
     int intakeState = 0;
+    int intakeStateBasic = 0;
     int intakeWaitCount = 0;
     int scoringState = 0;
     int currentArmPos = 0;
@@ -126,6 +127,7 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
     boolean wasManuallyMovingArm = false;
     boolean yWasPressed = false;
     boolean reachedPos = false;
+    boolean normalToBasicToggle = false;
 
 
     float rightX;
@@ -302,6 +304,7 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
             telemetry.addData("Arm Pos Needed", armPosNeeded);
             telemetry.addData("arm angle needed", armAngleNeeded);
             telemetry.addData("intake state", intakeState);
+            telemetry.addData("intake state basic", intakeStateBasic);
             telemetry.update();
         }
     }
@@ -633,7 +636,7 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
     public void controlIntake2(){
         driverIsMovingArm = true;
         if(isIntakingBasic){
-            if(gamepad1.left_bumper && intakeState == 0){
+            if(gamepad1.left_trigger > .5 && intakeStateBasic == 0){
                 arm.setPower(.8);
                 arm.setTargetPosition(-290);
                 currentArmPos = -290;
@@ -645,15 +648,20 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
                     rightIntakeServoPosition = .1;
                     leftIntakeServoPosition = 1;
                 }
-                if(touchSensorBlock.isPressed()){
-                    intakeState = 1;
+                if(/*rangeSensorBlock.getDistance(DistanceUnit.CM) < 10*/ touchSensorBlock.isPressed()){
+                    intakeStateBasic = 1;
                 }
             }
-            if(intakeState == 1){
+            if(intakeStateBasic == 1){
                 leftIntakeMotor.setPower(0);
                 rightIntakeMotor.setPower(0);
                 leftIntakeServoPosition = .6;
                 rightIntakeServoPosition = .5;
+                intakeStateBasic = 2;
+            }
+            if (gamepad1.right_trigger > .5 && intakeStateBasic == 2){
+                leftIntakeMotor.setPower(-1);
+                rightIntakeMotor.setPower(-1);
             }
         }
         else if(isIntakingNormal){
@@ -769,6 +777,20 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
             }
         } else if(!gamepad1.left_bumper) {
             intakeButtonWasPressed = false;
+        }
+        if(gamepad1.right_bumper && !normalToBasicToggle){
+            normalToBasicToggle = true;
+            if(isIntakingNormal){
+                isIntakingNormal = false;
+                isIntakingBasic = true;
+            }
+            else{
+                isIntakingBasic = false;
+                isIntakingNormal = true;
+            }
+        }
+        else if(!gamepad1.right_bumper){
+            normalToBasicToggle = false;
         }
     }
 
