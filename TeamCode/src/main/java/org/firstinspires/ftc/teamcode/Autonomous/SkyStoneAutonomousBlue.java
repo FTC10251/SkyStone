@@ -72,7 +72,7 @@ import static org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocaliz
  * Notes:
  * Positive Direction is intakeSide
  */
-@Autonomous(name = "SkyStone Auto Old(BLUE)", group = "HDrive")
+@Autonomous(name = "SkyStone Auto Updated (BLUE)", group = "HDrive")
 public class SkyStoneAutonomousBlue extends LinearOpMode {
     //Vuforia
     private static final String VUFORIA_KEY =
@@ -329,14 +329,12 @@ public class SkyStoneAutonomousBlue extends LinearOpMode {
 
         //Move forward to pick up block
         if(blockPosition == 0) { //Right
-            encoderDriveProfiled(.2,.4,.5,15,1,6,0,false);
-            turnInCircleProfiled(20,2,-1,30, .4,.1,.4,0,10,0);
+            encoderDriveProfiled(.2,.4,.5,11,1,6,0,false);
+            turnInCircleProfiled(18,2,-1,35, .4,.1,.4,0,10,0);
             leftIntakeServo.setPosition(.55);
             rightIntakeServo.setPosition(.55);
-            ThreadSleepUpdated(300);
-            turnInCircleProfiled(15,2,-1,30, -.1,-.1,-.4,2,4,0);
-
-            ThreadSleepUpdated(100);
+            Thread.sleep(600);
+            turnInCircleProfiled(15,2,-1,35, -.1,-.1,-.4,2,4,0);
             leftIntakeMotor.setPower(0);
             rightIntakeMotor.setPower(0);
             pickUpSkystone();
@@ -353,7 +351,7 @@ public class SkyStoneAutonomousBlue extends LinearOpMode {
             ThreadSleepUpdated(500);
 
             //Move Back after picking up block
-            encoderDriveProfiled(.2, .2, .5, -10, 1, 6, 0, true);
+            encoderDriveProfiled(-.2, -.2, -.5, 10, 1, 6, 0, true);
 
             ThreadSleepUpdated(100);
             leftIntakeMotor.setPower(0);
@@ -366,7 +364,7 @@ public class SkyStoneAutonomousBlue extends LinearOpMode {
             encoderDriveProfiled(.1, .1, .5, 81, 2, 15, 270, true);
             ThreadSleepUpdated(100);
         } else { //Right
-            encoderDriveProfiled(.2,.4,.5,19,1,6,0,false);
+            encoderDriveProfiled(.2,.4,.5,10,1,6,0,false);
             turnInCircleProfiled(20,2,1,25, .4,.1,.4,0,10,0);
             leftIntakeServo.setPosition(.55);
             rightIntakeServo.setPosition(.55);
@@ -794,6 +792,7 @@ public class SkyStoneAutonomousBlue extends LinearOpMode {
     }
 
     public void lignUpWithFoundation() {
+        hookServo.setPosition(.75);
         double distance = rangeSensorBack.getDistance(DistanceUnit.CM);
         double maxSpeed = -.4;
         double minSpeed = -.1;

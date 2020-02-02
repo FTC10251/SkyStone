@@ -894,6 +894,7 @@ public class SkyStoneAutonomousUpdated extends LinearOpMode {
     }
 
     public void lignUpWithFoundation() {
+        hookServo.setPosition(.75);
         double distance = rangeSensorBack.getDistance(DistanceUnit.CM);
         double maxSpeed = -.5;
         double minSpeed = -.1;
@@ -921,52 +922,6 @@ public class SkyStoneAutonomousUpdated extends LinearOpMode {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-
-
-        /*leftMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        leftMotor2.setMode(STOP_AND_RESET_ENCODER);
-        rightMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        rightMotor2.setMode(STOP_AND_RESET_ENCODER);
-
-        int newSideTargets =  (int) ((Math.abs(-16)) * COUNTS_PER_INCH);*/
-        /*leftMotor.setTargetPosition(newSideTargets);
-        leftMotor2.setTargetPosition(newSideTargets);
-        rightMotor.setTargetPosition(newSideTargets);
-        rightMotor2.setTargetPosition(newSideTargets);
-
-        leftMotor.setMode(RUN_TO_POSITION);
-        leftMotor2.setMode(RUN_TO_POSITION);
-        rightMotor.setMode(RUN_TO_POSITION);
-        rightMotor2.setMode(RUN_TO_POSITION);
-        while(leftMotor.isBusy() && leftMotor2.isBusy() && rightMotor.isBusy() && rightMotor2.isBusy()) {
-            double currentPowerLeft = .5;
-            double currentPowerRight = .5;
-
-            double holdAngle = 180;
-            angles = imu.getAngularOrientation().toAxesReference(AxesReference.INTRINSIC).toAxesOrder(AxesOrder.ZYX);
-            angleDouble = extraClasses.convertAngle(Double.parseDouble(formatAngle(angles.angleUnit, angles.firstAngle)));
-            double distance1 = Math.abs(angleDouble - holdAngle);
-            double distance2 = Math.abs(Math.abs((360 - angleDouble)) - holdAngle);
-            double angleError = distance1;
-            if (distance1 > distance2) {
-                angleError = distance2;
-            }
-            angleError = angleError / 30;
-            if ((holdAngle - angleDouble + 360) % 360 < 180) {
-                angleError = angleError;
-            } else {
-                angleError = angleError * -1;
-            }
-            leftMotor.setPower(currentPowerLeft - angleError);
-            leftMotor2.setPower(currentPowerLeft - angleError);
-            rightMotor.setPower(currentPowerRight + angleError);
-            rightMotor2.setPower(currentPowerRight + angleError);
-        }
-
-        leftMotor.setPower(0);
-        leftMotor2.setPower(0);
-        rightMotor.setPower(0);
-        rightMotor2.setPower(0);*/
     }
 
     public void scoreFoundation() {

@@ -40,8 +40,8 @@ import java.util.Locale;
  *
  *
  */
-@TeleOp(name = "SkyStone TeleOp Updated (RED)", group = "HDrive")
-public class TeleOp2020NewDrivebase extends LinearOpMode {
+@TeleOp(name = "SkyStone TeleOp Updated (BLUE)", group = "HDrive")
+public class TeleOp2020NewDrivebaseBlue extends LinearOpMode {
     HDriveFCCalc calculator;
     HDriveFCCalc dpadCalculator;
     ArmCalculator armCalculator;
@@ -281,9 +281,13 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
             telemetry.addData("Back Distance", setDistanceItShouldBeBack);
             telemetry.addData("Scoring State", scoringState);
             telemetry.addData("arm pos", currentArmPos);
+            telemetry.addData("Intake State", intakeState);
             telemetry.addData("intake toggle", intakingToggle);
+            telemetry.addData("Intake State", intakeState);
             telemetry.addData("Arm Pos", arm.getCurrentPosition());
             telemetry.addData("Arm Mode", intakeMode);
+            telemetry.addData("Arm State", intakeState);
+            telemetry.addData("Auto Scoring Mode", autoScoringMode);
             telemetry.addData("Auto Scoring State", autoScoreState);
             telemetry.addData("Back Distance", rangeSensorBack.getDistance(DistanceUnit.CM));
             //telemetry.addData("Left Distance", rangeSensorLeft.getDistance(DistanceUnit.CM));
@@ -497,7 +501,7 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
 
             if(autoScoreState == 0) {
                 //Find Angle Error
-                double goalAngle = 90; //Just the starting angle I think
+                double goalAngle = -90; //Just the starting angle I think
                 double currentAngleAdjusted = angleDouble + offset;
                 double distance1 = Math.abs(currentAngleAdjusted - goalAngle);
                 double distance2 = Math.abs(Math.abs((360 - currentAngleAdjusted)) - goalAngle);
