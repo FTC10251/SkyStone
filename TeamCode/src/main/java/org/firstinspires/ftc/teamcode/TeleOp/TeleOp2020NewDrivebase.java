@@ -162,7 +162,7 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
     //Sensors
     DistanceSensor rangeSensorLeft;
     DistanceSensor rangeSensorBack;
-    DistanceSensor rangeSensorBlock;
+    //DistanceSensor rangeSensorBlock;
     TouchSensor touchSensorFoundation;
     TouchSensor touchSensorBlock;
 
@@ -200,7 +200,7 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
         arm = (DcMotorEx) hardwareMap.get(DcMotor.class, "Arm");
         rangeSensorBack = hardwareMap.get(DistanceSensor.class, "Range Sensor Back");
         //rangeSensorLeft = hardwareMap.get(DistanceSensor.class, "Range Sensor Left");
-        rangeSensorBlock = hardwareMap.get(DistanceSensor.class, "Range Sensor Block");
+        //rangeSensorBlock = hardwareMap.get(DistanceSensor.class, "Range Sensor Block");
         touchSensorFoundation = hardwareMap.get(TouchSensor.class,"Touch Sensor");
         touchSensorBlock = hardwareMap.get(TouchSensor.class,"Touch Sensor Block");
         webcamName = hardwareMap.get(WebcamName.class, "Webcam 1");
@@ -519,9 +519,44 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
                 //Find how far from the side wall it is
                 //setDistanceItShouldBeBack = 16;
                 //if(armAngle(arm.getCurrentPosition()) < -200) {
-                armAngleNeeded = (Math.toDegrees(Math.asin((blockPosY * 10.85 - 30)/47)));
+
+
+                /*armAngleNeeded = (Math.toDegrees(Math.asin((blockPosY * 10.85 - 30)/47)));
                 armPosNeeded = ((216 - armAngleNeeded) * 15.278 * -1);
-                setDistanceItShouldBeBack = (47 * Math.cos(Math.toRadians(armAngleNeeded)) - 10);
+                setDistanceItShouldBeBack = (47 * Math.cos(Math.toRadians(armAngleNeeded)) - 10);*/
+
+                switch (blockPosY){
+                    case 1:
+                        armPosNeeded = -3667;
+                        setDistanceItShouldBeBack = 32.9;
+                        break;
+                    case 2:
+                        armPosNeeded = -3455;
+                        setDistanceItShouldBeBack = 36.26;
+                        break;
+                    case 3:
+                        armPosNeeded = -3253;
+                        setDistanceItShouldBeBack = 37;
+                        break;
+                    case 4:
+                        armPosNeeded = -3047;
+                        setDistanceItShouldBeBack = 36;
+                        break;
+                    case 5:
+                        armPosNeeded = -2826;
+                        setDistanceItShouldBeBack = 31;
+                        break;
+                    case 6:
+                        armPosNeeded = -2562;
+                        setDistanceItShouldBeBack = 22;
+                        break;
+                    case 7:
+                        armPosNeeded = -2141;
+                        setDistanceItShouldBeBack = 10;
+                        break;
+                    default:
+                        telemetry.addData("You have exceeded the capabilities of this robot", blockPosY);
+                }
                 //}
 
 
@@ -685,7 +720,7 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
                         rightIntakeServoPosition = .1;
                         leftIntakeServoPosition = 1;
                     }
-                    if(rangeSensorBlock.getDistance(DistanceUnit.CM) < 10){
+                    if(/*rangeSensorBlock.getDistance(DistanceUnit.CM) < 10*/ touchSensorBlock.isPressed()){
                         startingTime = System.currentTimeMillis();
                         leftIntakeServo.setPosition(.55);
                         rightIntakeServo.setPosition(.55);

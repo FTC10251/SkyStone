@@ -164,8 +164,8 @@ public class TickTester extends OpMode {
         telemetry.addData("PRedicted Distance", leftMotor.getCurrentPosition()/COUNTS_PER_INCH);
         telemetry.addData("Angle", ExtraClasses.convertAngle(Double.parseDouble(angleDouble)));
         telemetry.addData("Touch Sensor", touchSensor.isPressed());
-        telemetry.addData("Distance", rangeSensor.getDistance(DistanceUnit.CM));
-        telemetry.addData("Distance", rangeSensorLeft.getDistance(DistanceUnit.CM));
+        telemetry.addData("Distance Back", rangeSensor.getDistance(DistanceUnit.CM));
+        telemetry.addData("Distance Left", rangeSensorLeft.getDistance(DistanceUnit.CM));
         telemetry.addData("Left Intake", leftIntakeServo.getPosition());
         telemetry.addData("Right Intake", rightIntakeServo.getPosition());
         telemetry.update();
