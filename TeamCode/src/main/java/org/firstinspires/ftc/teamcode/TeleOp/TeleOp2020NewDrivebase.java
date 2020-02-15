@@ -516,31 +516,31 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
                 setDistanceItShouldBeBack = (47 * Math.cos(Math.toRadians(armAngleNeeded)) - 10);*/
 
                 switch (blockPosY){
-                    case 1:
+                    case 0:
                         armPosNeeded = -3667;
                         setDistanceItShouldBeBack = 32.9;
                         break;
-                    case 2:
+                    case 1:
                         armPosNeeded = -3455;
                         setDistanceItShouldBeBack = 36.26;
                         break;
-                    case 3:
+                    case 2:
                         armPosNeeded = -3253;
                         setDistanceItShouldBeBack = 37;
                         break;
-                    case 4:
+                    case 3:
                         armPosNeeded = -3047;
                         setDistanceItShouldBeBack = 36;
                         break;
-                    case 5:
+                    case 4:
                         armPosNeeded = -2826;
                         setDistanceItShouldBeBack = 31;
                         break;
-                    case 6:
+                    case 5:
                         armPosNeeded = -2562;
                         setDistanceItShouldBeBack = 22;
                         break;
-                    case 7:
+                    case 6:
                         armPosNeeded = -2141;
                         setDistanceItShouldBeBack = 10;
                         break;
