@@ -670,33 +670,38 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
     }
     public void controlIntake2(){
         driverIsMovingArm = true;
-        if(isIntakingBasic){
-            if(gamepad1.left_trigger > .5 && intakeStateBasic == 0){
-                arm.setPower(.8);
-                arm.setTargetPosition(-290);
-                currentArmPos = -290;
-                leftIntakeMotor.setPower(1);
-                rightIntakeMotor.setPower(1);
-                leftIntakeServoPosition = leftIntakeServoPosition - .01;
-                rightIntakeServoPosition = rightIntakeServoPosition + .01;
-                if (rightIntakeServoPosition > .55) {
-                    rightIntakeServoPosition = .1;
-                    leftIntakeServoPosition = 1;
+        if(isIntakingBasic) {
+            if (intakingToggle) {
+                if (intakeStateBasic == 0) {
+                    arm.setPower(.8);
+                    arm.setTargetPosition(-290);
+                    currentArmPos = -290;
+                    leftIntakeMotor.setPower(1);
+                    rightIntakeMotor.setPower(1);
+                    leftIntakeServoPosition = leftIntakeServoPosition - .01;
+                    rightIntakeServoPosition = rightIntakeServoPosition + .01;
+                    if (rightIntakeServoPosition > .55) {
+                        rightIntakeServoPosition = .1;
+                        leftIntakeServoPosition = 1;
+                    }
+                    if (/*rangeSensorBlock.getDistance(DistanceUnit.CM) < 10*/ touchSensorBlock.isPressed()) {
+                        intakeStateBasic = 1;
+                    }
                 }
-                if(/*rangeSensorBlock.getDistance(DistanceUnit.CM) < 10*/ touchSensorBlock.isPressed()){
-                    intakeStateBasic = 1;
+                if (intakeStateBasic == 1) {
+                    leftIntakeMotor.setPower(0);
+                    rightIntakeMotor.setPower(0);
+                    leftIntakeServoPosition = .6;
+                    rightIntakeServoPosition = .5;
+                    intakeStateBasic = 2;
                 }
-            }
-            if(intakeStateBasic == 1){
-                leftIntakeMotor.setPower(0);
-                rightIntakeMotor.setPower(0);
-                leftIntakeServoPosition = .6;
-                rightIntakeServoPosition = .5;
-                intakeStateBasic = 2;
-            }
-            if (gamepad1.right_trigger > .5 && intakeStateBasic == 2){
-                leftIntakeMotor.setPower(-1);
-                rightIntakeMotor.setPower(-1);
+                if (gamepad1.right_trigger > .5 && intakeStateBasic == 2) {
+                    leftIntakeMotor.setPower(-1);
+                    rightIntakeMotor.setPower(-1);
+                }
+                else if (gamepad1.right_trigger < .5) {
+                        intakeStateBasic = 0;
+                }
             }
         }
         else if(isIntakingNormal){
