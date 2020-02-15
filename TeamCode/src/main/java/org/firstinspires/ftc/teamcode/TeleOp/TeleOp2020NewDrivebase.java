@@ -558,7 +558,7 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
                rightMotor2.setPower(frontPowerError + -angleAdjustPower);*/
                 //middleMotor.setPower(middlePowerError);
 
-                //COMMENT THIS OUT BRUH
+                //COMMENT THIS OUT BRUHh
                 if(extraClasses.closeEnough(currentAngleAdjusted, goalAngle, 5)) {
                     if (virgin){
                         virgin = false;
