@@ -91,6 +91,12 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
     double reading4;
     double distanceDifferenceBack = 0;
     double armAngleDifference = 0;
+    double lastTime = 0;
+    double lastDistanceBack = 0;
+    double totalBackDistanceError = 0;
+    double differentialBackDistanceError;
+    double deltaT = 0;
+    double totalTime = 0;
 
     int blockPosY = 0;
     int blockPosX = 0;
@@ -128,6 +134,7 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
     boolean yWasPressed = false;
     boolean reachedPos = false;
     boolean normalToBasicToggle = false;
+    boolean virgin = true;
 
 
     float rightX;
@@ -279,32 +286,14 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
             posY = posY + velY * timeDifferencePosition;
             timeBefore = System.currentTimeMillis();
 
-            telemetry.addData("Arm Angle", armAngle(arm.getCurrentPosition()));
-            telemetry.addData("Back Distance", setDistanceItShouldBeBack);
-            telemetry.addData("Scoring State", scoringState);
-            telemetry.addData("arm pos", currentArmPos);
-            telemetry.addData("intake toggle", intakingToggle);
-            telemetry.addData("Arm Pos", arm.getCurrentPosition());
-            telemetry.addData("Arm Mode", intakeMode);
-            telemetry.addData("Auto Scoring State", autoScoreState);
-            telemetry.addData("Back Distance", rangeSensorBack.getDistance(DistanceUnit.CM));
-            //telemetry.addData("Left Distance", rangeSensorLeft.getDistance(DistanceUnit.CM));
-            telemetry.addData("Angle actual", extraClasses.convertAngle(angleDouble + offset));
-            telemetry.addData("Acceleration", imu.getAcceleration());
-            telemetry.addData("Block Pos X", blockPosX);
-            telemetry.addData("Block Pos Y", blockPosY);
-            telemetry.addData("angles", angleDouble);
-            telemetry.addData("Foundation State", foundationState);
-            telemetry.addData("Hold Arm Pos", gamepad1.back);
-            telemetry.addData("Hook Pos", hookUp);
-            telemetry.addData("Left Motor Back Pos", leftMotor2.getCurrentPosition());
-            telemetry.addData("Left Motor Front pos", leftMotor.getCurrentPosition());
-            telemetry.addData("Distance should be back", setDistanceItShouldBeBack);
-            telemetry.addData("Distance Difference back", distanceDifferenceBack);
-            telemetry.addData("Arm Pos Needed", armPosNeeded);
-            telemetry.addData("arm angle needed", armAngleNeeded);
-            telemetry.addData("intake state", intakeState);
-            telemetry.addData("intake state basic", intakeStateBasic);
+            telemetry.addData("Angle", angleDouble);
+            telemetry.addData("PId P", distanceDifferenceBack/75);
+            telemetry.addData("PID I", totalBackDistanceError);
+            telemetry.addData("PID D", differentialBackDistanceError);
+            telemetry.addData("distance back", distanceDifferenceBack);
+            telemetry.addData("deltaT", deltaT);
+            telemetry.addData("total time", totalTime);
+            telemetry.addData("Sensor Value", rangeSensorBack.getDistance(DistanceUnit.CM));
             telemetry.update();
         }
     }
@@ -496,6 +485,7 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
             if (autoScoringModeFirstTime) {
                 autoScoringModeFirstTime = false;
                 readingNum = 0;
+                totalBackDistanceError = 0;
             }
 
             if(autoScoreState == 0) {
@@ -570,13 +560,36 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
 
                 //COMMENT THIS OUT BRUH
                 if(extraClasses.closeEnough(currentAngleAdjusted, goalAngle, 5)) {
+                    if (virgin){
+                        virgin = false;
+                        lastTime = System.currentTimeMillis();
+                        double rangeSensorDistanceBack = rangeSensorBack.getDistance(DistanceUnit.CM);
+                        double filteredRangeSensorDistanceBack = filterValues(rangeSensorDistanceBack, readingNum);
+                        lastDistanceBack = filteredRangeSensorDistanceBack - setDistanceItShouldBeBack;
+                    }
                     double rangeSensorDistanceBack = rangeSensorBack.getDistance(DistanceUnit.CM);
                     double filteredRangeSensorDistanceBack = filterValues(rangeSensorDistanceBack, readingNum);
-                    if(filteredRangeSensorDistanceBack > 40) {
-                        filteredRangeSensorDistanceBack = 40;
+                    if(filteredRangeSensorDistanceBack > 60) {
+                        filteredRangeSensorDistanceBack = 60;
                     }
+                    double time = System.currentTimeMillis();
+                    if(Math.abs(time - lastTime) > 2000) {
+                        lastTime = System.currentTimeMillis();
+                    }
+                    deltaT = time - lastTime;
+                    totalTime += deltaT;
                     distanceDifferenceBack = filteredRangeSensorDistanceBack - setDistanceItShouldBeBack;
-                    double frontPowerError = distanceDifferenceBack / 75;
+                    differentialBackDistanceError = ((distanceDifferenceBack - lastDistanceBack) / deltaT) / 2;
+                    lastDistanceBack = filteredRangeSensorDistanceBack - setDistanceItShouldBeBack;
+                    lastTime = time;
+                    totalBackDistanceError += (distanceDifferenceBack * deltaT / 180000.0);
+                    if(distanceDifferenceBack > 0 && totalBackDistanceError < 0) {
+                        totalBackDistanceError = 0;
+                    } else if(distanceDifferenceBack < 0 && totalBackDistanceError > 0) {
+                        totalBackDistanceError = 0;
+                    }
+
+                    double frontPowerError = distanceDifferenceBack/50 + totalBackDistanceError + differentialBackDistanceError;
 
                     leftMotor.setPower(frontPowerError + angleAdjustPower);
                     leftMotor2.setPower(frontPowerError + angleAdjustPower);
@@ -593,12 +606,12 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
                     if(reachedPos == false) {
                         arm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
                         arm.setTargetPosition((int) armPosNeeded + 200);
-                        arm.setPower(armPowerError);
+                        //arm.setPower(armPowerError);
                     }
                     if(extraClasses.closeEnough(arm.getCurrentPosition(),armPosNeeded + 200, 25)) {
                         reachedPos = true;
                     }
-                    if(!arm.isBusy()){
+                    if(!arm.isBusy() && ExtraClasses.closeEnough(frontPowerError, 0, .01)){
                         autoScoreState = 1;
                     }
                     telemetry.addData("arm power error: ", armPowerError);
@@ -614,6 +627,10 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
                 //armFlipper.setPower(0);
                 //clawServo.setPosition(0);
                 //blockPos[blockPosX][blockPosY] = 1;
+                totalBackDistanceError = 0;
+                virgin = true;
+                differentialBackDistanceError = 0;
+
                 autoScoreState = 2;
             }
         } else {

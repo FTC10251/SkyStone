@@ -143,7 +143,7 @@ public class RoboPosTune extends LinearOpMode {
             autoScoreMode();
             telemetry.addData("PId P", distanceDifferenceBack/75);
             telemetry.addData("PID I", totalBackDistanceError);
-            telemetry.addData("PID D", differentialBackDistanceError/40000);
+            telemetry.addData("PID D", differentialBackDistanceError);
             telemetry.addData("distance back", distanceDifferenceBack);
             telemetry.update();
 
@@ -200,11 +200,11 @@ public class RoboPosTune extends LinearOpMode {
             double time = System.currentTimeMillis();
             double deltaT = time - lastTime;
             distanceDifferenceBack = filteredRangeSensorDistanceBack - setDistanceItShouldBeBack;
-            differentialBackDistanceError = (distanceDifferenceBack - lastDistanceBack) / deltaT;
+            differentialBackDistanceError = ((distanceDifferenceBack - lastDistanceBack) / deltaT)/40000;
             lastDistanceBack = filteredRangeSensorDistanceBack - setDistanceItShouldBeBack;
             lastTime = time;
             totalBackDistanceError += distanceDifferenceBack * deltaT/35000.0;
-            double frontPowerError = -distanceDifferenceBack/ 75 - differentialBackDistanceError/40000 - totalBackDistanceError;
+            double frontPowerError = -distanceDifferenceBack/ 75 - differentialBackDistanceError - totalBackDistanceError;
 
 
             leftMotor.setPower(frontPowerError + angleAdjustPower);
