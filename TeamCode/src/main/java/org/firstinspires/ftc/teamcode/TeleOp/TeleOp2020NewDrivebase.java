@@ -905,9 +905,9 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
             backWasPressed = true;
             if(hookUp) {
                 hookUp = false;
-                hookServo.setPosition(.3);
+                hookServo.setPosition(.1);
             } else {
-                hookServo.setPosition(.75);
+                hookServo.setPosition(.5);
                 hookUp = true;
             }
         } else if(!gamepad1.y) {
