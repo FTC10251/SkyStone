@@ -73,11 +73,8 @@ public class ExtraClasses {
     static public double angleDistance(double currentAngle, double targetAngle) {
         double distance1 = Math.abs(targetAngle - currentAngle);
         double distance2 = Math.abs((360 - currentAngle) - targetAngle);
-        double angleDistance = distance1;
-        if(distance1 > distance2) {
-            angleDistance = distance2;
-        }
-        return angleDistance;
+        double diff = 180 - Math.abs(Math.abs(currentAngle - targetAngle) - 180);
+        return diff;
     }
     static public double angleDistanceNoAbs(double currentAngle, double targetAngle) {
         double distance1 = targetAngle - currentAngle;

@@ -322,7 +322,6 @@ public class SkyStoneAutonomousUpdated extends LinearOpMode {
         }
 
 
-
         //Set Intake Position
         moveIntakeAndArm();
         leftIntakeServo.setPosition(.96);
@@ -354,7 +353,7 @@ public class SkyStoneAutonomousUpdated extends LinearOpMode {
             pickUpSkystone1();
             Thread.sleep(100);
 
-            encoderDriveProfiled(-.1, -.1, -.8, 75, 2, 15, 270, true);
+            encoderDriveProfiled(-.1, -.1, -.8, 60, 2, 15, 270, true);
             leftIntakeMotor.setPower(0);
             rightIntakeMotor.setPower(0);
             pickUpSkystone2();
@@ -651,8 +650,6 @@ public class SkyStoneAutonomousUpdated extends LinearOpMode {
                 leftPower = (minSpeedFinal * leftRatio) + (leftRatio * ((rotations - angleDifference) / slowDownAt) * speedDifferenceFinal);
                 rightPower = (minSpeedFinal * rightRatio) + (rightRatio * ((rotations - angleDifference) / slowDownAt) * speedDifferenceFinal);
             }
-            telemetry.addData("Left Power", leftPower);
-            telemetry.addData("Right Power", rightPower);
             telemetry.addData("Angle Diff", angleDifference);
             telemetry.addData("Current State", currentState);
             telemetry.addData("Current Angle", currentAngle);
@@ -956,11 +953,10 @@ public class SkyStoneAutonomousUpdated extends LinearOpMode {
                 angleError = distance2;
             }
             if ((scoreAngle - angleDouble + 360) % 360 < 180) {
-                angleError = angleError;
+                motorPower = angleError / 200;
             } else {
-                angleError = angleError * -1;
+                motorPower = angleError / 200 * -1;
             }
-            motorPower = angleError / 200;
             double minSpeed = .1;
             leftMotor.setPower(-minSpeed - motorPower + moveBack);
             leftMotor2.setPower(-minSpeed - motorPower + moveBack);
