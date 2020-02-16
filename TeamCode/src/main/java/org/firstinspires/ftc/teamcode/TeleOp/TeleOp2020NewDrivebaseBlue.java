@@ -126,6 +126,7 @@ public class TeleOp2020NewDrivebaseBlue extends LinearOpMode {
     boolean wasManuallyMovingArm = false;
     boolean yWasPressed = false;
     boolean reachedPos = false;
+    boolean blockSeen = false;
 
 
     float rightX;
@@ -515,7 +516,7 @@ public class TeleOp2020NewDrivebaseBlue extends LinearOpMode {
                 } else {
                     angleError = angleError;
                 }
-                angleAdjustPower = angleError / 60;
+                angleAdjustPower = angleError / 80;
 
                 //Find how far from the side wall it is
                 //setDistanceItShouldBeBack = 16;
@@ -663,6 +664,7 @@ public class TeleOp2020NewDrivebaseBlue extends LinearOpMode {
         else if(isIntakingNormal){
             if(intakingToggle){
                 if(intakeState == 0){
+                    blockSeen = false;
                     arm.setPower(.8);
                     arm.setTargetPosition(-290);
                     arm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
@@ -675,18 +677,24 @@ public class TeleOp2020NewDrivebaseBlue extends LinearOpMode {
                 else if(intakeState == 1) {
                     leftIntakeMotor.setPower(1);
                     rightIntakeMotor.setPower(1);
-                    leftIntakeServoPosition = leftIntakeServoPosition - .01;
-                    rightIntakeServoPosition = rightIntakeServoPosition + .01;
-                    if (rightIntakeServoPosition > .55) {
-                        rightIntakeServoPosition = .1;
-                        leftIntakeServoPosition = 1;
+                    if(!blockSeen) {
+                        leftIntakeServoPosition = leftIntakeServoPosition - .01;
+                        rightIntakeServoPosition = rightIntakeServoPosition + .01;
+                        if (rightIntakeServoPosition > .55) {
+                            rightIntakeServoPosition = .1;
+                            leftIntakeServoPosition = 1;
+                        }
                     }
-                    if(rangeSensorBlock.getDistance(DistanceUnit.CM) < 10){
-                        startingTime = System.currentTimeMillis();
-                        leftIntakeServo.setPosition(.55);
-                        rightIntakeServo.setPosition(.55);
+                    if(rangeSensorBlock.getDistance(DistanceUnit.CM) < 15){
+                        blockSeen = true;
+                        leftIntakeServoPosition = .55;
+                        rightIntakeServoPosition = .55;
+                    }
+                    if (touchSensorBlock.isPressed()) {
                         intakeState = 2;
+                        startingTime = System.currentTimeMillis();
                     }
+
                 }
                 else if(intakeState == 2) {
                     if(System.currentTimeMillis() - startingTime > 500) {
@@ -702,7 +710,7 @@ public class TeleOp2020NewDrivebaseBlue extends LinearOpMode {
                     arm.setTargetPosition(-0);
                     arm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
                     currentArmPos = arm.getCurrentPosition();
-                    if(arm.getCurrentPosition() > -110){
+                    if(arm.getCurrentPosition() > -40){
                         intakeState = 4;
                         arm.setPower(0);
                     }

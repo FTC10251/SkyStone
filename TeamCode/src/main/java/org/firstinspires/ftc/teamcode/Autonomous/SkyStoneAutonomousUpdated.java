@@ -292,10 +292,13 @@ public class SkyStoneAutonomousUpdated extends LinearOpMode {
                         double blueAverage3 = blueAverage;
                         if((redAverage1 + greenAverage1) / 2 < (redAverage2 + greenAverage2)/2 && (redAverage1 + greenAverage1)/2 < (redAverage3 + greenAverage3)/2) {
                             blockPosition = 0;
+                            telemetry.addData("Block Position", "Left (" + blockPosition + ")");
                         } else if((redAverage2 + greenAverage2) / 2 < (redAverage1 + greenAverage1)/2 && (redAverage2 + greenAverage2)/2 < (redAverage3 + greenAverage3)/2) {
                             blockPosition = 1;
+                            telemetry.addData("Block Position", "Middle (" + blockPosition + ")");
                         } else if((redAverage3 + greenAverage3) / 2 < (redAverage1 + greenAverage1)/2 && (redAverage3 + greenAverage3)/2 < (redAverage2 + greenAverage2)/2) {
                             blockPosition = 2;
+                            telemetry.addData("Block Position", "Right (" + blockPosition + ")");
                         }
 
                         telemetry.addData("Block Position", blockPosition);
@@ -346,32 +349,31 @@ public class SkyStoneAutonomousUpdated extends LinearOpMode {
             encoderDriveProfiled(.2, .1, .5, 30, 1, 6, 0, true);
             leftIntakeServo.setPosition(.55);
             rightIntakeServo.setPosition(.55);
-            Thread.sleep(500);
+            ThreadSleepUpdated(500);
 
             //Move Back after picking up block
             turnInCircleProfiled(7,2,-1,90, -.1,-.1,-.5,2,4,0);
             pickUpSkystone1();
-            Thread.sleep(100);
+            ThreadSleepUpdated(100);
 
             encoderDriveProfiled(-.1, -.1, -.8, 60, 2, 15, 270, true);
             leftIntakeMotor.setPower(0);
             rightIntakeMotor.setPower(0);
             pickUpSkystone2();
-            Thread.sleep(100);
+            ThreadSleepUpdated(100);
         } else { //Right
-
-            encoderDriveProfiled(.2,.4,.5,6,1,6,0,false);
-            turnInCircleProfiled(30,2,-1,20, .5,.1,.4,0,4,0);
+            encoderDriveProfiled(.2,.4,.5,5,1,6,0,false);
+            turnInCircleProfiled(25,2,-1,30, .5,.1,.4,0,4,0);
             leftIntakeServo.setPosition(.55);
             rightIntakeServo.setPosition(.55);
-            Thread.sleep(300);
-            turnInCircleProfiled(9,2,-1,80, -.1,-.1,-.4,0,4,0);
+            ThreadSleepUpdated(300);
+            turnInCircleProfiled(2,2,-1,120, -.1,-.1,-.4,0,4,0);
             pickUpSkystone1();
             encoderDriveProfiled(-.1, -.1, -.8, 75, 2, 15, 270, true);
             leftIntakeMotor.setPower(0);
             rightIntakeMotor.setPower(0);
             pickUpSkystone2();
-            Thread.sleep(100);
+            ThreadSleepUpdated(100);
         }
 
 
@@ -383,7 +385,7 @@ public class SkyStoneAutonomousUpdated extends LinearOpMode {
         telemetry.addLine("Got here");
         telemetry.update();
         turnInPlace(-.05, 180, 3);
-        Thread.sleep(100);
+        ThreadSleepUpdated(100);
 
         autoScore();
 
@@ -408,7 +410,7 @@ public class SkyStoneAutonomousUpdated extends LinearOpMode {
             moveToNextBlock(.1, .1, .8, 79, 2, 25, 270, 70, true);
             moveIntakeAndArm2();
             turnInCircleProfiled(25,2,-1,35, .5,.1,.4,0,4,0);
-            Thread.sleep(500);
+            ThreadSleepUpdated(500);
             leftIntakeServo.setPosition(.55);
             rightIntakeServo.setPosition(.55);
             turnInCircleProfiled(25,2,-1,35, -.5,-.3,-.4,0,4,-.3);
@@ -416,12 +418,12 @@ public class SkyStoneAutonomousUpdated extends LinearOpMode {
             moveToNextBlock(.1, .1, .8, 73, 2, 25, 270, 70, true);
             moveIntakeAndArm2();
             turnInCircleProfiled(25,2,-1,30, .5,.1,.4,0,4,0);
-            Thread.sleep(500);
+            ThreadSleepUpdated(500);
             leftIntakeServo.setPosition(.55);
             rightIntakeServo.setPosition(.55);
-            turnInCircleProfiled(25,2,-1,30, -.5,-.3,-.4,0,4,-.3);
+            turnInCircleProfiled(12,2,-1,30, -.5,-.3,-.4,0,4,-.3);
         }
-        Thread.sleep(500);
+        ThreadSleepUpdated(500);
         pickUpSkystone1();//
         if(blockPosition == 0) {
             encoderDriveProfiled(-.3, -.1, -.8, 62, 2, 15, 270, true);
@@ -432,8 +434,8 @@ public class SkyStoneAutonomousUpdated extends LinearOpMode {
         }
 
         scoreBlockAtEnd();
-        Thread.sleep(500);
-        encoderDriveProfiled(.1,.1,.5,30, 2,15,270,true);
+        ThreadSleepUpdated(500);
+        encoderDriveProfiled(.1,.1,.5,20, 2,15,270,true);
 
         //finish under the foundation
         //encoderDriveProfiled(.3, .2, .8, 41, 2, 5, 270, true);
@@ -662,6 +664,12 @@ public class SkyStoneAutonomousUpdated extends LinearOpMode {
                 rightMotor.setPower(rightPower);
                 rightMotor2.setPower(rightPower);
             }
+            if(!opModeIsActive()) {
+                leftMotor.setPower(0);
+                leftMotor2.setPower(0);
+                rightMotor.setPower(0);
+                rightMotor2.setPower(0);
+            }
         }
         leftMotor.setPower(nextSpeed);
         leftMotor2.setPower(nextSpeed);
@@ -744,6 +752,12 @@ public class SkyStoneAutonomousUpdated extends LinearOpMode {
                 telemetry.addData("Angle Error", angleError);
                 telemetry.addData("Angle Current", extraClasses.convertAngle(angleDouble));
                 telemetry.update();
+                if(!opModeIsActive()) {
+                    leftMotor.setPower(0);
+                    leftMotor2.setPower(0);
+                    rightMotor.setPower(0);
+                    rightMotor2.setPower(0);
+                }
             }
         }
         if (end == true) {
@@ -855,7 +869,7 @@ public class SkyStoneAutonomousUpdated extends LinearOpMode {
 
             telemetry.update();
             try {
-                Thread.sleep(10);
+                ThreadSleepUpdated(10);
             }
             catch(Exception e){
 
@@ -867,7 +881,7 @@ public class SkyStoneAutonomousUpdated extends LinearOpMode {
         //leftMotor2.setPower(0);
         middleMotor.setPower(0);
         try {
-            Thread.sleep(5000);
+            ThreadSleepUpdated(5000);
         }
         catch(Exception e){
 
@@ -875,7 +889,7 @@ public class SkyStoneAutonomousUpdated extends LinearOpMode {
         telemetry.addData("turning completed" ,1 );
         telemetry.update();
         try {
-            Thread.sleep(5000);
+            ThreadSleepUpdated(5000);
         }
         catch(Exception e){
 
@@ -891,34 +905,49 @@ public class SkyStoneAutonomousUpdated extends LinearOpMode {
     }
 
     public void lignUpWithFoundation() {
-        hookServo.setPosition(.75);
+        hookServo.setPosition(.5);
         double distance = rangeSensorBack.getDistance(DistanceUnit.CM);
         double maxSpeed = -.5;
         double minSpeed = -.1;
         double goalDistance = 4;
         while (!touchSensor.isPressed()) {
+            angles = imu.getAngularOrientation().toAxesReference(AxesReference.INTRINSIC).toAxesOrder(AxesOrder.ZYX);
+            angleDouble = extraClasses.convertAngle(Double.parseDouble(formatAngle(angles.angleUnit, angles.firstAngle)));
+
+            double goalAngle = 185; //Just the starting angle I think
+            double distance1 = Math.abs(angleDouble - goalAngle);
+            double distance2 = Math.abs(Math.abs((360 - angleDouble)) - goalAngle);
+            double angleError = distance1;
+            double angleAdjustPower = 0;
+            if (distance1 > distance2) {
+                angleError = distance2;
+            }
+            if ((goalAngle - angleDouble + 360) % 360 < 180) {
+                angleError = angleError * -1;
+            } else {
+                angleError = angleError;
+            }
+            angleAdjustPower = angleError / 40;
             distance = rangeSensorBack.getDistance(DistanceUnit.CM);
             if(distance > 30) {
                 distance = 30;
+                distance = 30;
             }
-            double sidePower = -.4;
+            double sidePower = -distance/170 - .1;
             telemetry.addData("Distance", distance);
             telemetry.update();
-            leftMotor.setPower(sidePower);
-            leftMotor2.setPower(sidePower);
-            rightMotor.setPower(sidePower);
-            rightMotor2.setPower(sidePower);
+            leftMotor.setPower(sidePower + angleAdjustPower);
+            leftMotor2.setPower(sidePower + angleAdjustPower);
+            rightMotor.setPower(sidePower - angleAdjustPower);
+            rightMotor2.setPower(sidePower - angleAdjustPower);
         }
+        ThreadSleepUpdated(250);
         leftMotor.setPower(0);
         leftMotor2.setPower(0);
         rightMotor.setPower(0);
         rightMotor2.setPower(0);
-        hookServo.setPosition(.3);
-        try {
-            Thread.sleep(400);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        hookServo.setPosition(.1);
+        ThreadSleepUpdated(700);
     }
 
     public void scoreFoundation() {
@@ -976,11 +1005,7 @@ public class SkyStoneAutonomousUpdated extends LinearOpMode {
         rightMotor.setPower(0);
         rightMotor2.setPower(0);
         middleMotor.setPower(0);
-        try {
-            Thread.sleep(100);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        ThreadSleepUpdated(100);
         double movePower = -.4;
         leftMotor.setPower(movePower);
         leftMotor2.setPower(movePower);
@@ -1008,7 +1033,7 @@ public class SkyStoneAutonomousUpdated extends LinearOpMode {
             rightMotor.setPower(movePower + motorPower);
             rightMotor2.setPower(movePower + motorPower);
         }
-        hookServo.setPosition(.75);
+        hookServo.setPosition(.5);
         leftMotor.setPower(0);
         leftMotor2.setPower(0);
         rightMotor.setPower(0);
@@ -1083,7 +1108,7 @@ public class SkyStoneAutonomousUpdated extends LinearOpMode {
                 leftMotor2.setPower(currentPowerLeft - angleError);
                 rightMotor.setPower(currentPowerRight + angleError);
                 rightMotor2.setPower(currentPowerRight + angleError);
-                if((leftMotor.getCurrentPosition()/COUNTS_PER_INCH) < 12 && leftMotor.getCurrentPosition()/COUNTS_PER_INCH > 44) {
+                if((leftMotor.getCurrentPosition()/COUNTS_PER_INCH) > 12 && leftMotor.getCurrentPosition()/COUNTS_PER_INCH < 44) {
                     middleMotor.setPower(middlePowerError);
                 } else {
                     middleMotor.setPower(0);
@@ -1267,11 +1292,7 @@ public class SkyStoneAutonomousUpdated extends LinearOpMode {
     }
     public void pickUpSkystone2() {
         clawServo.setPosition(servoClosedPos);
-        try {
-            Thread.sleep(300);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        ThreadSleepUpdated(300);
         arm.setTargetPosition(-210);
         arm.setPower(.4);
         arm.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
@@ -1280,12 +1301,7 @@ public class SkyStoneAutonomousUpdated extends LinearOpMode {
         clawServo.setPosition(servoClosedPos);
         leftIntakeMotor.setPower(0);
         rightIntakeMotor.setPower(0);
-        try {
-            Thread.sleep(500);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-
+        ThreadSleepUpdated(500);
         arm.setTargetPosition(-3800);
         arm.setMode(RUN_TO_POSITION);
         arm.setPower(.8);

@@ -135,6 +135,7 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
     boolean reachedPos = false;
     boolean normalToBasicToggle = false;
     boolean virgin = true;
+    boolean blockSeen = false;
 
 
     float rightX;
@@ -169,7 +170,7 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
     //Sensors
     DistanceSensor rangeSensorLeft;
     DistanceSensor rangeSensorBack;
-    //DistanceSensor rangeSensorBlock;
+    DistanceSensor rangeSensorBlock;
     TouchSensor touchSensorFoundation;
     TouchSensor touchSensorBlock;
 
@@ -207,7 +208,7 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
         arm = (DcMotorEx) hardwareMap.get(DcMotor.class, "Arm");
         rangeSensorBack = hardwareMap.get(DistanceSensor.class, "Range Sensor Back");
         //rangeSensorLeft = hardwareMap.get(DistanceSensor.class, "Range Sensor Left");
-        //rangeSensorBlock = hardwareMap.get(DistanceSensor.class, "Range Sensor Block");
+        rangeSensorBlock = hardwareMap.get(DistanceSensor.class, "Range Sensor Block");
         touchSensorFoundation = hardwareMap.get(TouchSensor.class,"Touch Sensor");
         touchSensorBlock = hardwareMap.get(TouchSensor.class,"Touch Sensor Block");
         webcamName = hardwareMap.get(WebcamName.class, "Webcam 1");
@@ -286,6 +287,9 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
             posY = posY + velY * timeDifferencePosition;
             timeBefore = System.currentTimeMillis();
 
+            telemetry.addData("Arm Position", arm.getCurrentPosition());
+            telemetry.addData("Block Height", blockPosY);
+            telemetry.addData("Range Block", rangeSensorBlock.getDistance(DistanceUnit.CM));
             telemetry.addData("Angle", angleDouble);
             telemetry.addData("PId P", distanceDifferenceBack/75);
             telemetry.addData("PID I", totalBackDistanceError);
@@ -504,7 +508,7 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
                 } else {
                     angleError = angleError;
                 }
-                angleAdjustPower = angleError / 60;
+                angleAdjustPower = angleError / 80;
 
                 //Find how far from the side wall it is
                 //setDistanceItShouldBeBack = 16;
@@ -569,8 +573,8 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
                     }
                     double rangeSensorDistanceBack = rangeSensorBack.getDistance(DistanceUnit.CM);
                     double filteredRangeSensorDistanceBack = filterValues(rangeSensorDistanceBack, readingNum);
-                    if(filteredRangeSensorDistanceBack > 60) {
-                        filteredRangeSensorDistanceBack = 60;
+                    if(filteredRangeSensorDistanceBack > 40) {
+                        filteredRangeSensorDistanceBack = 40;
                     }
                     double time = System.currentTimeMillis();
                     if(Math.abs(time - lastTime) > 2000) {
@@ -606,9 +610,9 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
                     if(reachedPos == false) {
                         arm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
                         arm.setTargetPosition((int) armPosNeeded + 200);
-                        //arm.setPower(armPowerError);
+                        arm.setPower(armPowerError);
                     }
-                    if(extraClasses.closeEnough(arm.getCurrentPosition(),armPosNeeded + 200, 25)) {
+                    if(extraClasses.closeEnough(arm.getCurrentPosition(),armPosNeeded + 200, 35)) {
                         reachedPos = true;
                     }
                     if(!arm.isBusy() && ExtraClasses.closeEnough(frontPowerError, 0, .01)){
@@ -729,6 +733,7 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
                     arm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
                     currentArmPos = arm.getCurrentPosition();
                     clawServo.setPosition(servoOpenPos);
+                    blockSeen = false;
                     if(arm.getCurrentPosition() > -310 && arm.getCurrentPosition() < -270){
                         intakeState = 1;
                     }
@@ -736,17 +741,22 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
                 else if(intakeState == 1) {
                     leftIntakeMotor.setPower(1);
                     rightIntakeMotor.setPower(1);
-                    leftIntakeServoPosition = leftIntakeServoPosition - .01;
-                    rightIntakeServoPosition = rightIntakeServoPosition + .01;
-                    if (rightIntakeServoPosition > .55) {
-                        rightIntakeServoPosition = .1;
-                        leftIntakeServoPosition = 1;
+                    if(!blockSeen) {
+                        leftIntakeServoPosition = leftIntakeServoPosition - .01;
+                        rightIntakeServoPosition = rightIntakeServoPosition + .01;
+                        if (rightIntakeServoPosition > .55) {
+                            rightIntakeServoPosition = .1;
+                            leftIntakeServoPosition = 1;
+                        }
                     }
-                    if(/*rangeSensorBlock.getDistance(DistanceUnit.CM) < 10*/ touchSensorBlock.isPressed()){
-                        startingTime = System.currentTimeMillis();
-                        leftIntakeServo.setPosition(.55);
-                        rightIntakeServo.setPosition(.55);
+                    if(rangeSensorBlock.getDistance(DistanceUnit.CM) < 15){
+                        leftIntakeServoPosition = .55;
+                        rightIntakeServoPosition = .55;
+                        blockSeen = true;
+                    }
+                    if(touchSensorBlock.isPressed()) {
                         intakeState = 2;
+                        startingTime = System.currentTimeMillis();
                     }
                 }
                 else if(intakeState == 2) {
@@ -763,7 +773,7 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
                     arm.setTargetPosition(-0);
                     arm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
                     currentArmPos = arm.getCurrentPosition();
-                    if(arm.getCurrentPosition() > -110){
+                    if(arm.getCurrentPosition() > -60){
                         intakeState = 4;
                         arm.setPower(0);
                     }
