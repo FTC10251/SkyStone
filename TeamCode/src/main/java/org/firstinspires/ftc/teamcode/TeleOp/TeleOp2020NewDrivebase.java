@@ -290,7 +290,7 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
             telemetry.addData("Arm Position", arm.getCurrentPosition());
             telemetry.addData("Block Height", blockPosY);
             telemetry.addData("Range Block", rangeSensorBlock.getDistance(DistanceUnit.CM));
-            telemetry.addData("Angle", angleDouble);
+            telemetry.addData("Angle", extraClasses.convertAngle(angleDouble));
             telemetry.addData("PId P", distanceDifferenceBack/75);
             telemetry.addData("PID I", totalBackDistanceError);
             telemetry.addData("PID D", differentialBackDistanceError);
@@ -690,6 +690,10 @@ public class TeleOp2020NewDrivebase extends LinearOpMode {
 
     }
     public void controlIntake2(){
+        if(gamepad2.b) {
+            arm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+            arm.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        }
         driverIsMovingArm = true;
         if(isIntakingBasic) {
             if (intakingToggle) {

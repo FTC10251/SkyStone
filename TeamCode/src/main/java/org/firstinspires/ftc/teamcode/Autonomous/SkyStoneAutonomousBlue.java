@@ -9,6 +9,7 @@ import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.hardware.modernrobotics.ModernRoboticsI2cRangeSensor;
 import com.qualcomm.hardware.modernrobotics.ModernRoboticsTouchSensor;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
@@ -73,6 +74,7 @@ import static org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocaliz
  * Positive Direction is intakeSide
  */
 @Autonomous(name = "SkyStone Auto Updated (BLUE)", group = "HDrive")
+@Disabled
 public class SkyStoneAutonomousBlue extends LinearOpMode {
     //Vuforia
     private static final String VUFORIA_KEY =

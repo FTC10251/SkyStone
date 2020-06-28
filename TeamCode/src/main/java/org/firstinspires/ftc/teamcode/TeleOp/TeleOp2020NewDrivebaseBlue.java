@@ -91,6 +91,12 @@ public class TeleOp2020NewDrivebaseBlue extends LinearOpMode {
     double reading4;
     double distanceDifferenceBack = 0;
     double armAngleDifference = 0;
+    double lastTime = 0;
+    double lastDistanceBack = 0;
+    double totalBackDistanceError = 0;
+    double differentialBackDistanceError;
+    double deltaT = 0;
+    double totalTime = 0;
 
     int blockPosY = 0;
     int blockPosX = 0;
@@ -126,6 +132,7 @@ public class TeleOp2020NewDrivebaseBlue extends LinearOpMode {
     boolean wasManuallyMovingArm = false;
     boolean yWasPressed = false;
     boolean reachedPos = false;
+    boolean virgin = true;
     boolean blockSeen = false;
 
 
@@ -479,7 +486,7 @@ public class TeleOp2020NewDrivebaseBlue extends LinearOpMode {
             if (autoScoringMode == 0) {
                 autoScoringMode = 1;
             } else if (autoScoringMode == 1) {
-                if(!dontScore) {
+                if (!dontScore) {
                     autoScoringMode = 2;
                     reachedPos = false;
                 }
@@ -494,13 +501,14 @@ public class TeleOp2020NewDrivebaseBlue extends LinearOpMode {
         }
 
         //Driver does not have control of robot here
-        if ( autoScoringMode == 2 && !dontScore) {
+        if (autoScoringMode == 2 && !dontScore) {
             if (autoScoringModeFirstTime) {
                 autoScoringModeFirstTime = false;
                 readingNum = 0;
+                totalBackDistanceError = 0;
             }
 
-            if(autoScoreState == 0) {
+            if (autoScoreState == 0) {
                 //Find Angle Error
                 double goalAngle = -90; //Just the starting angle I think
                 double currentAngleAdjusted = angleDouble + offset;
@@ -521,9 +529,44 @@ public class TeleOp2020NewDrivebaseBlue extends LinearOpMode {
                 //Find how far from the side wall it is
                 //setDistanceItShouldBeBack = 16;
                 //if(armAngle(arm.getCurrentPosition()) < -200) {
-                armAngleNeeded = (Math.toDegrees(Math.asin((blockPosY * 10.85 - 30)/47)));
+
+
+                /*armAngleNeeded = (Math.toDegrees(Math.asin((blockPosY * 10.85 - 30)/47)));
                 armPosNeeded = ((216 - armAngleNeeded) * 15.278 * -1);
-                setDistanceItShouldBeBack = (47 * Math.cos(Math.toRadians(armAngleNeeded)) - 10);
+                setDistanceItShouldBeBack = (47 * Math.cos(Math.toRadians(armAngleNeeded)) - 10);*/
+
+                switch (blockPosY) {
+                    case 0:
+                        armPosNeeded = -3667;
+                        setDistanceItShouldBeBack = 32.9;
+                        break;
+                    case 1:
+                        armPosNeeded = -3455;
+                        setDistanceItShouldBeBack = 36.26;
+                        break;
+                    case 2:
+                        armPosNeeded = -3253;
+                        setDistanceItShouldBeBack = 37;
+                        break;
+                    case 3:
+                        armPosNeeded = -3047;
+                        setDistanceItShouldBeBack = 36;
+                        break;
+                    case 4:
+                        armPosNeeded = -2826;
+                        setDistanceItShouldBeBack = 31;
+                        break;
+                    case 5:
+                        armPosNeeded = -2562;
+                        setDistanceItShouldBeBack = 22;
+                        break;
+                    case 6:
+                        armPosNeeded = -2141;
+                        setDistanceItShouldBeBack = 10;
+                        break;
+                    default:
+                        telemetry.addData("You have exceeded the capabilities of this robot", blockPosY);
+                }
                 //}
 
 
@@ -535,15 +578,38 @@ public class TeleOp2020NewDrivebaseBlue extends LinearOpMode {
                rightMotor2.setPower(frontPowerError + -angleAdjustPower);*/
                 //middleMotor.setPower(middlePowerError);
 
-                //COMMENT THIS OUT BRUH
-                if(extraClasses.closeEnough(currentAngleAdjusted, goalAngle, 5)) {
+                //COMMENT THIS OUT BRUHh
+                if (extraClasses.closeEnough(currentAngleAdjusted, goalAngle, 5)) {
+                    if (virgin) {
+                        virgin = false;
+                        lastTime = System.currentTimeMillis();
+                        double rangeSensorDistanceBack = rangeSensorBack.getDistance(DistanceUnit.CM);
+                        double filteredRangeSensorDistanceBack = filterValues(rangeSensorDistanceBack, readingNum);
+                        lastDistanceBack = filteredRangeSensorDistanceBack - setDistanceItShouldBeBack;
+                    }
                     double rangeSensorDistanceBack = rangeSensorBack.getDistance(DistanceUnit.CM);
                     double filteredRangeSensorDistanceBack = filterValues(rangeSensorDistanceBack, readingNum);
-                    if(filteredRangeSensorDistanceBack > 40) {
+                    if (filteredRangeSensorDistanceBack > 40) {
                         filteredRangeSensorDistanceBack = 40;
                     }
+                    double time = System.currentTimeMillis();
+                    if (Math.abs(time - lastTime) > 2000) {
+                        lastTime = System.currentTimeMillis();
+                    }
+                    deltaT = time - lastTime;
+                    totalTime += deltaT;
                     distanceDifferenceBack = filteredRangeSensorDistanceBack - setDistanceItShouldBeBack;
-                    double frontPowerError = distanceDifferenceBack / 75;
+                    differentialBackDistanceError = ((distanceDifferenceBack - lastDistanceBack) / deltaT) / 2;
+                    lastDistanceBack = filteredRangeSensorDistanceBack - setDistanceItShouldBeBack;
+                    lastTime = time;
+                    totalBackDistanceError += (distanceDifferenceBack * deltaT / 180000.0);
+                    if (distanceDifferenceBack > 0 && totalBackDistanceError < 0) {
+                        totalBackDistanceError = 0;
+                    } else if (distanceDifferenceBack < 0 && totalBackDistanceError > 0) {
+                        totalBackDistanceError = 0;
+                    }
+
+                    double frontPowerError = distanceDifferenceBack / 50 + totalBackDistanceError + differentialBackDistanceError;
 
                     leftMotor.setPower(frontPowerError + angleAdjustPower);
                     leftMotor2.setPower(frontPowerError + angleAdjustPower);
@@ -557,15 +623,15 @@ public class TeleOp2020NewDrivebaseBlue extends LinearOpMode {
                    }*/
                     armAngleDifference = arm.getCurrentPosition() - armPosNeeded;
                     double armPowerError = armAngleDifference / 50;
-                    if(reachedPos == false) {
+                    if (reachedPos == false) {
                         arm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
                         arm.setTargetPosition((int) armPosNeeded + 200);
                         arm.setPower(armPowerError);
                     }
-                    if(extraClasses.closeEnough(arm.getCurrentPosition(),armPosNeeded + 200, 25)) {
+                    if (extraClasses.closeEnough(arm.getCurrentPosition(), armPosNeeded + 200, 35)) {
                         reachedPos = true;
                     }
-                    if(!arm.isBusy()){
+                    if (!arm.isBusy() && ExtraClasses.closeEnough(frontPowerError, 0, .01)) {
                         autoScoreState = 1;
                     }
                     telemetry.addData("arm power error: ", armPowerError);
@@ -577,16 +643,20 @@ public class TeleOp2020NewDrivebaseBlue extends LinearOpMode {
                     arm.setPower(0);
                 }
                 readingNum++;
-            } else if(autoScoreState == 1) {
+            } else if (autoScoreState == 1) {
                 //armFlipper.setPower(0);
                 //clawServo.setPosition(0);
                 //blockPos[blockPosX][blockPosY] = 1;
+                totalBackDistanceError = 0;
+                virgin = true;
+                differentialBackDistanceError = 0;
+
                 autoScoreState = 2;
             }
         } else {
             autoScoringModeFirstTime = true;
         }
-        if(autoScoringMode == 1) {
+        if (autoScoringMode == 1) {
             /*if (gamepad1.dpad_left) {
                 if(blockPos[0][blockPosY] == 0) { //checks whether that position has scored yet
                     blockPosX = 0;
@@ -614,28 +684,31 @@ public class TeleOp2020NewDrivebaseBlue extends LinearOpMode {
             } else if (gamepad2.dpad_down && dpadWasPressed == false) {
                 dpadWasPressed = true;
                 blockPosY = blockPosY - 1;
-            } else if(!gamepad2.dpad_down && !gamepad2.dpad_up) {
+            } else if (!gamepad2.dpad_down && !gamepad2.dpad_up) {
                 dpadWasPressed = false;
             }
-            if(gamepad1.left_trigger > .5 && leftTriggerPressed == false) {
+            if (gamepad1.left_trigger > .5 && leftTriggerPressed == false) {
                 leftTriggerPressed = true;
-                if(rotation == 0) {
+                if (rotation == 0) {
                     rotation = 1;
                 } else {
                     rotation = 0;
                 }
-            } else if(gamepad1.left_trigger < .5) {
+            } else if (gamepad1.left_trigger < .5) {
                 leftTriggerPressed = false;
             }
-            if(gamepad1.start) {
+            if (gamepad1.start) {
                 blockPosX = 0;
                 blockPosY = 0;
                 rotation = 0;
             }
         }
-
     }
     public void controlIntake2(){
+        if(gamepad2.b) {
+            arm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+            arm.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        }
         driverIsMovingArm = true;
         if(isIntakingBasic){
             if(gamepad1.left_bumper && intakeState == 0){

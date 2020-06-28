@@ -399,12 +399,13 @@ public class SkyStoneAutonomousUpdatedBlue extends LinearOpMode {
         //finish under the foundation
 
         if(blockPosition == 0) {
-            moveToNextBlock(.1, .05, .8, 87, 2, 35, 90, 68, true);
+            moveToNextBlock(.1, .05, .8, 82, 2, 35, 90, 68, true);
             moveIntakeAndArm2();
             ThreadSleepUpdated(100);
             turnInCircleProfiled(25,2,1,30, .5,.1,.4,2,4,0);
             leftIntakeServo.setPosition(.55);
             rightIntakeServo.setPosition(.55);
+            ThreadSleepUpdated(400);
             turnInCircleProfiled(25,2,1,30, -.5,-.3,-.4,2,4,-.3);
         } else if(blockPosition == 1) {
             moveToNextBlock(.1, .05, .8, 75, 2, 35, 90, 70, true);
@@ -414,21 +415,23 @@ public class SkyStoneAutonomousUpdatedBlue extends LinearOpMode {
             ThreadSleepUpdated(500);
             leftIntakeServo.setPosition(.55);
             rightIntakeServo.setPosition(.55);
+            ThreadSleepUpdated(400);
             turnInCircleProfiled(25,2,1,35, -.5,-.3,-.4,2,4,-.3);
         } else {
             moveToNextBlock(.1, .05, .8, 73, 2, 35, 90, 70, true);
             moveIntakeAndArm2();
             ThreadSleepUpdated(100);
-            turnInCircleProfiled(25,2,1,30, .5,.1,.4,2,4,0);
+            turnInCircleProfiled(25,2,1,35, .5,.1,.4,2,4,0);
             ThreadSleepUpdated(500);
             leftIntakeServo.setPosition(.55);
             rightIntakeServo.setPosition(.55);
-            turnInCircleProfiled(25,2,1,30, -.5,-.3,-.4,2,4,-.3);
+            ThreadSleepUpdated(400);
+            turnInCircleProfiled(25,2,1,35, -.5,-.3,-.4,2,4,-.3);
         }
         ThreadSleepUpdated(500);
         pickUpSkystone1();//
         if(blockPosition == 0) {
-            encoderDriveProfiled(-.3, -.1, -.8, 62, 2, 15, 90, true);
+            encoderDriveProfiled(-.3, -.1, -.8, 57, 2, 15, 90, true);
         } else if(blockPosition == 1) {
             encoderDriveProfiled(-.3, -.1, -.8, 45, 2, 15, 90, true);
         } else {
@@ -553,7 +556,7 @@ public class SkyStoneAutonomousUpdatedBlue extends LinearOpMode {
             }
         }
 
-        while (opModeIsActive() && !finishedMotion) {
+        while (opModeIsActive() && !isStopRequested() && !finishedMotion) {
 
 
             angles = imu.getAngularOrientation().toAxesReference(AxesReference.INTRINSIC).toAxesOrder(AxesOrder.ZYX);
@@ -703,7 +706,7 @@ public class SkyStoneAutonomousUpdatedBlue extends LinearOpMode {
 
             double currentPowerLeft = 0;
             double currentPowerRight = 0;
-            while (Math.abs(leftMotor.getCurrentPosition()) < Math.abs(newSideTargets)-5 || Math.abs(rightMotor.getCurrentPosition()) < Math.abs(newSideTargets) - 5 && opModeIsActive()) {
+            while (Math.abs(leftMotor.getCurrentPosition()) < Math.abs(newSideTargets)-5 || Math.abs(rightMotor.getCurrentPosition()) < Math.abs(newSideTargets) - 5 && opModeIsActive() && !isStopRequested()) {
                 int stateAt = 0;
                 double currentEncoderPos = leftMotor.getCurrentPosition();
                 if (Math.abs(currentEncoderPos) < Math.abs(speedUpAt)) {
@@ -784,7 +787,7 @@ public class SkyStoneAutonomousUpdatedBlue extends LinearOpMode {
         if (distance1 > distance2) {
             angleError = distance2;
         }
-        while (Math.abs(angleError) > errorAllowed && opModeIsActive()) {
+        while (Math.abs(angleError) > errorAllowed  && opModeIsActive() && !isStopRequested()) {
             angles = imu.getAngularOrientation().toAxesReference(AxesReference.INTRINSIC).toAxesOrder(AxesOrder.ZYX);
             angleDouble = extraClasses.convertAngle(Double.parseDouble(formatAngle(angles.angleUnit, angles.firstAngle)));
             distance1 = Math.abs(angleDouble - turnAngle);
@@ -836,7 +839,7 @@ public class SkyStoneAutonomousUpdatedBlue extends LinearOpMode {
         double maxSpeed = -.5;
         double minSpeed = -.1;
         double goalDistance = 4;
-        while (!touchSensor.isPressed()) {
+        while (!touchSensor.isPressed() && opModeIsActive() && !isStopRequested()) {
             angles = imu.getAngularOrientation().toAxesReference(AxesReference.INTRINSIC).toAxesOrder(AxesOrder.ZYX);
             angleDouble = extraClasses.convertAngle(Double.parseDouble(formatAngle(angles.angleUnit, angles.firstAngle)));
 
@@ -858,7 +861,7 @@ public class SkyStoneAutonomousUpdatedBlue extends LinearOpMode {
             if(distance > 30) {
                 distance = 30;
             }
-            double sidePower = -distance/170 - .1;
+            double sidePower = -distance/230 - .1;
             telemetry.addData("Distance", distance);
             telemetry.update();
             leftMotor.setPower(sidePower + angleAdjustPower);
@@ -897,8 +900,8 @@ public class SkyStoneAutonomousUpdatedBlue extends LinearOpMode {
         double motorPower = angleError / 250;
         middleMotor.setPower(.2);
         double moveBack = .6;
-        int pValue = 350;
-        while (Math.abs(angleError) > 3) {
+        int pValue = 275;
+        while (Math.abs(angleError) > 3 && opModeIsActive() && !isStopRequested()) {
             angles = imu.getAngularOrientation().toAxesReference(AxesReference.INTRINSIC).toAxesOrder(AxesOrder.ZYX);
             angleDouble = extraClasses.convertAngle(Double.parseDouble(formatAngle(angles.angleUnit, angles.firstAngle)));
             angleError = extraClasses.angleDistance(angleDouble, scoreAngle);
@@ -934,7 +937,7 @@ public class SkyStoneAutonomousUpdatedBlue extends LinearOpMode {
         rightMotor.setPower(movePower);
         rightMotor.setPower(movePower);
         long startingTime = System.currentTimeMillis();
-        while ((System.currentTimeMillis() - startingTime) < 900) {
+        while ((System.currentTimeMillis() - startingTime) < 900 && opModeIsActive() && !isStopRequested()) {
             angles = imu.getAngularOrientation().toAxesReference(AxesReference.INTRINSIC).toAxesOrder(AxesOrder.ZYX);
             angleDouble = extraClasses.convertAngle(Double.parseDouble(formatAngle(angles.angleUnit, angles.firstAngle)));
             scoreAngle = 90;
@@ -975,7 +978,7 @@ public class SkyStoneAutonomousUpdatedBlue extends LinearOpMode {
         int armState = 0;
         double previousValue = rangeSensorBack.getDistance(DistanceUnit.CM);
         int readingNum = 1;
-        while(!scored) {
+        while(!scored && opModeIsActive() && !isStopRequested()) {
             angles = imu.getAngularOrientation().toAxesReference(AxesReference.INTRINSIC).toAxesOrder(AxesOrder.ZYX);
             angleDouble = extraClasses.convertAngle(Double.parseDouble(formatAngle(angles.angleUnit, angles.firstAngle)));
 
@@ -1091,7 +1094,7 @@ public class SkyStoneAutonomousUpdatedBlue extends LinearOpMode {
 
             double currentPowerLeft = 0;
             double currentPowerRight = 0;
-            while (Math.abs(leftMotor.getCurrentPosition()) < Math.abs(newSideTargets)-5 && Math.abs(rightMotor.getCurrentPosition()) < Math.abs(newSideTargets) - 5 && opModeIsActive()) {
+            while (Math.abs(leftMotor.getCurrentPosition()) < Math.abs(newSideTargets)-5 && Math.abs(rightMotor.getCurrentPosition()) < Math.abs(newSideTargets) - 5 && opModeIsActive() && !isStopRequested()) {
                 int stateAt = 0;
                 double currentEncoderPos = leftMotor.getCurrentPosition();
                 if (Math.abs(currentEncoderPos) < Math.abs(speedUpAt)) {
@@ -1173,7 +1176,7 @@ public class SkyStoneAutonomousUpdatedBlue extends LinearOpMode {
         arm.setTargetPosition(-3800);
         arm.setMode(RUN_TO_POSITION);
         arm.setPower(.8);
-        while(arm.getCurrentPosition() > -3700) {
+        while(arm.getCurrentPosition() > -3700 && opModeIsActive() && !isStopRequested()) {
 
         }
         clawServo.setPosition(servoOpenPos);
@@ -1247,9 +1250,9 @@ public class SkyStoneAutonomousUpdatedBlue extends LinearOpMode {
     public void ThreadSleepUpdated(double waitTime) {
         double startingTime = System.currentTimeMillis();
         boolean isDone = false;
-        while(!isDone && opModeIsActive()) {
+        while(!isDone && opModeIsActive() && !isStopRequested()) {
             double timeDifference = System.currentTimeMillis() - startingTime;
-            if(timeDifference > waitTime) {
+            if(timeDifference > waitTime && opModeIsActive() && !isStopRequested()) {
                 isDone = true;
             }
         }

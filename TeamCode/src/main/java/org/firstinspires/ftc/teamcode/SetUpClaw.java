@@ -26,7 +26,7 @@ public class SetUpClaw extends LinearOpMode {
             holdServo.setPosition(SkyStoneAutonomousUpdated.holdServoPos);
             rotationServo.setPosition(.54);
             leftIntakeServo.setPosition(1);
-            hookServo.setPosition(.3);
+            hookServo.setPosition(.1);
         }
     }
 }
